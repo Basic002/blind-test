@@ -1,0 +1,27 @@
+{
+  "name": "blind-test",
+  "version": "1.0.0",
+  "description": "Application web de blind-test multijoueur en temps réel avec écran hôte et manettes smartphones",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [
+    "blind-test",
+    "socket.io",
+    "deezer",
+    "party-game"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.4"
+  }
+}

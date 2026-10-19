@@ -1,0 +1,368 @@
+// Initialize Socket.io
+const socket = io();
+
+// State
+let roomCode = null;
+let currentThemes = [];
+let selectedThemeId = 'disney';
+let roundTimerInterval = null;
+let audioPlayer = document.getElementById('audio-player');
+let currentPlayers = [];
+
+// Views
+const views = {
+  lobby: document.getElementById('view-lobby'),
+  round: document.getElementById('view-round'),
+  reveal: document.getElementById('view-reveal'),
+  gameover: document.getElementById('view-gameover')
+};
+
+function switchView(viewName) {
+  Object.values(views).forEach(v => v.classList.remove('active'));
+  if (views[viewName]) {
+    views[viewName].classList.add('active');
+  }
+}
+
+// Volume & Audio control
+const volumeSlider = document.getElementById('volume-slider');
+audioPlayer.volume = parseFloat(volumeSlider.value);
+volumeSlider.addEventListener('input', (e) => {
+  audioPlayer.volume = parseFloat(e.target.value);
+});
+
+// Fullscreen toggle
+document.getElementById('fullscreen-btn').addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => console.log(err));
+  } else {
+    document.exitFullscreen().catch(err => console.log(err));
+  }
+});
+
+// Join Room creation
+socket.emit('create_room');
+
+socket.on('room_created', (data) => {
+  roomCode = data.roomCode;
+  currentThemes = data.themes;
+
+  document.getElementById('display-room-code').textContent = data.roomCode;
+  document.getElementById('display-join-url').textContent = data.joinUrl;
+  document.getElementById('qr-code-img').src = data.qrDataUrl;
+
+  renderThemes(data.themes, data.themeId);
+});
+
+// Render Themes
+function renderThemes(themes, activeThemeId) {
+  const container = document.getElementById('themes-grid');
+  container.innerHTML = '';
+
+  themes.forEach(theme => {
+    const card = document.createElement('div');
+    card.className = `theme-card ${theme.id === activeThemeId ? 'selected' : ''}`;
+    card.dataset.themeId = theme.id;
+    card.innerHTML = `
+      <div class="theme-icon">${theme.icon}</div>
+      <div class="theme-title">${theme.name}</div>
+    `;
+
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedThemeId = theme.id;
+      
+      const customBox = document.getElementById('custom-playlist-box');
+      if (theme.id === 'custom') {
+        customBox.style.display = 'block';
+        document.getElementById('custom-playlist-input').focus();
+      } else {
+        customBox.style.display = 'none';
+      }
+
+      sendSettingsUpdate();
+    });
+
+    container.appendChild(card);
+  });
+}
+
+// Settings updates
+function sendSettingsUpdate() {
+  const rounds = parseInt(document.getElementById('rounds-select').value, 10);
+  const duration = parseInt(document.getElementById('duration-select').value, 10);
+  const customPlaylistId = document.getElementById('custom-playlist-input').value.trim();
+
+  socket.emit('update_settings', {
+    themeId: selectedThemeId,
+    customPlaylistId: selectedThemeId === 'custom' ? customPlaylistId : null,
+    totalRounds: rounds,
+    roundDuration: duration
+  });
+}
+
+document.getElementById('rounds-select').addEventListener('change', sendSettingsUpdate);
+document.getElementById('duration-select').addEventListener('change', sendSettingsUpdate);
+document.getElementById('custom-playlist-input').addEventListener('input', sendSettingsUpdate);
+
+// Player joined / left handlers
+socket.on('player_joined', (data) => {
+  currentPlayers = data.players;
+  updateLobbyPlayers(data.players);
+});
+
+socket.on('player_left', (data) => {
+  currentPlayers = data.players;
+  updateLobbyPlayers(data.players);
+});
+
+function updateLobbyPlayers(players) {
+  const grid = document.getElementById('lobby-players-grid');
+  const countBadge = document.getElementById('players-count-badge');
+  const startBtn = document.getElementById('start-game-btn');
+
+  const count = players.length;
+  countBadge.textContent = `${count} joueur${count > 1 ? 's' : ''}`;
+
+  if (count === 0) {
+    grid.innerHTML = `
+      <div id="no-players-placeholder" style="grid-column: 1 / -1; color: #94a3b8; text-align: center; padding: 2rem;">
+        En attente des joueurs... Sortez vos téléphones ! 📱
+      </div>
+    `;
+    startBtn.disabled = true;
+    startBtn.textContent = 'LANCER LA PARTIE 🚀';
+  } else {
+    grid.innerHTML = players.map(p => `
+      <div class="player-chip">
+        <span class="player-avatar">${p.avatar}</span>
+        <span class="player-name">${escapeHtml(p.nickname)}</span>
+      </div>
+    `).join('');
+    startBtn.disabled = false;
+    startBtn.textContent = `LANCER LA PARTIE 🚀 (${count})`;
+  }
+}
+
+// Start Game button
+const startBtn = document.getElementById('start-game-btn');
+startBtn.addEventListener('click', () => {
+  // Prime audio playback to fulfill browser interaction requirements
+  audioPlayer.play().then(() => audioPlayer.pause()).catch(() => {});
+  startBtn.disabled = true;
+  startBtn.textContent = 'CHARGEMENT DES MORCEAUX... ⏳';
+  socket.emit('start_game');
+});
+
+socket.on('game_start_error', (data) => {
+  alert(data.message || 'Erreur lors du lancement');
+  startBtn.disabled = false;
+  startBtn.textContent = 'LANCER LA PARTIE 🚀';
+});
+
+// Round Start on Host
+socket.on('round_start_host', (data) => {
+  switchView('round');
+
+  document.getElementById('round-number-display').textContent = `Manche ${data.roundIndex} / ${data.totalRounds}`;
+  const themeObj = currentThemes.find(t => t.id === selectedThemeId);
+  document.getElementById('round-theme-display').textContent = themeObj ? `${themeObj.icon} ${themeObj.name}` : '';
+
+  // Setup live answered indicator
+  updateAnsweredCount(0, data.players.length);
+  renderRoundPlayersList(data.players);
+
+  // Play audio preview
+  audioPlayer.src = data.audioPreview;
+  audioPlayer.currentTime = 0;
+  audioPlayer.play().catch(err => {
+    console.warn('Autoplay blocked or audio failed:', err);
+  });
+
+  // Start smooth visual timer
+  startRoundTimer(data.duration);
+});
+
+function renderRoundPlayersList(players) {
+  const container = document.getElementById('round-players-list');
+  container.innerHTML = players.map(p => `
+    <div id="round-player-${p.id}" class="player-chip" style="opacity: 0.6; transition: all 0.2s ease;">
+      <span class="player-avatar">${p.avatar}</span>
+      <span class="player-name">${escapeHtml(p.nickname)}</span>
+      <span class="answer-check" style="display: none; margin-left: 0.3rem;">✅</span>
+    </div>
+  `).join('');
+}
+
+// Player answered event
+socket.on('player_answered', (data) => {
+  updateAnsweredCount(data.answeredCount, data.totalPlayers);
+
+  // Mark player chip as answered
+  const playerChip = document.getElementById(`round-player-${data.playerId}`);
+  if (playerChip) {
+    playerChip.style.opacity = '1';
+    playerChip.style.borderColor = '#10b981';
+    const check = playerChip.querySelector('.answer-check');
+    if (check) check.style.display = 'inline';
+  }
+});
+
+function updateAnsweredCount(answered, total) {
+  const el = document.getElementById('answers-counter');
+  el.textContent = `${answered} / ${total} ont répondu`;
+}
+
+function startRoundTimer(durationSeconds) {
+  if (roundTimerInterval) clearInterval(roundTimerInterval);
+
+  const timerBar = document.getElementById('timer-bar');
+  const timerSeconds = document.getElementById('timer-seconds');
+  const startTime = Date.now();
+  const totalMs = durationSeconds * 1000;
+
+  timerBar.style.width = '100%';
+  timerSeconds.textContent = durationSeconds;
+
+  roundTimerInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, totalMs - elapsed);
+    const percent = (remaining / totalMs) * 100;
+
+    timerBar.style.width = `${percent}%`;
+    timerSeconds.textContent = Math.ceil(remaining / 1000);
+
+    if (remaining <= 0) {
+      clearInterval(roundTimerInterval);
+    }
+  }, 50);
+}
+
+// Round Ended Reveal on Host
+socket.on('round_ended_host', (data) => {
+  if (roundTimerInterval) clearInterval(roundTimerInterval);
+  
+  // Fade out audio preview gently
+  let fadeVolume = audioPlayer.volume;
+  const fade = setInterval(() => {
+    if (fadeVolume > 0.05) {
+      fadeVolume -= 0.05;
+      audioPlayer.volume = fadeVolume;
+    } else {
+      clearInterval(fade);
+      audioPlayer.pause();
+      audioPlayer.volume = parseFloat(volumeSlider.value);
+    }
+  }, 50);
+
+  switchView('reveal');
+
+  // Display song reveal info
+  document.getElementById('reveal-title').textContent = data.track.title;
+  document.getElementById('reveal-artist').textContent = data.track.artist;
+  document.getElementById('reveal-cover').src = data.track.cover || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400';
+
+  // Display leaderboard
+  renderLeaderboard(data.leaderboard);
+});
+
+function renderLeaderboard(leaderboard) {
+  const container = document.getElementById('reveal-leaderboard');
+  container.innerHTML = leaderboard.slice(0, 6).map((player, index) => {
+    const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+    const medals = ['🥇', '🥈', '🥉'];
+    const rankPrefix = medals[index] || `#${index + 1}`;
+
+    return `
+      <div class="leaderboard-row ${rankClass}">
+        <div class="leaderboard-player-info">
+          <span>${rankPrefix}</span>
+          <span style="font-size: 1.4rem;">${player.avatar}</span>
+          <span>${escapeHtml(player.nickname)}</span>
+          ${player.streak > 1 ? `<span class="streak-badge">🔥 ${player.streak}</span>` : ''}
+        </div>
+        <div class="leaderboard-score">${player.score.toLocaleString()} pts</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Game Over & Podium
+socket.on('game_over_host', (data) => {
+  if (roundTimerInterval) clearInterval(roundTimerInterval);
+  audioPlayer.pause();
+
+  switchView('gameover');
+
+  // Launch confetti fireworks!
+  launchConfetti();
+
+  const podium = data.podium || [];
+  
+  // 1st place
+  if (podium[0]) {
+    const p1 = document.getElementById('podium-1');
+    p1.querySelector('.podium-avatar').textContent = podium[0].avatar;
+    p1.querySelector('.podium-name').textContent = podium[0].nickname;
+    p1.querySelector('.podium-score').textContent = `${podium[0].score.toLocaleString()} pts`;
+  }
+
+  // 2nd place
+  if (podium[1]) {
+    const p2 = document.getElementById('podium-2');
+    p2.querySelector('.podium-avatar').textContent = podium[1].avatar;
+    p2.querySelector('.podium-name').textContent = podium[1].nickname;
+    p2.querySelector('.podium-score').textContent = `${podium[1].score.toLocaleString()} pts`;
+  }
+
+  // 3rd place
+  if (podium[2]) {
+    const p3 = document.getElementById('podium-3');
+    p3.querySelector('.podium-avatar').textContent = podium[2].avatar;
+    p3.querySelector('.podium-name').textContent = podium[2].nickname;
+    p3.querySelector('.podium-score').textContent = `${podium[2].score.toLocaleString()} pts`;
+  }
+});
+
+// Replay button
+document.getElementById('replay-btn').addEventListener('click', () => {
+  socket.emit('restart_to_lobby');
+});
+
+socket.on('back_to_lobby', (data) => {
+  switchView('lobby');
+  updateLobbyPlayers(data.players);
+});
+
+// Confetti generator
+function launchConfetti() {
+  if (typeof confetti !== 'undefined') {
+    const duration = 5 * 1000;
+    const animationEnd = Date.now() + duration;
+
+    const interval = setInterval(() => {
+      const timeLeft = animationEnd - Date.now();
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      confetti({
+        particleCount: 50,
+        startVelocity: 30,
+        spread: 360,
+        origin: { x: Math.random(), y: Math.random() - 0.2 }
+      });
+    }, 250);
+  }
+}
+
+// Helper utility
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+}
