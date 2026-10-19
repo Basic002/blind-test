@@ -7,35 +7,41 @@
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
 </head>
-<body style="background: #030712;">
+<body style="background: #060811;">
+  <div class="ambient-glow glow-1" style="width: 250px; height: 250px; top: -50px; left: -50px;"></div>
+  <div class="ambient-glow glow-2" style="width: 250px; height: 250px; bottom: -50px; right: -50px;"></div>
+
   <div class="mobile-view">
     <!-- Header Joueur -->
     <header class="player-header">
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <span id="player-avatar-badge" style="font-size: 1.5rem;">🎵</span>
-        <span id="player-name-badge" style="font-weight: 700; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Joueur</span>
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span id="player-avatar-badge" style="font-size: 1.6rem;">🦊</span>
+        <span id="player-name-badge" style="font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Joueur</span>
       </div>
       <div style="display: flex; align-items: center; gap: 0.75rem;">
         <div id="player-streak-badge" class="streak-badge" style="display: none;">🔥 0</div>
-        <div id="player-score-badge" class="player-score-badge">0 pts</div>
+        <div id="player-score-badge" class="player-score-pill">0 pts</div>
       </div>
     </header>
 
     <!-- 1. VIEW JOIN -->
-    <div id="view-join" class="glass-panel" style="padding: 1.5rem; margin: auto 0; text-align: center;">
-      <h1 style="font-size: 1.75rem; font-weight: 900; margin-bottom: 0.25rem; background: linear-gradient(135deg, #a855f7, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+    <div id="view-join" class="glass-panel" style="padding: 2rem 1.5rem; margin: auto 0; text-align: center;">
+      <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3)); border: 1px solid rgba(255, 255, 255, 0.15); font-size: 1.8rem; margin-bottom: 1rem;">
+        🎧
+      </div>
+      <h1 style="font-size: 2rem; font-weight: 900; margin-bottom: 0.25rem; letter-spacing: -0.5px;">
         BLIND-TEST PARTY
       </h1>
-      <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;">Rejoins la partie sur ton téléphone !</p>
+      <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.75rem;">Rejoins le salon et prépare tes réflexes !</p>
 
-      <div style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
+      <div style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
         <div>
-          <label style="font-weight: 700; font-size: 0.9rem; color: #cbd5e1; display: block; margin-bottom: 0.3rem;">Code du salon :</label>
-          <input type="text" id="input-room-code" class="form-input" placeholder="Ex: K7X2" maxlength="4" style="text-transform: uppercase; font-size: 1.5rem; text-align: center; letter-spacing: 4px;">
+          <label style="font-weight: 700; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">Code du salon</label>
+          <input type="text" id="input-room-code" class="form-input" placeholder="ABCD" maxlength="4" style="text-transform: uppercase; font-family: var(--font-display); font-size: 1.75rem; text-align: center; letter-spacing: 6px; font-weight: 900; color: #38bdf8;">
         </div>
 
         <div>
-          <label style="font-weight: 700; font-size: 0.9rem; color: #cbd5e1; display: block; margin-bottom: 0.3rem;">Choisis ton avatar :</label>
+          <label style="font-weight: 700; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">Avatar</label>
           <div id="avatar-picker" class="avatar-grid">
             <div class="avatar-option selected" data-avatar="🦊">🦊</div>
             <div class="avatar-option" data-avatar="🐯">🐯</div>
@@ -51,81 +57,97 @@
         </div>
 
         <div>
-          <label style="font-weight: 700; font-size: 0.9rem; color: #cbd5e1; display: block; margin-bottom: 0.3rem;">Ton pseudo :</label>
-          <input type="text" id="input-nickname" class="form-input" placeholder="Ex: Alex" maxlength="15">
+          <label style="font-weight: 700; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">Pseudo</label>
+          <input type="text" id="input-nickname" class="form-input" placeholder="Ton prénom ou pseudo..." maxlength="15">
         </div>
 
-        <button id="btn-join" class="btn btn-primary" style="margin-top: 0.5rem; padding: 1rem; font-size: 1.2rem;">
-          REJOINDRE 🎮
+        <button id="btn-join" class="btn btn-primary" style="margin-top: 0.5rem; padding: 1.1rem; font-size: 1.15rem;">
+          REJOINDRE LA PARTIE 🎮
         </button>
       </div>
     </div>
 
     <!-- 2. VIEW LOBBY WAITING -->
-    <div id="view-waiting" class="waiting-feedback" style="display: none;">
-      <div class="waiting-spinner">🎧</div>
-      <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">Tu es connecté !</h2>
-      <p style="color: #94a3b8; font-size: 1rem;">Regarde l'écran TV, la partie va bientôt commencer...</p>
+    <div id="view-waiting" class="glass-panel" style="display: none; padding: 3rem 1.5rem; margin: auto 0; text-align: center;">
+      <div style="font-size: 4rem; animation: floatOrb 3s ease-in-out infinite alternate; margin-bottom: 1.25rem;">
+        🎮
+      </div>
+      <h2 style="font-size: 1.75rem; font-weight: 900; margin-bottom: 0.5rem;">Tu es dans le salon !</h2>
+      <p style="color: #94a3b8; font-size: 1.05rem; line-height: 1.5;">
+        Regarde l'écran TV.<br>L'hôte va bientôt lancer la partie...
+      </p>
     </div>
 
-    <!-- 3. VIEW GAME ROUND (4 COLOR BUTTONS) -->
+    <!-- 3. VIEW GAME ROUND (4 TACTILE BUTTONS) -->
     <div id="view-play" style="display: none; flex-direction: column; flex: 1;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-        <span id="player-round-badge" style="font-size: 0.95rem; font-weight: 700; color: #94a3b8;">Manche 1 / 10</span>
-        <span id="player-timer-text" style="font-weight: 800; color: #38bdf8;">25s</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <span id="player-round-badge" style="font-family: var(--font-display); font-size: 1rem; font-weight: 800; color: #94a3b8;">Manche 1 / 10</span>
+        <span id="player-question-mode" style="font-size: 0.85rem; font-weight: 800; color: #f43f5e; text-transform: uppercase; letter-spacing: 1px;">Trouve l'animé !</span>
       </div>
 
-      <div class="timer-container" style="height: 8px; margin: 0 0 1rem 0;">
+      <div class="timer-container" style="height: 6px; margin: 0 0 1rem 0;">
         <div id="player-timer-bar" class="timer-bar"></div>
       </div>
 
-      <!-- 4 Choix QCM -->
+      <!-- 4 Choix QCM avec lettres A, B, C, D -->
       <div id="choices-container" class="choices-grid">
         <button class="choice-btn choice-btn-0" data-index="0">
-          <div class="choice-title">Option A</div>
-          <div class="choice-artist">Artiste</div>
+          <span class="choice-letter">A</span>
+          <div class="choice-text-wrapper">
+            <div class="choice-title">Option A</div>
+            <div class="choice-artist">Animé</div>
+          </div>
         </button>
         <button class="choice-btn choice-btn-1" data-index="1">
-          <div class="choice-title">Option B</div>
-          <div class="choice-artist">Artiste</div>
+          <span class="choice-letter">B</span>
+          <div class="choice-text-wrapper">
+            <div class="choice-title">Option B</div>
+            <div class="choice-artist">Animé</div>
+          </div>
         </button>
         <button class="choice-btn choice-btn-2" data-index="2">
-          <div class="choice-title">Option C</div>
-          <div class="choice-artist">Artiste</div>
+          <span class="choice-letter">C</span>
+          <div class="choice-text-wrapper">
+            <div class="choice-title">Option C</div>
+            <div class="choice-artist">Animé</div>
+          </div>
         </button>
         <button class="choice-btn choice-btn-3" data-index="3">
-          <div class="choice-title">Option D</div>
-          <div class="choice-artist">Artiste</div>
+          <span class="choice-letter">D</span>
+          <div class="choice-text-wrapper">
+            <div class="choice-title">Option D</div>
+            <div class="choice-artist">Animé</div>
+          </div>
         </button>
       </div>
 
-      <div id="answer-locked-banner" style="display: none; text-align: center; margin-top: 1rem; font-weight: 700; color: #38bdf8;">
-        ✅ Réponse validée ! En attente du résultat...
+      <div id="answer-locked-banner" style="display: none; text-align: center; margin-top: 1rem; font-family: var(--font-display); font-weight: 800; color: #38bdf8; font-size: 1.05rem;">
+        ⚡ Réponse enregistrée ! Résultat imminent...
       </div>
     </div>
 
     <!-- 4. VIEW ROUND RESULT FEEDBACK -->
-    <div id="view-result" class="waiting-feedback" style="display: none;">
+    <div id="view-result" class="glass-panel" style="display: none; padding: 2.5rem 1.5rem; margin: auto 0; text-align: center;">
       <div id="result-icon" style="font-size: 4rem; margin-bottom: 0.5rem;">🎉</div>
-      <h2 id="result-title" style="font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem;">EXCELLENT !</h2>
-      <div id="result-points" style="font-size: 1.75rem; font-weight: 900; color: #38bdf8; margin-bottom: 1rem;">+850 pts</div>
+      <h2 id="result-title" style="font-size: 2.25rem; font-weight: 900; margin-bottom: 0.25rem;">EXCELLENT !</h2>
+      <div id="result-points" style="font-family: var(--font-display); font-size: 2rem; font-weight: 900; color: #38bdf8; margin-bottom: 1.5rem;">+850 pts</div>
       
-      <div class="glass-panel" style="padding: 1rem; margin: 1rem 0; text-align: left;">
-        <div style="font-size: 0.85rem; color: #94a3b8;">C'était :</div>
-        <div id="result-song-name" style="font-weight: 800; font-size: 1.1rem; color: white;">-</div>
+      <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1rem; padding: 1.25rem; text-align: left; margin-bottom: 1.5rem;">
+        <div id="result-type-label" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #94a3b8; margin-bottom: 0.25rem;">C'était :</div>
+        <div id="result-song-name" style="font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; color: #ffffff; line-height: 1.2;">-</div>
       </div>
 
-      <div id="result-rank-text" style="font-weight: 700; color: #cbd5e1; font-size: 1.1rem;">
-        Tu es classé 1er
+      <div id="result-rank-text" style="font-weight: 700; color: #94a3b8; font-size: 1.05rem;">
+        Tu es actuellement 1er
       </div>
     </div>
 
     <!-- 5. VIEW GAME OVER -->
-    <div id="view-gameover-player" class="waiting-feedback" style="display: none;">
-      <div id="final-medal" style="font-size: 4.5rem; margin-bottom: 0.5rem;">🏆</div>
-      <h2 id="final-rank-title" style="font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem;">Partie Terminée !</h2>
-      <div id="final-score-display" style="font-size: 2.25rem; font-weight: 900; color: #38bdf8; margin: 1rem 0;">0 pts</div>
-      <p style="color: #94a3b8;">Regarde le grand écran pour voir le podium complet !</p>
+    <div id="view-gameover-player" class="glass-panel" style="display: none; padding: 3rem 1.5rem; margin: auto 0; text-align: center;">
+      <div id="final-medal" style="font-size: 5rem; margin-bottom: 0.75rem;">🏆</div>
+      <h2 id="final-rank-title" style="font-size: 2.25rem; font-weight: 900; margin-bottom: 0.5rem;">Partie Terminée !</h2>
+      <div id="final-score-display" style="font-family: var(--font-display); font-size: 2.75rem; font-weight: 900; color: #38bdf8; margin: 1rem 0;">0 pts</div>
+      <p style="color: #94a3b8; font-size: 1rem;">Regarde le grand écran pour célébrer le podium !</p>
     </div>
   </div>
 

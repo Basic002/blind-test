@@ -206,16 +206,37 @@ class RoomManager {
       return;
     }
 
-    // Pick 3 distractors from the remaining pool
-    const distractors = shuffleArray(
-      room.tracksPool.filter(t => t.id !== currentTrack.id)
-    ).slice(0, 3);
+    const isAnime = Boolean(currentTrack.isAnime || room.themeId === 'anime');
+    let rawOptions = [];
 
-    // Build 4 options
-    const rawOptions = [
-      { id: currentTrack.id, title: currentTrack.title, artist: currentTrack.artist },
-      ...distractors.map(d => ({ id: d.id, title: d.title, artist: d.artist }))
-    ];
+    if (isAnime && currentTrack.anime) {
+      // Pick 3 distractors with UNIQUE anime names
+      const chosenAnimes = new Set([currentTrack.anime.toLowerCase()]);
+      const animeDistractors = [];
+
+      for (const t of shuffleArray(room.tracksPool)) {
+        if (t.anime && !chosenAnimes.has(t.anime.toLowerCase())) {
+          chosenAnimes.add(t.anime.toLowerCase());
+          animeDistractors.push(t);
+          if (animeDistractors.length === 3) break;
+        }
+      }
+
+      rawOptions = [
+        { id: currentTrack.id, title: currentTrack.anime, artist: 'Animé' },
+        ...animeDistractors.map(d => ({ id: d.id, title: d.anime, artist: 'Animé' }))
+      ];
+    } else {
+      // Pick 3 distractors from the remaining pool
+      const distractors = shuffleArray(
+        room.tracksPool.filter(t => t.id !== currentTrack.id)
+      ).slice(0, 3);
+
+      rawOptions = [
+        { id: currentTrack.id, title: currentTrack.title, artist: currentTrack.artist },
+        ...distractors.map(d => ({ id: d.id, title: d.title, artist: d.artist }))
+      ];
+    }
 
     const shuffledOptions = shuffleArray(rawOptions);
 
@@ -234,6 +255,7 @@ class RoomManager {
       correctId: currentTrack.id,
       startedAt,
       duration,
+      isAnime,
       answers: new Map()
     };
 
@@ -244,6 +266,7 @@ class RoomManager {
       roundIndex: room.currentRoundIndex + 1,
       totalRounds: room.settings.totalRounds,
       audioPreview: currentTrack.preview,
+      isAnime,
       duration,
       players: this.getPlayersList(room)
     });
@@ -253,6 +276,8 @@ class RoomManager {
       this.io.to(socketId).emit('round_start_player', {
         roundIndex: room.currentRoundIndex + 1,
         totalRounds: room.settings.totalRounds,
+        isAnime,
+        questionLabel: isAnime ? 'Trouve l\'animé !' : 'Trouve le morceau !',
         options: shuffledOptions.map((opt, idx) => ({
           id: opt.id,
           index: idx,
@@ -354,12 +379,14 @@ class RoomManager {
 
     const leaderboard = this.getPlayersList(room);
 
-    // Notify host with full reveal (cover, track name, artist, leaderboard)
+    // Notify host with full reveal (cover, track name, artist, anime, leaderboard)
     this.io.to(room.hostSocketId).emit('round_ended_host', {
       track: {
         id: correctTrack.id,
         title: correctTrack.title,
         artist: correctTrack.artist,
+        anime: correctTrack.anime || null,
+        isAnime: Boolean(correctTrack.isAnime || round.isAnime),
         cover: correctTrack.cover,
         preview: correctTrack.preview
       },
@@ -380,7 +407,9 @@ class RoomManager {
         rank,
         correctTrack: {
           title: correctTrack.title,
-          artist: correctTrack.artist
+          artist: correctTrack.artist,
+          anime: correctTrack.anime || null,
+          isAnime: Boolean(correctTrack.isAnime || round.isAnime)
         }
       });
     }

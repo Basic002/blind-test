@@ -82,10 +82,50 @@ function parsePlaylistId(input) {
   return null;
 }
 
+const { ANIME_CATALOG } = require('../config/animeCatalog');
+
+let cachedAnimeTracks = null;
+
+async function fetchAnimeCatalog() {
+  if (cachedAnimeTracks && cachedAnimeTracks.length > 0) {
+    return cachedAnimeTracks;
+  }
+
+  const trackPromises = ANIME_CATALOG.map(async (item) => {
+    try {
+      const res = await fetch(`https://api.deezer.com/track/${item.id}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.preview) return null;
+
+      return {
+        id: String(item.id),
+        anime: item.anime,
+        title: item.title,
+        fullTitle: `${item.title} (${item.anime})`,
+        artist: item.artist,
+        preview: data.preview,
+        cover: data.album ? (data.album.cover_big || data.album.cover_medium) : null,
+        isAnime: true
+      };
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const resolved = await Promise.all(trackPromises);
+  cachedAnimeTracks = resolved.filter(Boolean);
+  return cachedAnimeTracks;
+}
+
 /**
  * Get tracks by theme ID or custom playlist
  */
 async function getTracksForTheme(themeId, customPlaylistId = null) {
+  if (themeId === 'anime') {
+    return await fetchAnimeCatalog();
+  }
+
   let targetPlaylistId = null;
 
   if (themeId === 'custom' && customPlaylistId) {
@@ -107,6 +147,7 @@ async function getTracksForTheme(themeId, customPlaylistId = null) {
 
 module.exports = {
   fetchPlaylistTracks,
+  fetchAnimeCatalog,
   parsePlaylistId,
   getTracksForTheme,
   cleanTitle

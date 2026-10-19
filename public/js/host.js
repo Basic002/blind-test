@@ -64,6 +64,7 @@ function renderThemes(themes, activeThemeId) {
     card.className = `theme-card ${theme.id === activeThemeId ? 'selected' : ''}`;
     card.dataset.themeId = theme.id;
     card.innerHTML = `
+      ${theme.id === 'anime' ? '<span class="theme-badge-anime">ANIME</span>' : ''}
       <div class="theme-icon">${theme.icon}</div>
       <div class="theme-title">${theme.name}</div>
     `;
@@ -166,8 +167,17 @@ socket.on('round_start_host', (data) => {
   switchView('round');
 
   document.getElementById('round-number-display').textContent = `Manche ${data.roundIndex} / ${data.totalRounds}`;
-  const themeObj = currentThemes.find(t => t.id === selectedThemeId);
-  document.getElementById('round-theme-display').textContent = themeObj ? `${themeObj.icon} ${themeObj.name}` : '';
+  
+  if (data.isAnime) {
+    document.getElementById('round-mode-display').textContent = '🎌 DEVINE L\'ANIMÉ';
+    document.getElementById('round-question-heading').textContent = 'De quel animé vient cet extrait ?';
+    document.getElementById('round-question-subtext').textContent = 'Écoutez attentivement et sélectionnez l\'animé sur votre écran !';
+  } else {
+    const themeObj = currentThemes.find(t => t.id === selectedThemeId);
+    document.getElementById('round-mode-display').textContent = themeObj ? `${themeObj.icon} ${themeObj.name}` : '🎵 Blind-Test';
+    document.getElementById('round-question-heading').textContent = 'Écoutez l\'extrait...';
+    document.getElementById('round-question-subtext').textContent = 'Trouvez la bonne réponse sur votre téléphone !';
+  }
 
   // Setup live answered indicator
   updateAnsweredCount(0, data.players.length);
@@ -187,10 +197,10 @@ socket.on('round_start_host', (data) => {
 function renderRoundPlayersList(players) {
   const container = document.getElementById('round-players-list');
   container.innerHTML = players.map(p => `
-    <div id="round-player-${p.id}" class="player-chip" style="opacity: 0.6; transition: all 0.2s ease;">
+    <div id="round-player-${p.id}" class="player-chip" style="opacity: 0.55; transition: all 0.25s ease;">
       <span class="player-avatar">${p.avatar}</span>
       <span class="player-name">${escapeHtml(p.nickname)}</span>
-      <span class="answer-check" style="display: none; margin-left: 0.3rem;">✅</span>
+      <span class="answer-check" style="display: none; margin-left: 0.3rem;">⚡</span>
     </div>
   `).join('');
 }
@@ -204,14 +214,17 @@ socket.on('player_answered', (data) => {
   if (playerChip) {
     playerChip.style.opacity = '1';
     playerChip.style.borderColor = '#10b981';
+    playerChip.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.3)';
     const check = playerChip.querySelector('.answer-check');
     if (check) check.style.display = 'inline';
   }
 });
 
 function updateAnsweredCount(answered, total) {
-  const el = document.getElementById('answers-counter');
-  el.textContent = `${answered} / ${total} ont répondu`;
+  const textEl = document.getElementById('answers-counter-text');
+  if (textEl) {
+    textEl.textContent = `${answered} / ${total} ont répondu`;
+  }
 }
 
 function startRoundTimer(durationSeconds) {
@@ -258,10 +271,30 @@ socket.on('round_ended_host', (data) => {
 
   switchView('reveal');
 
-  // Display song reveal info
-  document.getElementById('reveal-title').textContent = data.track.title;
-  document.getElementById('reveal-artist').textContent = data.track.artist;
-  document.getElementById('reveal-cover').src = data.track.cover || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400';
+  const coverUrl = data.track.cover || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400';
+  document.getElementById('reveal-cover').src = coverUrl;
+  const glow = document.getElementById('reveal-cover-glow');
+  if (glow) glow.style.backgroundImage = `url('${coverUrl}')`;
+
+  const categoryEl = document.getElementById('reveal-category');
+  const titleEl = document.getElementById('reveal-title');
+  const artistEl = document.getElementById('reveal-artist');
+  const extraEl = document.getElementById('reveal-extra-info');
+
+  if (data.track.isAnime && data.track.anime) {
+    categoryEl.textContent = '🎌 ANIMÉ';
+    titleEl.textContent = data.track.anime;
+    artistEl.textContent = `Opening : "${data.track.title}"`;
+    if (extraEl) {
+      extraEl.textContent = `Artiste : ${data.track.artist}`;
+      extraEl.style.display = 'block';
+    }
+  } else {
+    categoryEl.textContent = '🎵 TITRE DÉCOUVERT';
+    titleEl.textContent = data.track.title;
+    artistEl.textContent = data.track.artist;
+    if (extraEl) extraEl.style.display = 'none';
+  }
 
   // Display leaderboard
   renderLeaderboard(data.leaderboard);

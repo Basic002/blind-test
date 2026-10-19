@@ -98,6 +98,12 @@ socket.on('round_start_player', (data) => {
 
   // Update header
   document.getElementById('player-round-badge').textContent = `Manche ${data.roundIndex} / ${data.totalRounds}`;
+  const modeText = document.getElementById('player-question-mode');
+  if (modeText) {
+    modeText.textContent = data.questionLabel || (data.isAnime ? 'Trouve l\'animé !' : 'Trouve le morceau !');
+    modeText.style.color = data.isAnime ? '#f43f5e' : '#38bdf8';
+  }
+
   document.getElementById('answer-locked-banner').style.display = 'none';
 
   // Render 4 buttons
@@ -110,7 +116,7 @@ socket.on('round_start_player', (data) => {
     if (option) {
       btn.dataset.optionId = option.id;
       btn.querySelector('.choice-title').textContent = option.title;
-      btn.querySelector('.choice-artist').textContent = option.artist;
+      btn.querySelector('.choice-artist').textContent = data.isAnime ? 'Animé' : option.artist;
       btn.style.display = 'flex';
     } else {
       btn.style.display = 'none';
@@ -154,12 +160,10 @@ function startMobileTimer(durationSeconds) {
   if (playerTimerInterval) clearInterval(playerTimerInterval);
 
   const timerBar = document.getElementById('player-timer-bar');
-  const timerText = document.getElementById('player-timer-text');
   const startTime = Date.now();
   const totalMs = durationSeconds * 1000;
 
   timerBar.style.width = '100%';
-  timerText.textContent = `${durationSeconds}s`;
 
   playerTimerInterval = setInterval(() => {
     const elapsed = Date.now() - startTime;
@@ -167,7 +171,6 @@ function startMobileTimer(durationSeconds) {
     const percent = (remaining / totalMs) * 100;
 
     timerBar.style.width = `${percent}%`;
-    timerText.textContent = `${Math.ceil(remaining / 1000)}s`;
 
     if (remaining <= 0) {
       clearInterval(playerTimerInterval);
@@ -196,6 +199,7 @@ socket.on('round_ended_player', (data) => {
   const resultPoints = document.getElementById('result-points');
   const resultSongName = document.getElementById('result-song-name');
   const resultRankText = document.getElementById('result-rank-text');
+  const resultTypeLabel = document.getElementById('result-type-label');
 
   if (data.isCorrect) {
     vibrate([70, 40, 70]);
@@ -208,12 +212,18 @@ socket.on('round_ended_player', (data) => {
     vibrate(180);
     resultIcon.textContent = '😢';
     resultTitle.textContent = 'RATÉ !';
-    resultTitle.style.color = '#ef4444';
+    resultTitle.style.color = '#f43f5e';
     resultPoints.textContent = '+0 pt';
     resultPoints.style.color = '#94a3b8';
   }
 
-  resultSongName.textContent = `${data.correctTrack.title} — ${data.correctTrack.artist}`;
+  if (data.correctTrack && data.correctTrack.isAnime && data.correctTrack.anime) {
+    if (resultTypeLabel) resultTypeLabel.textContent = "C'ÉTAIT L'ANIMÉ :";
+    resultSongName.textContent = `${data.correctTrack.anime} — "${data.correctTrack.title}"`;
+  } else {
+    if (resultTypeLabel) resultTypeLabel.textContent = "C'ÉTAIT :";
+    resultSongName.textContent = `${data.correctTrack.title} — ${data.correctTrack.artist}`;
+  }
   
   const rankSuffix = data.rank === 1 ? '1er' : `${data.rank}ème`;
   resultRankText.textContent = `Tu es actuellement ${rankSuffix} avec ${data.totalScore.toLocaleString()} pts`;
