@@ -3,33 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blind-Test Party - Écran Hôte</title>
+  <title>BLIND-TEST // HOST</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-  <div class="ambient-glow glow-1"></div>
-  <div class="ambient-glow glow-2"></div>
-
   <audio id="audio-player" preload="auto"></audio>
   <canvas id="confetti-canvas"></canvas>
 
-  <!-- Header -->
+  <!-- Technical Header -->
   <header class="app-header">
     <div class="brand-wrapper">
-      <div class="brand-badge">🎧</div>
+      <div class="brand-badge">BT</div>
       <div>
-        <span class="brand-text">BLIND-TEST PARTY</span>
-        <span class="brand-tag">ÉCRAN HÔTE</span>
+        <span class="brand-text">BLIND-TEST</span>
+        <span class="brand-tag">HOST // DISPLAY</span>
       </div>
     </div>
     <div style="display: flex; align-items: center; gap: 1.5rem;">
-      <div id="volume-wrapper" style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; font-size: 0.95rem; color: #94a3b8;">
-        <span>🔊</span>
-        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" style="cursor: pointer; accent-color: #8b5cf6;">
+      <div id="volume-wrapper" style="display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-mono); font-size: 0.85rem; color: #a1a1aa;">
+        <span>VOL</span>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" style="cursor: pointer; accent-color: #ffffff; width: 100px;">
       </div>
-      <button id="fullscreen-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">⛶ Plein écran</button>
+      <button id="fullscreen-btn" class="btn btn-secondary" style="padding: 0.45rem 0.9rem; font-size: 0.8rem;">[⛶ FULLSCREEN]</button>
     </div>
   </header>
 
@@ -38,25 +35,25 @@
     <section id="view-lobby" class="view active">
       <div class="lobby-grid">
         <!-- Colonne de gauche: Connexion & QR Code -->
-        <div class="join-info-card glass-panel">
-          <div class="room-code-tag">Code du salon</div>
+        <div class="join-info-card tech-box">
+          <div class="room-code-tag">// ROOM ACCESS CODE</div>
           <div id="display-room-code" class="room-code-display">----</div>
           
           <div class="qr-code-wrapper">
             <img id="qr-code-img" class="qr-code-img" alt="QR Code d'accès" src="">
           </div>
           
-          <div style="margin-bottom: 0.6rem; font-size: 0.9rem; color: #94a3b8; font-weight: 500;">Scannez pour rejoindre ou entrez l'adresse :</div>
+          <div style="margin-bottom: 0.6rem; font-family: var(--font-mono); font-size: 0.75rem; color: #71717a; text-transform: uppercase;">SCAN OR CONNECT DIRECTLY:</div>
           <div id="display-join-url" class="join-url">Chargement...</div>
         </div>
 
         <!-- Colonne de droite: Thèmes, Paramètres & Joueurs -->
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
           <!-- Choix du thème -->
-          <div class="glass-panel" style="padding: 1.75rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-              <h2 style="font-size: 1.35rem; font-weight: 800;">🎵 Sélectionne un thème</h2>
-              <span style="font-size: 0.85rem; color: #94a3b8;">Deezer API Direct</span>
+          <div class="tech-box" style="padding: 1.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+              <h2 style="font-size: 1.25rem; text-transform: uppercase; letter-spacing: -0.01em;">// SÉLECTIONNER UN THÈME</h2>
+              <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-lime);">[DEEZER API DIRECT]</span>
             </div>
             
             <div id="themes-grid" class="themes-grid">
@@ -64,48 +61,48 @@
             </div>
 
             <!-- Option Playlist Deezer personnalisée -->
-            <div id="custom-playlist-box" style="margin-top: 1.25rem; display: none;">
+            <div id="custom-playlist-box" style="margin-top: 1rem; display: none;">
               <input type="text" id="custom-playlist-input" class="form-input" placeholder="Coller une URL ou ID de playlist Deezer publique (ex: 7548451242)">
             </div>
           </div>
 
           <!-- Paramètres de la partie -->
-          <div class="glass-panel" style="padding: 1.25rem 1.75rem; display: flex; gap: 2.5rem; align-items: center; flex-wrap: wrap;">
+          <div class="tech-box" style="padding: 1.25rem 1.75rem; display: flex; gap: 2.5rem; align-items: center; flex-wrap: wrap;">
             <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">Nombre de manches</label>
-              <select id="rounds-select" class="form-input" style="padding: 0.6rem 1.2rem; width: auto; font-size: 0.95rem;">
-                <option value="5">5 manches (Flash)</option>
-                <option value="10" selected>10 manches (Standard)</option>
-                <option value="15">15 manches (Chaud)</option>
-                <option value="20">20 manches (Marathon)</option>
+              <label style="font-family: var(--font-mono); font-weight: 700; font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">MANCHES</label>
+              <select id="rounds-select" class="form-input" style="padding: 0.55rem 1rem; width: auto; font-family: var(--font-mono); font-size: 0.9rem;">
+                <option value="5">05 MANCHES (FLASH)</option>
+                <option value="10" selected>10 MANCHES (STANDARD)</option>
+                <option value="15">15 MANCHES (EXPERT)</option>
+                <option value="20">20 MANCHES (MARATHON)</option>
               </select>
             </div>
             <div>
-              <label style="font-weight: 700; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">Chrono par manche</label>
-              <select id="duration-select" class="form-input" style="padding: 0.6rem 1.2rem; width: auto; font-size: 0.95rem;">
-                <option value="15">15 secondes (Express)</option>
-                <option value="20">20 secondes</option>
-                <option value="25" selected>25 secondes (Idéal)</option>
-                <option value="30">30 secondes</option>
+              <label style="font-family: var(--font-mono); font-weight: 700; font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">CHRONO PAR MANCHE</label>
+              <select id="duration-select" class="form-input" style="padding: 0.55rem 1rem; width: auto; font-family: var(--font-mono); font-size: 0.9rem;">
+                <option value="15">15 SECONDES</option>
+                <option value="20">20 SECONDES</option>
+                <option value="25" selected>25 SECONDES (RECOMMANDÉ)</option>
+                <option value="30">30 SECONDES</option>
               </select>
             </div>
           </div>
 
           <!-- Joueurs connectés -->
-          <div class="glass-panel lobby-players-card">
+          <div class="tech-box lobby-players-card">
             <div class="players-header">
-              <h2 style="font-size: 1.35rem; font-weight: 800;">Joueurs dans le lobby</h2>
-              <span id="players-count-badge" class="players-count-badge">0 joueur</span>
+              <h2 style="font-size: 1.25rem; text-transform: uppercase;">// JOUEURS CONNECTÉS</h2>
+              <span id="players-count-badge" class="players-count-badge">0 JOUEURS</span>
             </div>
 
             <div id="lobby-players-grid" class="players-grid">
-              <div id="no-players-placeholder" style="grid-column: 1 / -1; color: #64748b; text-align: center; padding: 2.5rem 1rem; font-weight: 500;">
-                En attente des premiers joueurs... Sortez vos téléphones ! 📱
+              <div id="no-players-placeholder" style="grid-column: 1 / -1; color: #71717a; font-family: var(--font-mono); text-align: center; padding: 2rem 1rem; font-size: 0.85rem;">
+                [EN ATTENTE DES JOUEURS // SCANNEZ LE QR CODE]
               </div>
             </div>
 
-            <button id="start-game-btn" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%; font-size: 1.25rem; padding: 1.15rem;" disabled>
-              LANCER LA PARTIE 🚀
+            <button id="start-game-btn" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%; font-size: 1.15rem; padding: 1.1rem;" disabled>
+              LANCER LA PARTIE ➔
             </button>
           </div>
         </div>
@@ -116,17 +113,12 @@
     <section id="view-round" class="view">
       <div class="round-container">
         <div class="round-status-bar">
-          <div id="round-number-display" class="round-counter-pill">Manche 1 / 10</div>
-          <div id="round-mode-display" class="round-mode-tag">🎵 Blind-Test</div>
+          <div id="round-number-display" class="round-counter-pill">MANCHE 01 / 10</div>
+          <div id="round-mode-display" class="round-mode-tag">BLIND-TEST</div>
         </div>
 
-        <!-- Disque vinyle luxueux avec égaliseur visuel -->
-        <div class="vinyl-stage">
-          <div class="vinyl-record">
-            <div class="vinyl-center-label">🎶</div>
-          </div>
-
-          <!-- Égaliseur audio animé -->
+        <!-- Squared Audio Deck Spectrogram Visualizer -->
+        <div class="vinyl-stage tech-box">
           <div class="visualizer-container">
             <div class="v-bar"></div>
             <div class="v-bar"></div>
@@ -139,8 +131,8 @@
           </div>
         </div>
 
-        <h2 id="round-question-heading" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.35rem;">Écoutez l'extrait...</h2>
-        <p id="round-question-subtext" style="color: #94a3b8; font-size: 1.2rem; font-weight: 500;">Trouvez la bonne réponse sur votre téléphone !</p>
+        <h2 id="round-question-heading" style="font-size: 2.75rem; font-weight: 800; margin-bottom: 0.25rem; text-transform: uppercase;">Écoutez l'extrait...</h2>
+        <p id="round-question-subtext" style="color: #a1a1aa; font-size: 1.15rem; font-family: var(--font-mono);">[SÉLECTIONNEZ LA RÉPONSE SUR VOTRE SMARTPHONE]</p>
 
         <!-- Chronomètre -->
         <div class="timer-container">
@@ -150,31 +142,30 @@
 
         <!-- Compteur de réponses -->
         <div id="answers-counter" class="answers-counter-pill">
-          <span>⚡</span> <span id="answers-counter-text">0 / 0 ont répondu</span>
+          <span>⚡</span> <span id="answers-counter-text">0 / 0 ONT RÉPONDU</span>
         </div>
 
         <!-- Avatars des joueurs -->
-        <div id="round-players-list" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 2rem;"></div>
+        <div id="round-players-list" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 2rem;"></div>
       </div>
     </section>
 
     <!-- 3. ROUND REVEAL VIEW -->
     <section id="view-reveal" class="view">
       <div class="round-container">
-        <div class="reveal-card glass-panel">
+        <div class="reveal-card tech-box">
           <div class="album-cover-wrapper">
-            <div id="reveal-cover-glow" class="album-cover-glow"></div>
             <img id="reveal-cover" class="album-cover-img" src="" alt="Pochette album">
           </div>
           <div class="track-info">
-            <span id="reveal-category" class="reveal-category-tag">🎵 TITRE DÉCOUVERT</span>
+            <span id="reveal-category" class="reveal-category-tag">// RÉSULTAT DE LA MANCHE</span>
             <div id="reveal-title" class="track-main-title">Titre du morceau</div>
             <div id="reveal-artist" class="track-subtitle">Artiste</div>
-            <div id="reveal-extra-info" style="margin-top: 0.5rem; font-size: 1rem; color: #a855f7; font-weight: 700; display: none;"></div>
+            <div id="reveal-extra-info" style="margin-top: 0.5rem; font-family: var(--font-mono); font-size: 0.95rem; color: var(--accent-lime); font-weight: 700; display: none;"></div>
           </div>
         </div>
 
-        <h3 style="font-size: 1.4rem; font-weight: 800; margin: 2rem 0 1rem 0; letter-spacing: -0.5px;">Classement de la manche</h3>
+        <h3 style="font-size: 1.35rem; text-transform: uppercase; margin: 2rem 0 1rem 0; letter-spacing: -0.02em;">// SCOREBOARD EN DIRECT</h3>
         <div id="reveal-leaderboard" class="leaderboard-list">
           <!-- Injecté par JS -->
         </div>
@@ -184,40 +175,40 @@
     <!-- 4. GAME OVER & PODIUM VIEW -->
     <section id="view-gameover" class="view">
       <div class="round-container">
-        <h1 style="font-size: 3.5rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24 0%, #ec4899 50%, #38bdf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-          PODIUM FINAL
+        <h1 style="font-size: 3.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: -0.03em;">
+          // PODIUM FINAL
         </h1>
-        <p style="color: #94a3b8; font-size: 1.15rem; margin-top: 0.25rem;">Félicitations aux champions de la partie !</p>
+        <p style="font-family: var(--font-mono); color: #a1a1aa; font-size: 1rem; margin-top: 0.25rem;">[RÉSULTATS DE LA SESSION DE JEU]</p>
 
         <!-- Podium des 3 premiers -->
-        <div id="podium-display" style="display: flex; justify-content: center; align-items: flex-end; gap: 1.5rem; margin: 3.5rem 0 2.5rem 0; width: 100%; max-width: 760px;">
+        <div id="podium-display" style="display: flex; justify-content: center; align-items: flex-end; gap: 1.25rem; margin: 3rem 0 2.5rem 0; width: 100%; max-width: 800px;">
           <!-- 2ème Place -->
-          <div id="podium-2" class="glass-panel" style="flex: 1; padding: 2rem 1.5rem; text-align: center; border-color: rgba(148, 163, 184, 0.4); height: 260px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="font-size: 2.75rem;">🥈</div>
-            <div class="podium-avatar" style="font-size: 2.75rem; margin: 0.5rem 0;">-</div>
+          <div id="podium-2" class="podium-box" style="flex: 1; padding: 2rem 1.5rem; text-align: center; height: 260px;">
+            <div style="font-family: var(--font-mono); font-size: 1.2rem; font-weight: 800; color: #cbd5e1;">[02] SILVER</div>
+            <div class="podium-avatar" style="font-size: 2.5rem; margin: 0.75rem 0;">-</div>
             <div class="podium-name" style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 800;">-</div>
-            <div class="podium-score" style="color: #38bdf8; font-weight: 800; margin-top: 0.4rem;">0 pts</div>
+            <div class="podium-score" style="font-family: var(--font-mono); color: var(--accent-lime); font-weight: 800; margin-top: 0.4rem;">0 PTS</div>
           </div>
 
           <!-- 1ère Place (plus haute) -->
-          <div id="podium-1" class="glass-panel" style="flex: 1.25; padding: 2.5rem 1.75rem; text-align: center; border-color: rgba(251, 191, 36, 0.8); box-shadow: 0 0 40px rgba(251, 191, 36, 0.35); height: 320px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="font-size: 3.75rem;">🥇</div>
-            <div class="podium-avatar" style="font-size: 3.5rem; margin: 0.5rem 0;">-</div>
-            <div class="podium-name" style="font-family: var(--font-display); font-size: 1.7rem; font-weight: 900; color: #fde047;">-</div>
-            <div class="podium-score" style="color: #38bdf8; font-size: 1.5rem; font-weight: 900; margin-top: 0.4rem;">0 pts</div>
+          <div id="podium-1" class="podium-box rank-1" style="flex: 1.25; padding: 2.5rem 1.75rem; text-align: center; height: 320px;">
+            <div style="font-family: var(--font-mono); font-size: 1.4rem; font-weight: 900; color: #fbbf24;">[01] CHAMPION</div>
+            <div class="podium-avatar" style="font-size: 3.25rem; margin: 0.75rem 0;">-</div>
+            <div class="podium-name" style="font-family: var(--font-display); font-size: 1.75rem; font-weight: 900; color: #ffffff;">-</div>
+            <div class="podium-score" style="font-family: var(--font-mono); color: var(--accent-lime); font-size: 1.5rem; font-weight: 900; margin-top: 0.4rem;">0 PTS</div>
           </div>
 
           <!-- 3ème Place -->
-          <div id="podium-3" class="glass-panel" style="flex: 1; padding: 1.75rem 1.5rem; text-align: center; border-color: rgba(217, 119, 6, 0.4); height: 230px; display: flex; flex-direction: column; justify-content: center;">
-            <div style="font-size: 2.5rem;">🥉</div>
-            <div class="podium-avatar" style="font-size: 2.5rem; margin: 0.5rem 0;">-</div>
+          <div id="podium-3" class="podium-box" style="flex: 1; padding: 1.75rem 1.5rem; text-align: center; height: 230px;">
+            <div style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 800; color: #f97316;">[03] BRONZE</div>
+            <div class="podium-avatar" style="font-size: 2.25rem; margin: 0.5rem 0;">-</div>
             <div class="podium-name" style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 800;">-</div>
-            <div class="podium-score" style="color: #38bdf8; font-weight: 800; margin-top: 0.4rem;">0 pts</div>
+            <div class="podium-score" style="font-family: var(--font-mono); color: var(--accent-lime); font-weight: 800; margin-top: 0.4rem;">0 PTS</div>
           </div>
         </div>
 
-        <button id="replay-btn" class="btn btn-primary" style="font-size: 1.2rem; padding: 1rem 3rem;">
-          RETOURNER AU SALON 🔄
+        <button id="replay-btn" class="btn btn-primary" style="font-size: 1.15rem; padding: 1.1rem 3rem;">
+          RETOURNER AU LOBBY ➔
         </button>
       </div>
     </section>

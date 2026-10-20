@@ -185,11 +185,11 @@ socket.on('round_ended_player', (data) => {
   switchView('result');
 
   // Update top score & streak
-  document.getElementById('player-score-badge').textContent = `${data.totalScore.toLocaleString()} pts`;
+  document.getElementById('player-score-badge').textContent = `${data.totalScore.toLocaleString()} PTS`;
   const streakBadge = document.getElementById('player-streak-badge');
   if (data.streak > 1) {
     streakBadge.style.display = 'inline-flex';
-    streakBadge.textContent = `🔥 ${data.streak}`;
+    streakBadge.textContent = `STREAK ${data.streak}`;
   } else {
     streakBadge.style.display = 'none';
   }
@@ -203,30 +203,29 @@ socket.on('round_ended_player', (data) => {
 
   if (data.isCorrect) {
     vibrate([70, 40, 70]);
-    resultIcon.textContent = '🎉';
-    resultTitle.textContent = 'EXCELLENT !';
-    resultTitle.style.color = '#10b981';
-    resultPoints.textContent = `+${data.pointsEarned.toLocaleString()} pts`;
-    resultPoints.style.color = '#38bdf8';
+    resultIcon.textContent = '⚡';
+    resultTitle.textContent = 'EXCELLENT';
+    resultTitle.style.color = 'var(--accent-lime)';
+    resultPoints.textContent = `+${data.pointsEarned.toLocaleString()} PTS`;
+    resultPoints.style.color = 'var(--accent-lime)';
   } else {
     vibrate(180);
-    resultIcon.textContent = '😢';
-    resultTitle.textContent = 'RATÉ !';
+    resultIcon.textContent = '✕';
+    resultTitle.textContent = 'MANQUÉ';
     resultTitle.style.color = '#f43f5e';
-    resultPoints.textContent = '+0 pt';
-    resultPoints.style.color = '#94a3b8';
+    resultPoints.textContent = '+0 PTS';
+    resultPoints.style.color = '#71717a';
   }
 
   if (data.correctTrack && data.correctTrack.isAnime && data.correctTrack.anime) {
-    if (resultTypeLabel) resultTypeLabel.textContent = "C'ÉTAIT L'ANIMÉ :";
+    if (resultTypeLabel) resultTypeLabel.textContent = "// ANIMÉ :";
     resultSongName.textContent = `${data.correctTrack.anime} — "${data.correctTrack.title}"`;
   } else {
-    if (resultTypeLabel) resultTypeLabel.textContent = "C'ÉTAIT :";
+    if (resultTypeLabel) resultTypeLabel.textContent = "// TITRE :";
     resultSongName.textContent = `${data.correctTrack.title} — ${data.correctTrack.artist}`;
   }
   
-  const rankSuffix = data.rank === 1 ? '1er' : `${data.rank}ème`;
-  resultRankText.textContent = `Tu es actuellement ${rankSuffix} avec ${data.totalScore.toLocaleString()} pts`;
+  resultRankText.textContent = `[RANG: 0${data.rank} // ${data.totalScore.toLocaleString()} PTS]`;
 });
 
 // Game Over feedback
@@ -242,29 +241,29 @@ socket.on('game_over_player', (data) => {
   if (data.rank === 1) {
     vibrate([100, 50, 100, 50, 200]);
     finalMedal.textContent = '🥇';
-    finalRankTitle.textContent = 'VICTOIRE ! 1ère PLACE !';
-    finalRankTitle.style.color = '#fde047';
+    finalRankTitle.textContent = 'CHAMPION [01]';
+    finalRankTitle.style.color = '#fbbf24';
   } else if (data.rank === 2) {
     finalMedal.textContent = '🥈';
-    finalRankTitle.textContent = '2ème Place ! Superbe !';
+    finalRankTitle.textContent = 'SILVER [02]';
     finalRankTitle.style.color = '#cbd5e1';
   } else if (data.rank === 3) {
     finalMedal.textContent = '🥉';
-    finalRankTitle.textContent = '3ème Place sur le podium !';
+    finalRankTitle.textContent = 'BRONZE [03]';
     finalRankTitle.style.color = '#f97316';
   } else {
     finalMedal.textContent = '🎮';
-    finalRankTitle.textContent = `Tu finis ${data.rank}ème sur ${data.totalPlayers}`;
-    finalRankTitle.style.color = '#94a3b8';
+    finalRankTitle.textContent = `RANG [0${data.rank}] / ${data.totalPlayers}`;
+    finalRankTitle.style.color = '#71717a';
   }
 
-  finalScoreDisplay.textContent = `${data.score.toLocaleString()} pts`;
+  finalScoreDisplay.textContent = `${data.score.toLocaleString()} PTS`;
 });
 
 // Back to lobby
 socket.on('back_to_lobby', () => {
   switchView('waiting');
-  document.getElementById('player-score-badge').textContent = '0 pts';
+  document.getElementById('player-score-badge').textContent = '0 PTS';
   document.getElementById('player-streak-badge').style.display = 'none';
 });
 

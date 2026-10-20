@@ -3,45 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Blind-Test - Manette Joueur</title>
+  <title>BLIND-TEST // CONTROLLER</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
 </head>
-<body style="background: #060811;">
-  <div class="ambient-glow glow-1" style="width: 250px; height: 250px; top: -50px; left: -50px;"></div>
-  <div class="ambient-glow glow-2" style="width: 250px; height: 250px; bottom: -50px; right: -50px;"></div>
-
+<body>
   <div class="mobile-view">
     <!-- Header Joueur -->
     <header class="player-header">
-      <div style="display: flex; align-items: center; gap: 0.6rem;">
-        <span id="player-avatar-badge" style="font-size: 1.6rem;">🦊</span>
-        <span id="player-name-badge" style="font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Joueur</span>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span id="player-avatar-badge" style="font-size: 1.4rem; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: #18181c; border: 1px solid rgba(255,255,255,0.1);">🦊</span>
+        <span id="player-name-badge" style="font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Joueur</span>
       </div>
       <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <div id="player-streak-badge" class="streak-badge" style="display: none;">🔥 0</div>
-        <div id="player-score-badge" class="player-score-pill">0 pts</div>
+        <div id="player-streak-badge" class="streak-badge" style="display: none;">STREAK 0</div>
+        <div id="player-score-badge" class="player-score-pill">0 PTS</div>
       </div>
     </header>
 
     <!-- 1. VIEW JOIN -->
-    <div id="view-join" class="glass-panel" style="padding: 2rem 1.5rem; margin: auto 0; text-align: center;">
-      <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3)); border: 1px solid rgba(255, 255, 255, 0.15); font-size: 1.8rem; margin-bottom: 1rem;">
-        🎧
+    <div id="view-join" class="tech-box" style="padding: 2.25rem 1.5rem; margin: auto 0; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-subtle);">
+        <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-lime); letter-spacing: 1px;">// PLAYER ACCESS</span>
+        <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #71717a;">[v2.0]</span>
       </div>
-      <h1 style="font-size: 2rem; font-weight: 900; margin-bottom: 0.25rem; letter-spacing: -0.5px;">
-        BLIND-TEST PARTY
-      </h1>
-      <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.75rem;">Rejoins le salon et prépare tes réflexes !</p>
 
-      <div style="display: flex; flex-direction: column; gap: 1.25rem; text-align: left;">
+      <h1 style="font-size: 2.25rem; font-weight: 900; margin-bottom: 0.25rem; letter-spacing: -0.04em; text-transform: uppercase;">
+        BLIND-TEST
+      </h1>
+      <p style="color: #a1a1aa; font-family: var(--font-mono); font-size: 0.85rem; margin-bottom: 1.75rem;">[CONNECTEZ VOTRE DISPOSITIF AU SALON]</p>
+
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
         <div>
-          <label style="font-weight: 700; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">Code du salon</label>
-          <input type="text" id="input-room-code" class="form-input" placeholder="ABCD" maxlength="4" style="text-transform: uppercase; font-family: var(--font-display); font-size: 1.75rem; text-align: center; letter-spacing: 6px; font-weight: 900; color: #38bdf8;">
+          <label style="font-family: var(--font-mono); font-weight: 700; font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">CODE SALON (4 LETTRES)</label>
+          <input type="text" id="input-room-code" class="form-input" placeholder="ABCD" maxlength="4" style="text-transform: uppercase; font-family: var(--font-mono); font-size: 1.75rem; text-align: center; letter-spacing: 8px; font-weight: 900; color: #ffffff;">
         </div>
 
         <div>
-          <label style="font-weight: 700; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">Avatar</label>
+          <label style="font-family: var(--font-mono); font-weight: 700; font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">AVATAR</label>
           <div id="avatar-picker" class="avatar-grid">
             <div class="avatar-option selected" data-avatar="🦊">🦊</div>
             <div class="avatar-option" data-avatar="🐯">🐯</div>
@@ -57,35 +56,36 @@
         </div>
 
         <div>
-          <label style="font-weight: 700; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">Pseudo</label>
-          <input type="text" id="input-nickname" class="form-input" placeholder="Ton prénom ou pseudo..." maxlength="15">
+          <label style="font-family: var(--font-mono); font-weight: 700; font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.4rem;">PSEUDONYME</label>
+          <input type="text" id="input-nickname" class="form-input" placeholder="Ex: Alex" maxlength="15">
         </div>
 
-        <button id="btn-join" class="btn btn-primary" style="margin-top: 0.5rem; padding: 1.1rem; font-size: 1.15rem;">
-          REJOINDRE LA PARTIE 🎮
+        <button id="btn-join" class="btn btn-primary" style="margin-top: 0.5rem; padding: 1.15rem; font-size: 1.05rem;">
+          REJOINDRE LA PARTIE ➔
         </button>
       </div>
     </div>
 
     <!-- 2. VIEW LOBBY WAITING -->
-    <div id="view-waiting" class="glass-panel" style="display: none; padding: 3rem 1.5rem; margin: auto 0; text-align: center;">
-      <div style="font-size: 4rem; animation: floatOrb 3s ease-in-out infinite alternate; margin-bottom: 1.25rem;">
-        🎮
+    <div id="view-waiting" class="tech-box" style="display: none; padding: 3rem 1.5rem; margin: auto 0; text-align: center;">
+      <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-lime); margin-bottom: 1rem; letter-spacing: 1px;">
+        // CONNEXION ÉTABLIE
       </div>
-      <h2 style="font-size: 1.75rem; font-weight: 900; margin-bottom: 0.5rem;">Tu es dans le salon !</h2>
-      <p style="color: #94a3b8; font-size: 1.05rem; line-height: 1.5;">
-        Regarde l'écran TV.<br>L'hôte va bientôt lancer la partie...
+      <h2 style="font-size: 2rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem;">Prêt à buzzer</h2>
+      <p style="color: #a1a1aa; font-family: var(--font-mono); font-size: 0.95rem; line-height: 1.5;">
+        [REGARDEZ L'ÉCRAN PRINCIPAL]<br>
+        La manche va bientôt débuter...
       </p>
     </div>
 
     <!-- 3. VIEW GAME ROUND (4 TACTILE BUTTONS) -->
     <div id="view-play" style="display: none; flex-direction: column; flex: 1;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-        <span id="player-round-badge" style="font-family: var(--font-display); font-size: 1rem; font-weight: 800; color: #94a3b8;">Manche 1 / 10</span>
-        <span id="player-question-mode" style="font-size: 0.85rem; font-weight: 800; color: #f43f5e; text-transform: uppercase; letter-spacing: 1px;">Trouve l'animé !</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-subtle);">
+        <span id="player-round-badge" style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 800; color: #ffffff;">MANCHE 01 / 10</span>
+        <span id="player-question-mode" style="font-family: var(--font-mono); font-size: 0.75rem; font-weight: 800; color: #f43f5e; text-transform: uppercase; letter-spacing: 1px;">[TROUVE L'ANIMÉ !]</span>
       </div>
 
-      <div class="timer-container" style="height: 6px; margin: 0 0 1rem 0;">
+      <div class="timer-container" style="height: 4px; margin: 0 0 1rem 0;">
         <div id="player-timer-bar" class="timer-bar"></div>
       </div>
 
@@ -121,33 +121,33 @@
         </button>
       </div>
 
-      <div id="answer-locked-banner" style="display: none; text-align: center; margin-top: 1rem; font-family: var(--font-display); font-weight: 800; color: #38bdf8; font-size: 1.05rem;">
-        ⚡ Réponse enregistrée ! Résultat imminent...
+      <div id="answer-locked-banner" style="display: none; text-align: center; margin-top: 1rem; font-family: var(--font-mono); font-weight: 800; color: var(--accent-lime); font-size: 0.95rem; letter-spacing: 0.5px;">
+        [RÉPONSE VALIDÉE // EN ATTENTE DU CHRONO]
       </div>
     </div>
 
     <!-- 4. VIEW ROUND RESULT FEEDBACK -->
-    <div id="view-result" class="glass-panel" style="display: none; padding: 2.5rem 1.5rem; margin: auto 0; text-align: center;">
-      <div id="result-icon" style="font-size: 4rem; margin-bottom: 0.5rem;">🎉</div>
-      <h2 id="result-title" style="font-size: 2.25rem; font-weight: 900; margin-bottom: 0.25rem;">EXCELLENT !</h2>
-      <div id="result-points" style="font-family: var(--font-display); font-size: 2rem; font-weight: 900; color: #38bdf8; margin-bottom: 1.5rem;">+850 pts</div>
+    <div id="view-result" class="tech-box" style="display: none; padding: 2.5rem 1.5rem; margin: auto 0; text-align: center;">
+      <div id="result-icon" style="font-size: 3rem; margin-bottom: 0.5rem;">⚡</div>
+      <h2 id="result-title" style="font-size: 2.25rem; font-weight: 900; text-transform: uppercase; margin-bottom: 0.25rem;">EXCELLENT</h2>
+      <div id="result-points" style="font-family: var(--font-mono); font-size: 2rem; font-weight: 900; color: var(--accent-lime); margin-bottom: 1.5rem;">+850 PTS</div>
       
-      <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1rem; padding: 1.25rem; text-align: left; margin-bottom: 1.5rem;">
-        <div id="result-type-label" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #94a3b8; margin-bottom: 0.25rem;">C'était :</div>
-        <div id="result-song-name" style="font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; color: #ffffff; line-height: 1.2;">-</div>
+      <div style="background: #000000; border: 1px solid var(--border-subtle); padding: 1.25rem; text-align: left; margin-bottom: 1.5rem;">
+        <div id="result-type-label" style="font-family: var(--font-mono); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #71717a; margin-bottom: 0.35rem;">// BONNE RÉPONSE :</div>
+        <div id="result-song-name" style="font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; color: #ffffff; line-height: 1.2;">-</div>
       </div>
 
-      <div id="result-rank-text" style="font-weight: 700; color: #94a3b8; font-size: 1.05rem;">
-        Tu es actuellement 1er
+      <div id="result-rank-text" style="font-family: var(--font-mono); font-weight: 700; color: #a1a1aa; font-size: 0.95rem;">
+        [RANG ACTUEL: 01 // 3,400 PTS]
       </div>
     </div>
 
     <!-- 5. VIEW GAME OVER -->
-    <div id="view-gameover-player" class="glass-panel" style="display: none; padding: 3rem 1.5rem; margin: auto 0; text-align: center;">
-      <div id="final-medal" style="font-size: 5rem; margin-bottom: 0.75rem;">🏆</div>
-      <h2 id="final-rank-title" style="font-size: 2.25rem; font-weight: 900; margin-bottom: 0.5rem;">Partie Terminée !</h2>
-      <div id="final-score-display" style="font-family: var(--font-display); font-size: 2.75rem; font-weight: 900; color: #38bdf8; margin: 1rem 0;">0 pts</div>
-      <p style="color: #94a3b8; font-size: 1rem;">Regarde le grand écran pour célébrer le podium !</p>
+    <div id="view-gameover-player" class="tech-box" style="display: none; padding: 3rem 1.5rem; margin: auto 0; text-align: center;">
+      <div id="final-medal" style="font-size: 4rem; margin-bottom: 0.75rem;">🏆</div>
+      <h2 id="final-rank-title" style="font-size: 2.25rem; font-weight: 900; text-transform: uppercase; margin-bottom: 0.5rem;">SESSION TERMINÉE</h2>
+      <div id="final-score-display" style="font-family: var(--font-mono); font-size: 2.5rem; font-weight: 900; color: var(--accent-lime); margin: 1rem 0;">0 PTS</div>
+      <p style="font-family: var(--font-mono); color: #71717a; font-size: 0.85rem;">[CONSULTEZ LE PODIUM SUR L'ÉCRAN PRINCIPAL]</p>
     </div>
   </div>
 

@@ -124,16 +124,16 @@ function updateLobbyPlayers(players) {
   const startBtn = document.getElementById('start-game-btn');
 
   const count = players.length;
-  countBadge.textContent = `${count} joueur${count > 1 ? 's' : ''}`;
+  countBadge.textContent = `${count} JOUEUR${count > 1 ? 'S' : ''}`;
 
   if (count === 0) {
     grid.innerHTML = `
-      <div id="no-players-placeholder" style="grid-column: 1 / -1; color: #94a3b8; text-align: center; padding: 2rem;">
-        En attente des joueurs... Sortez vos téléphones ! 📱
+      <div id="no-players-placeholder" style="grid-column: 1 / -1; color: #71717a; font-family: var(--font-mono); text-align: center; padding: 2rem 1rem; font-size: 0.85rem;">
+        [EN ATTENTE DES JOUEURS // SCANNEZ LE QR CODE]
       </div>
     `;
     startBtn.disabled = true;
-    startBtn.textContent = 'LANCER LA PARTIE 🚀';
+    startBtn.textContent = 'LANCER LA PARTIE ➔';
   } else {
     grid.innerHTML = players.map(p => `
       <div class="player-chip">
@@ -142,7 +142,7 @@ function updateLobbyPlayers(players) {
       </div>
     `).join('');
     startBtn.disabled = false;
-    startBtn.textContent = `LANCER LA PARTIE 🚀 (${count})`;
+    startBtn.textContent = `LANCER LA PARTIE ➔ (${count})`;
   }
 }
 
@@ -166,17 +166,17 @@ socket.on('game_start_error', (data) => {
 socket.on('round_start_host', (data) => {
   switchView('round');
 
-  document.getElementById('round-number-display').textContent = `Manche ${data.roundIndex} / ${data.totalRounds}`;
+  document.getElementById('round-number-display').textContent = `MANCHE 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
   
   if (data.isAnime) {
-    document.getElementById('round-mode-display').textContent = '🎌 DEVINE L\'ANIMÉ';
+    document.getElementById('round-mode-display').textContent = 'ANIME // MODE';
     document.getElementById('round-question-heading').textContent = 'De quel animé vient cet extrait ?';
-    document.getElementById('round-question-subtext').textContent = 'Écoutez attentivement et sélectionnez l\'animé sur votre écran !';
+    document.getElementById('round-question-subtext').textContent = '[SÉLECTIONNEZ L\'ANIMÉ SUR VOTRE SMARTPHONE]';
   } else {
     const themeObj = currentThemes.find(t => t.id === selectedThemeId);
-    document.getElementById('round-mode-display').textContent = themeObj ? `${themeObj.icon} ${themeObj.name}` : '🎵 Blind-Test';
+    document.getElementById('round-mode-display').textContent = themeObj ? themeObj.name.toUpperCase() : 'BLIND-TEST';
     document.getElementById('round-question-heading').textContent = 'Écoutez l\'extrait...';
-    document.getElementById('round-question-subtext').textContent = 'Trouvez la bonne réponse sur votre téléphone !';
+    document.getElementById('round-question-subtext').textContent = '[SÉLECTIONNEZ LE TITRE SUR VOTRE SMARTPHONE]';
   }
 
   // Setup live answered indicator
@@ -304,18 +304,17 @@ function renderLeaderboard(leaderboard) {
   const container = document.getElementById('reveal-leaderboard');
   container.innerHTML = leaderboard.slice(0, 6).map((player, index) => {
     const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
-    const medals = ['🥇', '🥈', '🥉'];
-    const rankPrefix = medals[index] || `#${index + 1}`;
+    const rankPrefix = `[0${index + 1}]`;
 
     return `
       <div class="leaderboard-row ${rankClass}">
         <div class="leaderboard-player-info">
-          <span>${rankPrefix}</span>
-          <span style="font-size: 1.4rem;">${player.avatar}</span>
-          <span>${escapeHtml(player.nickname)}</span>
-          ${player.streak > 1 ? `<span class="streak-badge">🔥 ${player.streak}</span>` : ''}
+          <span style="font-family: var(--font-mono); color: var(--text-dim); font-size: 0.85rem;">${rankPrefix}</span>
+          <span class="player-avatar">${player.avatar}</span>
+          <span style="font-family: var(--font-display);">${escapeHtml(player.nickname)}</span>
+          ${player.streak > 1 ? `<span class="streak-badge">STREAK ${player.streak}</span>` : ''}
         </div>
-        <div class="leaderboard-score">${player.score.toLocaleString()} pts</div>
+        <div class="leaderboard-score">${player.score.toLocaleString()} PTS</div>
       </div>
     `;
   }).join('');
@@ -338,7 +337,7 @@ socket.on('game_over_host', (data) => {
     const p1 = document.getElementById('podium-1');
     p1.querySelector('.podium-avatar').textContent = podium[0].avatar;
     p1.querySelector('.podium-name').textContent = podium[0].nickname;
-    p1.querySelector('.podium-score').textContent = `${podium[0].score.toLocaleString()} pts`;
+    p1.querySelector('.podium-score').textContent = `${podium[0].score.toLocaleString()} PTS`;
   }
 
   // 2nd place
@@ -346,7 +345,7 @@ socket.on('game_over_host', (data) => {
     const p2 = document.getElementById('podium-2');
     p2.querySelector('.podium-avatar').textContent = podium[1].avatar;
     p2.querySelector('.podium-name').textContent = podium[1].nickname;
-    p2.querySelector('.podium-score').textContent = `${podium[1].score.toLocaleString()} pts`;
+    p2.querySelector('.podium-score').textContent = `${podium[1].score.toLocaleString()} PTS`;
   }
 
   // 3rd place
@@ -354,7 +353,7 @@ socket.on('game_over_host', (data) => {
     const p3 = document.getElementById('podium-3');
     p3.querySelector('.podium-avatar').textContent = podium[2].avatar;
     p3.querySelector('.podium-name').textContent = podium[2].nickname;
-    p3.querySelector('.podium-score').textContent = `${podium[2].score.toLocaleString()} pts`;
+    p3.querySelector('.podium-score').textContent = `${podium[2].score.toLocaleString()} PTS`;
   }
 });
 
