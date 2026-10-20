@@ -207,9 +207,27 @@ class RoomManager {
     }
 
     const isAnime = Boolean(currentTrack.isAnime || room.themeId === 'anime');
+    const isDisney = Boolean(currentTrack.isDisney || room.themeId === 'disney');
     let rawOptions = [];
 
-    if (isAnime && currentTrack.anime) {
+    if (isDisney && currentTrack.disney) {
+      // Pick 3 distractors with UNIQUE Disney movie names
+      const chosenDisney = new Set([currentTrack.disney.toLowerCase()]);
+      const disneyDistractors = [];
+
+      for (const t of shuffleArray(room.tracksPool)) {
+        if (t.disney && !chosenDisney.has(t.disney.toLowerCase())) {
+          chosenDisney.add(t.disney.toLowerCase());
+          disneyDistractors.push(t);
+          if (disneyDistractors.length === 3) break;
+        }
+      }
+
+      rawOptions = [
+        { id: currentTrack.id, title: currentTrack.disney, artist: 'Film Disney' },
+        ...disneyDistractors.map(d => ({ id: d.id, title: d.disney, artist: 'Film Disney' }))
+      ];
+    } else if (isAnime && currentTrack.anime) {
       // Pick 3 distractors with UNIQUE anime names
       const chosenAnimes = new Set([currentTrack.anime.toLowerCase()]);
       const animeDistractors = [];
@@ -227,10 +245,20 @@ class RoomManager {
         ...animeDistractors.map(d => ({ id: d.id, title: d.anime, artist: 'Animé' }))
       ];
     } else {
-      // Pick 3 distractors from the remaining pool
-      const distractors = shuffleArray(
-        room.tracksPool.filter(t => t.id !== currentTrack.id)
-      ).slice(0, 3);
+      // Pick 3 distractors from the remaining pool with unique title + artist
+      const currentKey = `${(currentTrack.title || '').toLowerCase()}:::${(currentTrack.artist || '').toLowerCase()}`;
+      const chosenKeys = new Set([currentKey]);
+      const distractors = [];
+
+      for (const t of shuffleArray(room.tracksPool)) {
+        if (t.id === currentTrack.id) continue;
+        const key = `${(t.title || '').toLowerCase()}:::${(t.artist || '').toLowerCase()}`;
+        if (!chosenKeys.has(key)) {
+          chosenKeys.add(key);
+          distractors.push(t);
+          if (distractors.length === 3) break;
+        }
+      }
 
       rawOptions = [
         { id: currentTrack.id, title: currentTrack.title, artist: currentTrack.artist },
@@ -256,6 +284,7 @@ class RoomManager {
       startedAt,
       duration,
       isAnime,
+      isDisney,
       answers: new Map()
     };
 
@@ -267,6 +296,7 @@ class RoomManager {
       totalRounds: room.settings.totalRounds,
       audioPreview: currentTrack.preview,
       isAnime,
+      isDisney,
       duration,
       players: this.getPlayersList(room)
     });
@@ -277,7 +307,8 @@ class RoomManager {
         roundIndex: room.currentRoundIndex + 1,
         totalRounds: room.settings.totalRounds,
         isAnime,
-        questionLabel: isAnime ? 'Trouve l\'animé !' : 'Trouve le morceau !',
+        isDisney,
+        questionLabel: isDisney ? 'Trouve le Disney !' : (isAnime ? 'Trouve l\'animé !' : 'Trouve le morceau !'),
         options: shuffledOptions.map((opt, idx) => ({
           id: opt.id,
           index: idx,
@@ -379,14 +410,16 @@ class RoomManager {
 
     const leaderboard = this.getPlayersList(room);
 
-    // Notify host with full reveal (cover, track name, artist, anime, leaderboard)
+    // Notify host with full reveal (cover, track name, artist, anime, disney, leaderboard)
     this.io.to(room.hostSocketId).emit('round_ended_host', {
       track: {
         id: correctTrack.id,
         title: correctTrack.title,
         artist: correctTrack.artist,
         anime: correctTrack.anime || null,
+        disney: correctTrack.disney || null,
         isAnime: Boolean(correctTrack.isAnime || round.isAnime),
+        isDisney: Boolean(correctTrack.isDisney || round.isDisney),
         cover: correctTrack.cover,
         preview: correctTrack.preview
       },
@@ -409,7 +442,9 @@ class RoomManager {
           title: correctTrack.title,
           artist: correctTrack.artist,
           anime: correctTrack.anime || null,
-          isAnime: Boolean(correctTrack.isAnime || round.isAnime)
+          disney: correctTrack.disney || null,
+          isAnime: Boolean(correctTrack.isAnime || round.isAnime),
+          isDisney: Boolean(correctTrack.isDisney || round.isDisney)
         }
       });
     }

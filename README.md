@@ -47,13 +47,13 @@ L'application intègre des playlists Deezer sans avoir besoin de clé API :
 
 | Thème | Description |
 | :--- | :--- |
-| 🏰 **Disney & Enfance** | Classiques Disney, Pixar et dessins animés cultes |
+| 🏰 **Disney & Enfance** | Devine le nom du film Disney culte (Le Roi Lion, Aladdin, Tarzan, Mulan, Vaiana...) |
+| ⚡ **Openings d'Animés** | Devine l'animé culte (Naruto, SNK, One Piece, Death Note, Demon Slayer...) |
+| 🎤 **Rap Français** | Toutes les générations : classiques 90s/2000s aux bangers actuels (Booba, PNL, Ninho, Gazo, Damso, SDM...) |
+| 🎸 **Rock/Métal** | AC/DC, Metallica, Nirvana, Linkin Park et les hymnes du rock & métal |
 | 💾 **Années 2000** | Les hits incontournables des années 2000 |
-| 🎤 **Rap Français** | Les classiques et légendes du rap FR |
-| ⚡ **Openings d'Animés** | Les openings cultes (Naruto, SNK, One Piece...) |
 | 🪩 **Années 80** | Disco, synthwave et tubes intemporels |
-| 🔥 **Pop & Hits** | Les hits radio internationaux |
-| 🎸 **Rock Legends** | Queen, AC/DC, Nirvana, Linkin Park... |
+| 🔥 **Pop & Hits** | Les plus grands hits radio internationaux |
 | 🔗 **Playlist Personnalisée** | Colle n'importe quel lien ou ID de playlist publique Deezer ! |
 
 Pour ajouter un nouveau thème, modifie simplement `src/config/themes.js`.
@@ -78,7 +78,9 @@ blind-test/
 ├── src/
 │   ├── server.js              # Serveur Express, WebSocket et détection IP LAN
 │   ├── config/
-│   │   └── themes.js          # Configuration des thèmes & playlists Deezer
+│   │   ├── themes.js          # Configuration des thèmes & playlists Deezer
+│   │   ├── animeCatalog.js    # Catalogue des openings avec association d'animés
+│   │   └── disneyCatalog.js   # Catalogue des chansons Disney avec association de films
 │   └── services/
 │       ├── deezerService.js   # Client Deezer API avec cache & filtrage audio
 │       └── roomManager.js     # Gestion des salons, scores, chronomètres et QCM
@@ -91,5 +93,7 @@ blind-test/
 │   ├── host.html              # Vue grand écran
 │   └── index.html             # Vue joueur mobile
 └── tests/
-    └── test-game.js           # Simulation automatique multijoueur
+    ├── test-game.js           # Simulation automatique multijoueur
+    ├── test-disney.js         # Test automatique du mode Disney et Rock/Métal
+    └── test-rap.js            # Test automatique du mode Rap FR multi-générations
 ```

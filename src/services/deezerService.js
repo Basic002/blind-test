@@ -83,8 +83,10 @@ function parsePlaylistId(input) {
 }
 
 const { ANIME_CATALOG } = require('../config/animeCatalog');
+const { DISNEY_CATALOG } = require('../config/disneyCatalog');
 
 let cachedAnimeTracks = null;
+let cachedDisneyTracks = null;
 
 async function fetchAnimeCatalog() {
   if (cachedAnimeTracks && cachedAnimeTracks.length > 0) {
@@ -118,12 +120,114 @@ async function fetchAnimeCatalog() {
   return cachedAnimeTracks;
 }
 
+async function fetchDisneyCatalog() {
+  if (cachedDisneyTracks && cachedDisneyTracks.length > 0) {
+    return cachedDisneyTracks;
+  }
+
+  const trackPromises = DISNEY_CATALOG.map(async (item) => {
+    try {
+      const res = await fetch(`https://api.deezer.com/track/${item.id}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.preview) return null;
+
+      return {
+        id: String(item.id),
+        disney: item.disney,
+        title: item.title,
+        fullTitle: `${item.title} (${item.disney})`,
+        artist: item.artist,
+        preview: data.preview,
+        cover: data.album ? (data.album.cover_big || data.album.cover_medium) : null,
+        isDisney: true
+      };
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const resolved = await Promise.all(trackPromises);
+  cachedDisneyTracks = resolved.filter(Boolean);
+  return cachedDisneyTracks;
+}
+
+// Curated playlist IDs covering all eras of French Rap (90s, 2000s, 2010s, 2020s & recent hits)
+const RAP_FR_PLAYLISTS = [
+  '1999435002', // Rap Français Classiques (IAM, NTM, Fonky Family, Booba débuts, Rohff, Sniper, 113...)
+  '11355471784', // Rap FR All Time (PNL, Damso, Nekfeu, SCH, Orelsan, Freeze Corleone, Lunatic, Kaaris, Dinos...)
+  '10692649262', // Bangers Rap FR (PLK, Maes, Ninho, Gazo, Luv Resval, Koba LaD, Naps...)
+  '9563400362',  // Rapstars : années 2020 (Werenoi, SDM, Tiakola, Gazo, PLK, Favé...)
+  '3272614282'   // Rapstars Actuel (les plus gros hits récents 2023-2026)
+];
+
+let cachedRapFrTracks = null;
+
+async function fetchRapFrTracks() {
+  if (cachedRapFrTracks && cachedRapFrTracks.length > 0) {
+    return cachedRapFrTracks;
+  }
+
+  const responses = await Promise.all(
+    RAP_FR_PLAYLISTS.map(id =>
+      fetch(`https://api.deezer.com/playlist/${id}`)
+        .then(r => r.json())
+        .catch(err => {
+          console.error(`Erreur chargement playlist rap ${id}:`, err.message);
+          return null;
+        })
+    )
+  );
+
+  const seenIds = new Set();
+  const seenKeys = new Set();
+  const tracks = [];
+
+  for (const p of responses) {
+    if (!p || !p.tracks || !p.tracks.data) continue;
+    for (const t of p.tracks.data) {
+      if (!t.preview || t.preview.length === 0) continue;
+      if (seenIds.has(t.id)) continue;
+
+      const title = cleanTitle(t.title_short || t.title);
+      const artist = t.artist ? t.artist.name : 'Inconnu';
+      const key = `${artist.toLowerCase()}:::${title.toLowerCase()}`.replace(/\s+/g, ' ').trim();
+      if (seenKeys.has(key)) continue;
+
+      seenIds.add(t.id);
+      seenKeys.add(key);
+
+      tracks.push({
+        id: String(t.id),
+        title,
+        fullTitle: t.title,
+        artist,
+        preview: t.preview,
+        cover: t.album ? (t.album.cover_big || t.album.cover_medium) : null
+      });
+    }
+  }
+
+  if (tracks.length < 4) {
+    throw new Error('Impossible de charger les morceaux de Rap Français');
+  }
+
+  cachedRapFrTracks = tracks;
+  return cachedRapFrTracks;
+}
+
 /**
  * Get tracks by theme ID or custom playlist
  */
 async function getTracksForTheme(themeId, customPlaylistId = null) {
   if (themeId === 'anime') {
     return await fetchAnimeCatalog();
+  }
+  if (themeId === 'disney') {
+    return await fetchDisneyCatalog();
+  }
+  if (themeId === 'rap-fr') {
+    return await fetchRapFrTracks();
   }
 
   let targetPlaylistId = null;
@@ -148,6 +252,8 @@ async function getTracksForTheme(themeId, customPlaylistId = null) {
 module.exports = {
   fetchPlaylistTracks,
   fetchAnimeCatalog,
+  fetchDisneyCatalog,
+  fetchRapFrTracks,
   parsePlaylistId,
   getTracksForTheme,
   cleanTitle

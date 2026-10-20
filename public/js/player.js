@@ -97,11 +97,19 @@ socket.on('round_start_player', (data) => {
   switchView('play');
 
   // Update header
-  document.getElementById('player-round-badge').textContent = `Manche ${data.roundIndex} / ${data.totalRounds}`;
+  document.getElementById('player-round-badge').textContent = `MANCHE 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
   const modeText = document.getElementById('player-question-mode');
   if (modeText) {
-    modeText.textContent = data.questionLabel || (data.isAnime ? 'Trouve l\'animé !' : 'Trouve le morceau !');
-    modeText.style.color = data.isAnime ? '#f43f5e' : '#38bdf8';
+    if (data.isDisney) {
+      modeText.textContent = "TROUVE LE DISNEY !";
+      modeText.style.color = "var(--game-gold)";
+    } else if (data.isAnime) {
+      modeText.textContent = "TROUVE L'ANIMÉ !";
+      modeText.style.color = "var(--btn-a)";
+    } else {
+      modeText.textContent = "TROUVE LE MORCEAU !";
+      modeText.style.color = "var(--game-cyan)";
+    }
   }
 
   document.getElementById('answer-locked-banner').style.display = 'none';
@@ -116,7 +124,7 @@ socket.on('round_start_player', (data) => {
     if (option) {
       btn.dataset.optionId = option.id;
       btn.querySelector('.choice-title').textContent = option.title;
-      btn.querySelector('.choice-artist').textContent = data.isAnime ? 'Animé' : option.artist;
+      btn.querySelector('.choice-artist').textContent = data.isDisney ? 'Film Disney' : (data.isAnime ? 'Animé' : option.artist);
       btn.style.display = 'flex';
     } else {
       btn.style.display = 'none';
@@ -217,7 +225,10 @@ socket.on('round_ended_player', (data) => {
     resultPoints.style.color = '#71717a';
   }
 
-  if (data.correctTrack && data.correctTrack.isAnime && data.correctTrack.anime) {
+  if (data.correctTrack && data.correctTrack.isDisney && data.correctTrack.disney) {
+    if (resultTypeLabel) resultTypeLabel.textContent = "FILM DISNEY :";
+    resultSongName.textContent = `${data.correctTrack.disney} — "${data.correctTrack.title}"`;
+  } else if (data.correctTrack && data.correctTrack.isAnime && data.correctTrack.anime) {
     if (resultTypeLabel) resultTypeLabel.textContent = "ANIMÉ CULTE :";
     resultSongName.textContent = `${data.correctTrack.anime} — "${data.correctTrack.title}"`;
   } else {

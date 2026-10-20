@@ -6,7 +6,7 @@ const THEMES = [
     id: 'disney',
     name: 'Disney & Enfance',
     icon: '🏰',
-    description: 'Les plus grands classiques Disney et dessins animés cultes',
+    description: 'Devine le film Disney culte derrière chaque chanson',
     playlistId: '7548451242'
   },
   {
@@ -20,7 +20,7 @@ const THEMES = [
     id: 'rap-fr',
     name: 'Rap Français',
     icon: '🎤',
-    description: 'Les classiques et légendes du rap francophone',
+    description: 'Toutes les époques : des classiques 90s/2000s aux bangers récents (Booba, PNL, Ninho, Gazo...)',
     playlistId: '1999435002'
   },
   {
@@ -46,10 +46,10 @@ const THEMES = [
   },
   {
     id: 'rock',
-    name: 'Rock Legends',
+    name: 'Rock/Métal',
     icon: '🎸',
-    description: 'Queen, AC/DC, Nirvana, Linkin Park et les monstres du rock',
-    playlistId: '1306931615' // Classic Rock
+    description: 'AC/DC, Metallica, Nirvana, Linkin Park et les hymnes du rock & métal',
+    playlistId: '61217294'
   },
   {
     id: 'custom',

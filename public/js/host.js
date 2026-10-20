@@ -65,6 +65,7 @@ function renderThemes(themes, activeThemeId) {
     card.dataset.themeId = theme.id;
     card.innerHTML = `
       ${theme.id === 'anime' ? '<span class="theme-badge-anime">ANIME</span>' : ''}
+      ${theme.id === 'disney' ? '<span class="theme-badge-anime" style="background: #0284c7;">DISNEY</span>' : ''}
       <div class="theme-icon">${theme.icon}</div>
       <div class="theme-title">${theme.name}</div>
     `;
@@ -168,7 +169,11 @@ socket.on('round_start_host', (data) => {
 
   document.getElementById('round-number-display').textContent = `MANCHE 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
   
-  if (data.isAnime) {
+  if (data.isDisney) {
+    document.getElementById('round-mode-display').textContent = 'MODE DISNEY';
+    document.getElementById('round-question-heading').textContent = 'DE QUEL DISNEY VIENT CETTE CHANSON ?';
+    document.getElementById('round-question-subtext').textContent = 'DEVINEZ LE BON FILM DISNEY SUR VOTRE MANETTE !';
+  } else if (data.isAnime) {
     document.getElementById('round-mode-display').textContent = 'MODE ANIMÉ';
     document.getElementById('round-question-heading').textContent = 'DE QUEL ANIMÉ VIENT CET OPENING ?';
     document.getElementById('round-question-subtext').textContent = 'DEVINEZ LE BON ANIMÉ SUR VOTRE MANETTE !';
@@ -281,7 +286,15 @@ socket.on('round_ended_host', (data) => {
   const artistEl = document.getElementById('reveal-artist');
   const extraEl = document.getElementById('reveal-extra-info');
 
-  if (data.track.isAnime && data.track.anime) {
+  if (data.track.isDisney && data.track.disney) {
+    categoryEl.textContent = 'FILM DISNEY';
+    titleEl.textContent = data.track.disney;
+    artistEl.textContent = `Chanson : "${data.track.title}"`;
+    if (extraEl) {
+      extraEl.textContent = `Artiste : ${data.track.artist}`;
+      extraEl.style.display = 'block';
+    }
+  } else if (data.track.isAnime && data.track.anime) {
     categoryEl.textContent = 'ANIMÉ CULTE';
     titleEl.textContent = data.track.anime;
     artistEl.textContent = `Opening : "${data.track.title}"`;
