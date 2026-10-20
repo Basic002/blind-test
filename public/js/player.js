@@ -218,14 +218,15 @@ socket.on('round_ended_player', (data) => {
   }
 
   if (data.correctTrack && data.correctTrack.isAnime && data.correctTrack.anime) {
-    if (resultTypeLabel) resultTypeLabel.textContent = "// ANIMÉ :";
+    if (resultTypeLabel) resultTypeLabel.textContent = "ANIMÉ CULTE :";
     resultSongName.textContent = `${data.correctTrack.anime} — "${data.correctTrack.title}"`;
   } else {
-    if (resultTypeLabel) resultTypeLabel.textContent = "// TITRE :";
+    if (resultTypeLabel) resultTypeLabel.textContent = "TITRE DU MORCEAU :";
     resultSongName.textContent = `${data.correctTrack.title} — ${data.correctTrack.artist}`;
   }
   
-  resultRankText.textContent = `[RANG: 0${data.rank} // ${data.totalScore.toLocaleString()} PTS]`;
+  const rankSuffix = data.rank === 1 ? '1ER' : `${data.rank}ÈME`;
+  resultRankText.textContent = `CLASSEMENT : ${rankSuffix} // ${data.totalScore.toLocaleString()} PTS`;
 });
 
 // Game Over feedback

@@ -169,14 +169,14 @@ socket.on('round_start_host', (data) => {
   document.getElementById('round-number-display').textContent = `MANCHE 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
   
   if (data.isAnime) {
-    document.getElementById('round-mode-display').textContent = 'ANIME // MODE';
-    document.getElementById('round-question-heading').textContent = 'De quel animé vient cet extrait ?';
-    document.getElementById('round-question-subtext').textContent = '[SÉLECTIONNEZ L\'ANIMÉ SUR VOTRE SMARTPHONE]';
+    document.getElementById('round-mode-display').textContent = 'MODE ANIMÉ';
+    document.getElementById('round-question-heading').textContent = 'DE QUEL ANIMÉ VIENT CET OPENING ?';
+    document.getElementById('round-question-subtext').textContent = 'DEVINEZ LE BON ANIMÉ SUR VOTRE MANETTE !';
   } else {
     const themeObj = currentThemes.find(t => t.id === selectedThemeId);
-    document.getElementById('round-mode-display').textContent = themeObj ? themeObj.name.toUpperCase() : 'BLIND-TEST';
-    document.getElementById('round-question-heading').textContent = 'Écoutez l\'extrait...';
-    document.getElementById('round-question-subtext').textContent = '[SÉLECTIONNEZ LE TITRE SUR VOTRE SMARTPHONE]';
+    document.getElementById('round-mode-display').textContent = themeObj ? themeObj.name.toUpperCase() : 'BLIND-TEST ARENA';
+    document.getElementById('round-question-heading').textContent = 'ÉCOUTEZ L\'EXTRAIT...';
+    document.getElementById('round-question-subtext').textContent = 'DEVINEZ LE BON TITRE SUR VOTRE MANETTE !';
   }
 
   // Setup live answered indicator
@@ -282,7 +282,7 @@ socket.on('round_ended_host', (data) => {
   const extraEl = document.getElementById('reveal-extra-info');
 
   if (data.track.isAnime && data.track.anime) {
-    categoryEl.textContent = '🎌 ANIMÉ';
+    categoryEl.textContent = 'ANIMÉ CULTE';
     titleEl.textContent = data.track.anime;
     artistEl.textContent = `Opening : "${data.track.title}"`;
     if (extraEl) {
@@ -290,7 +290,7 @@ socket.on('round_ended_host', (data) => {
       extraEl.style.display = 'block';
     }
   } else {
-    categoryEl.textContent = '🎵 TITRE DÉCOUVERT';
+    categoryEl.textContent = 'TITRE DU MORCEAU';
     titleEl.textContent = data.track.title;
     artistEl.textContent = data.track.artist;
     if (extraEl) extraEl.style.display = 'none';
