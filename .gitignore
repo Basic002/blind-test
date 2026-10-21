@@ -3,3 +3,6 @@ node_modules/
 Thumbs.db
 npm-debug.log*
 .env
+.agents/
+skills-lock.json
+

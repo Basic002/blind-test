@@ -3,30 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BLIND-TEST // LOBBY PRINCIPAL</title>
+  <title>Blind-Test — Salon Principal</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-  <audio id="audio-player" preload="auto"></audio>
+  <audio id="audio-player" preload="auto" playsinline></audio>
   <canvas id="confetti-canvas"></canvas>
 
-  <!-- Game Header -->
+  <!-- Navigation / Header Glass Bar -->
   <header class="app-header">
     <div class="brand-wrapper">
       <div class="brand-badge">⚡</div>
       <div>
-        <span class="brand-text">BLIND-TEST</span>
-        <span class="brand-tag">ÉCRAN HÔTE</span>
+        <span class="brand-text">Blind-Test</span>
+        <span class="brand-tag">Écran Hôte</span>
       </div>
     </div>
     <div style="display: flex; align-items: center; gap: 1.5rem;">
-      <div id="volume-wrapper" style="display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-hud); font-size: 0.95rem; font-weight: 700; color: #a1a1aa;">
-        <span>VOLUME</span>
-        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" style="cursor: pointer; accent-color: var(--game-gold); width: 110px;">
+      <div id="volume-wrapper" style="display: flex; align-items: center; gap: 0.65rem; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">
+        <span>Volume</span>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" style="cursor: pointer; accent-color: var(--apple-blue); width: 110px;">
       </div>
-      <button id="fullscreen-btn" class="btn btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.85rem;">PLEIN ÉCRAN</button>
+      <button id="fullscreen-btn" class="btn btn-secondary" style="padding: 0.45rem 1.15rem; font-size: 0.85rem;">Plein Écran</button>
     </div>
   </header>
 
@@ -36,24 +36,24 @@
       <div class="lobby-grid">
         <!-- Colonne de gauche: Connexion & QR Code -->
         <div class="join-info-card game-panel">
-          <div class="room-code-tag">CODE D'ACCÈS DU SALON</div>
+          <div class="room-code-tag">Code d'accès du salon</div>
           <div id="display-room-code" class="room-code-display">----</div>
           
           <div class="qr-code-wrapper">
             <img id="qr-code-img" class="qr-code-img" alt="QR Code d'accès" src="">
           </div>
           
-          <div style="margin-bottom: 0.6rem; font-family: var(--font-hud); font-size: 0.9rem; font-weight: 700; color: #8e9bb0; text-transform: uppercase;">SCANNEZ POUR REJOINDRE :</div>
+          <div style="margin-bottom: 0.6rem; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.04em; text-transform: uppercase;">Scannez pour rejoindre :</div>
           <div id="display-join-url" class="join-url">Chargement...</div>
         </div>
 
         <!-- Colonne de droite: Thèmes, Paramètres & Joueurs -->
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
           <!-- Choix du thème -->
-          <div class="game-panel" style="padding: 1.75rem;">
+          <div class="game-panel" style="padding: 1.75rem 2rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-              <h2 style="font-size: 1.5rem; letter-spacing: 0.04em;">SÉLECTIONNEZ LE THÈME</h2>
-              <span class="hud-font" style="font-size: 0.85rem; color: var(--game-gold); font-weight: 800;">PLAYLISTS EN LIGNE</span>
+              <h2 style="font-size: 1.4rem;">Sélectionnez le Thème</h2>
+              <span class="hud-font" style="font-size: 0.8rem; color: var(--apple-blue); font-weight: 600;">Playlists en ligne</span>
             </div>
             
             <div id="themes-grid" class="themes-grid">
@@ -67,23 +67,23 @@
           </div>
 
           <!-- Paramètres de la partie -->
-          <div class="game-panel" style="padding: 1.25rem 1.75rem; display: flex; gap: 2.5rem; align-items: center; flex-wrap: wrap;">
+          <div class="game-panel" style="padding: 1.25rem 2rem; display: flex; gap: 2.5rem; align-items: center; flex-wrap: wrap;">
             <div>
-              <label style="font-family: var(--font-hud); font-weight: 800; font-size: 0.85rem; color: #8e9bb0; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 0.4rem;">NOMBRE DE MANCHES</label>
-              <select id="rounds-select" class="form-input" style="padding: 0.6rem 1.2rem; width: auto; font-family: var(--font-hud); font-size: 1rem; font-weight: 700;">
-                <option value="5">5 MANCHES (RAPIDE)</option>
-                <option value="10" selected>10 MANCHES (STANDARD)</option>
-                <option value="15">15 MANCHES (LONG)</option>
-                <option value="20">20 MANCHES (MARATHON)</option>
+              <label style="font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.4rem;">Nombre de Manches</label>
+              <select id="rounds-select" class="form-input form-select">
+                <option value="5">5 manches (Rapide)</option>
+                <option value="10" selected>10 manches (Standard)</option>
+                <option value="15">15 manches (Long)</option>
+                <option value="20">20 manches (Marathon)</option>
               </select>
             </div>
             <div>
-              <label style="font-family: var(--font-hud); font-weight: 800; font-size: 0.85rem; color: #8e9bb0; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 0.4rem;">DURÉE DU CHRONOMÈTRE</label>
-              <select id="duration-select" class="form-input" style="padding: 0.6rem 1.2rem; width: auto; font-family: var(--font-hud); font-size: 1rem; font-weight: 700;">
-                <option value="15">15 SECONDES</option>
-                <option value="20">20 SECONDES</option>
-                <option value="25" selected>25 SECONDES (RECOMMANDÉ)</option>
-                <option value="30">30 SECONDES</option>
+              <label style="font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.4rem;">Durée du Chronomètre</label>
+              <select id="duration-select" class="form-input form-select">
+                <option value="15">15 secondes</option>
+                <option value="20">20 secondes</option>
+                <option value="25" selected>25 secondes (Recommandé)</option>
+                <option value="30">30 secondes</option>
               </select>
             </div>
           </div>
@@ -91,18 +91,18 @@
           <!-- Joueurs connectés -->
           <div class="game-panel lobby-players-card">
             <div class="players-header">
-              <h2 style="font-size: 1.5rem;">SALON D'ATTENTE</h2>
-              <span id="players-count-badge" class="players-count-badge">0 JOUEUR</span>
+              <h2 style="font-size: 1.4rem;">Salon d'Attente</h2>
+              <span id="players-count-badge" class="players-count-badge">0 Joueur</span>
             </div>
 
             <div id="lobby-players-grid" class="players-grid">
-              <div id="no-players-placeholder" style="grid-column: 1 / -1; color: #546075; font-family: var(--font-hud); text-align: center; padding: 2rem 1rem; font-size: 1.05rem; font-weight: 700;">
-                EN ATTENTE DES JOUEURS... REJOIGNEZ SUR MOBILE ! 📱
+              <div id="no-players-placeholder" style="grid-column: 1 / -1; color: var(--text-tertiary); text-align: center; padding: 2rem 1rem; font-size: 1rem; font-weight: 500;">
+                En attente des joueurs... Rejoignez sur mobile ! 📱
               </div>
             </div>
 
-            <button id="start-game-btn" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%; font-size: 1.35rem; padding: 1.15rem;" disabled>
-              LANCER LA PARTIE ▶
+            <button id="start-game-btn" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%; font-size: 1.25rem; padding: 1.1rem;" disabled>
+              Lancer la Partie ▶
             </button>
           </div>
         </div>
@@ -113,11 +113,11 @@
     <section id="view-round" class="view">
       <div class="round-container">
         <div class="round-status-bar">
-          <div id="round-number-display" class="round-counter-pill">MANCHE 01 / 10</div>
-          <div id="round-mode-display" class="round-mode-tag">BLIND-TEST ARENA</div>
+          <div id="round-number-display" class="round-counter-pill">Manche 01 / 10</div>
+          <div id="round-mode-display" class="round-mode-tag">Blind-Test</div>
         </div>
 
-        <!-- Squared Audio Deck Visualizer -->
+        <!-- Apple Music EQ Visualizer Deck -->
         <div class="vinyl-stage game-panel">
           <div class="visualizer-container">
             <div class="v-bar"></div>
@@ -131,8 +131,8 @@
           </div>
         </div>
 
-        <h2 id="round-question-heading" style="font-size: 3rem; font-weight: 900; margin-bottom: 0.25rem;">ÉCOUTEZ L'EXTRAIT...</h2>
-        <p id="round-question-subtext" style="color: #8e9bb0; font-size: 1.25rem; font-family: var(--font-hud); font-weight: 700;">DEVINEZ LA BONNE RÉPONSE SUR VOTRE MANETTE !</p>
+        <h2 id="round-question-heading" style="font-size: clamp(2.2rem, 3.5vw, 3.2rem); font-weight: 800; margin-bottom: 0.35rem;">Écoutez l'extrait...</h2>
+        <p id="round-question-subtext" style="color: var(--text-secondary); font-size: 1.2rem; font-weight: 500;">Devinez la bonne réponse sur votre manette !</p>
 
         <!-- Chronomètre -->
         <div class="timer-container">
@@ -142,7 +142,7 @@
 
         <!-- Compteur de réponses -->
         <div id="answers-counter" class="answers-counter-pill">
-          <span>⚡</span> <span id="answers-counter-text">0 / 0 ONT RÉPONDU</span>
+          <span>⚡</span> <span id="answers-counter-text">0 / 0 ont répondu</span>
         </div>
 
         <!-- Avatars des joueurs -->
@@ -155,17 +155,18 @@
       <div class="round-container">
         <div class="reveal-card game-panel">
           <div class="album-cover-wrapper">
+            <div id="reveal-glow" class="album-cover-glow"></div>
             <img id="reveal-cover" class="album-cover-img" src="" alt="Pochette album">
           </div>
           <div class="track-info">
-            <span id="reveal-category" class="reveal-category-tag">RÉSULTAT DE LA MANCHE</span>
+            <span id="reveal-category" class="reveal-category-tag">Résultat de la manche</span>
             <div id="reveal-title" class="track-main-title">Titre du morceau</div>
             <div id="reveal-artist" class="track-subtitle">Artiste</div>
-            <div id="reveal-extra-info" style="margin-top: 0.5rem; font-family: var(--font-hud); font-size: 1.15rem; color: var(--game-gold); font-weight: 800; display: none;"></div>
+            <div id="reveal-extra-info" style="margin-top: 0.5rem; font-size: 1.15rem; color: var(--apple-yellow); font-weight: 700; display: none;"></div>
           </div>
         </div>
 
-        <h3 style="font-size: 1.6rem; margin: 2rem 0 1rem 0;">CLASSEMENT DE LA MANCHE</h3>
+        <h3 style="font-size: 1.5rem; margin: 2rem 0 1rem 0; font-weight: 700;">Classement de la Manche</h3>
         <div id="reveal-leaderboard" class="leaderboard-list">
           <!-- Injecté par JS -->
         </div>
@@ -175,40 +176,40 @@
     <!-- 4. GAME OVER & PODIUM VIEW -->
     <section id="view-gameover" class="view">
       <div class="round-container">
-        <h1 style="font-size: 4rem; font-weight: 900; letter-spacing: 0.05em; color: var(--game-gold); text-shadow: 0 0 30px var(--game-gold-glow);">
-          PODIUM FINAL
+        <h1 style="font-size: clamp(2.8rem, 4.5vw, 4.2rem); font-weight: 800; letter-spacing: -0.035em; color: var(--apple-yellow); text-shadow: 0 0 40px var(--game-gold-glow);">
+          Podium Final
         </h1>
-        <p style="font-family: var(--font-hud); color: #8e9bb0; font-size: 1.25rem; font-weight: 700; margin-top: 0.25rem;">RÉSULTAT DU MATCH</p>
+        <p style="color: var(--text-secondary); font-size: 1.25rem; font-weight: 500; margin-top: 0.35rem;">Résultat de la partie</p>
 
-        <!-- Podium des 3 premiers -->
+        <!-- Podium des 3 premiers (Marches Festives) -->
         <div id="podium-display" style="display: flex; justify-content: center; align-items: flex-end; gap: 1.5rem; margin: 3rem 0 2.5rem 0; width: 100%; max-width: 840px;">
           <!-- 2ème Place -->
           <div id="podium-2" class="podium-box" style="flex: 1; padding: 2rem 1.5rem; text-align: center; height: 270px; border-top: 4px solid #cbd5e1;">
-            <div style="font-family: var(--font-hud); font-size: 1.3rem; font-weight: 800; color: #cbd5e1;">2ÈME PLACE</div>
-            <div class="podium-avatar" style="font-size: 2.8rem; margin: 0.75rem 0;">-</div>
-            <div class="podium-name" style="font-family: var(--font-game); font-size: 1.5rem; font-weight: 800;">-</div>
-            <div class="podium-score" style="font-family: var(--font-game); color: var(--game-cyan); font-size: 1.4rem; font-weight: 800; margin-top: 0.4rem;">0 PTS</div>
+            <div style="font-size: 1.1rem; font-weight: 800; color: #cbd5e1; letter-spacing: 0.02em;">🥈 2ème Place</div>
+            <div class="podium-avatar" style="font-size: 3rem; margin: 0.75rem 0;">-</div>
+            <div class="podium-name" style="font-size: 1.45rem; font-weight: 800;">-</div>
+            <div class="podium-score" style="color: var(--party-cyan); font-size: 1.35rem; font-weight: 800; margin-top: 0.4rem;">0 pts</div>
           </div>
 
           <!-- 1ère Place (plus haute) -->
-          <div id="podium-1" class="podium-box rank-1" style="flex: 1.25; padding: 2.5rem 1.75rem; text-align: center; height: 340px; border-top: 6px solid var(--game-gold);">
-            <div style="font-family: var(--font-hud); font-size: 1.5rem; font-weight: 900; color: var(--game-gold);">👑 VAINQUEUR</div>
-            <div class="podium-avatar" style="font-size: 3.5rem; margin: 0.75rem 0;">-</div>
-            <div class="podium-name" style="font-family: var(--font-game); font-size: 2rem; font-weight: 900; color: #ffffff;">-</div>
-            <div class="podium-score" style="font-family: var(--font-game); color: var(--game-gold); font-size: 1.8rem; font-weight: 900; margin-top: 0.4rem;">0 PTS</div>
+          <div id="podium-1" class="podium-box rank-1" style="flex: 1.25; padding: 2.5rem 1.75rem; text-align: center; height: 350px; border-top: 5px solid var(--party-gold);">
+            <div style="font-size: 1.3rem; font-weight: 900; color: var(--party-gold); letter-spacing: 0.02em;">👑 Vainqueur</div>
+            <div class="podium-avatar" style="font-size: 3.8rem; margin: 0.75rem 0;">-</div>
+            <div class="podium-name" style="font-size: 1.85rem; font-weight: 900; color: #ffffff;">-</div>
+            <div class="podium-score" style="color: var(--party-gold); font-size: 1.7rem; font-weight: 900; margin-top: 0.4rem;">0 pts</div>
           </div>
 
           <!-- 3ème Place -->
           <div id="podium-3" class="podium-box" style="flex: 1; padding: 1.75rem 1.5rem; text-align: center; height: 240px; border-top: 4px solid #f97316;">
-            <div style="font-family: var(--font-hud); font-size: 1.2rem; font-weight: 800; color: #f97316;">3ÈME PLACE</div>
-            <div class="podium-avatar" style="font-size: 2.5rem; margin: 0.5rem 0;">-</div>
-            <div class="podium-name" style="font-family: var(--font-game); font-size: 1.4rem; font-weight: 800;">-</div>
-            <div class="podium-score" style="font-family: var(--font-game); color: var(--game-cyan); font-size: 1.3rem; font-weight: 800; margin-top: 0.4rem;">0 PTS</div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: #f97316; letter-spacing: 0.02em;">🥉 3ème Place</div>
+            <div class="podium-avatar" style="font-size: 2.6rem; margin: 0.5rem 0;">-</div>
+            <div class="podium-name" style="font-size: 1.35rem; font-weight: 800;">-</div>
+            <div class="podium-score" style="color: var(--party-cyan); font-size: 1.25rem; font-weight: 800; margin-top: 0.4rem;">0 pts</div>
           </div>
         </div>
 
-        <button id="replay-btn" class="btn btn-primary" style="font-size: 1.3rem; padding: 1.15rem 3.5rem;">
-          RETOURNER AU SALON ▶
+        <button id="replay-btn" class="btn btn-primary" style="font-size: 1.2rem; padding: 1.1rem 3.5rem;">
+          Retourner au Salon ▶
         </button>
       </div>
     </section>

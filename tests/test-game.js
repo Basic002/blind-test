@@ -4,13 +4,20 @@ const http = require('http');
 async function runTest() {
   console.log('--- DÉMARRAGE DU TEST MULTIJOUEUR DU BLIND-TEST ---');
   
-  // Start server
-  const server = require('../src/server.js');
-  // Wait a moment for server to listen
-  await new Promise(r => setTimeout(r, 1000));
-
   const PORT = process.env.PORT || 3000;
   const baseUrl = `http://localhost:${PORT}`;
+
+  const isRunning = await new Promise(resolve => {
+    const req = http.get(baseUrl, () => resolve(true));
+    req.on('error', () => resolve(false));
+  });
+
+  if (!isRunning) {
+    require('../src/server.js');
+    await new Promise(r => setTimeout(r, 1000));
+  } else {
+    console.log(`   (Serveur déjà actif sur ${baseUrl})`);
+  }
 
   // 1. Host creates room
   console.log('1. Connexion de l\'écran Hôte...');

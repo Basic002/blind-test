@@ -97,18 +97,18 @@ socket.on('round_start_player', (data) => {
   switchView('play');
 
   // Update header
-  document.getElementById('player-round-badge').textContent = `MANCHE 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
+  document.getElementById('player-round-badge').textContent = `Manche 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
   const modeText = document.getElementById('player-question-mode');
   if (modeText) {
     if (data.isDisney) {
-      modeText.textContent = "TROUVE LE DISNEY !";
-      modeText.style.color = "var(--game-gold)";
+      modeText.textContent = "Trouve le Disney !";
+      modeText.style.color = "var(--apple-yellow)";
     } else if (data.isAnime) {
-      modeText.textContent = "TROUVE L'ANIMÉ !";
-      modeText.style.color = "var(--btn-a)";
+      modeText.textContent = "Trouve l'animé !";
+      modeText.style.color = "var(--apple-red)";
     } else {
-      modeText.textContent = "TROUVE LE MORCEAU !";
-      modeText.style.color = "var(--game-cyan)";
+      modeText.textContent = "Trouve le morceau !";
+      modeText.style.color = "var(--apple-blue)";
     }
   }
 
@@ -193,11 +193,11 @@ socket.on('round_ended_player', (data) => {
   switchView('result');
 
   // Update top score & streak
-  document.getElementById('player-score-badge').textContent = `${data.totalScore.toLocaleString()} PTS`;
+  document.getElementById('player-score-badge').textContent = `${data.totalScore.toLocaleString('fr-FR')} pts`;
   const streakBadge = document.getElementById('player-streak-badge');
   if (data.streak > 1) {
     streakBadge.style.display = 'inline-flex';
-    streakBadge.textContent = `STREAK ${data.streak}`;
+    streakBadge.textContent = `🔥 ${data.streak}`;
   } else {
     streakBadge.style.display = 'none';
   }
@@ -211,33 +211,33 @@ socket.on('round_ended_player', (data) => {
 
   if (data.isCorrect) {
     vibrate([70, 40, 70]);
-    resultIcon.textContent = '⚡';
-    resultTitle.textContent = 'EXCELLENT';
-    resultTitle.style.color = 'var(--accent-lime)';
-    resultPoints.textContent = `+${data.pointsEarned.toLocaleString()} PTS`;
-    resultPoints.style.color = 'var(--accent-lime)';
+    resultIcon.textContent = '✓';
+    resultTitle.textContent = 'Excellent !';
+    resultTitle.style.color = 'var(--apple-green)';
+    resultPoints.textContent = `+${data.pointsEarned.toLocaleString('fr-FR')} pts`;
+    resultPoints.style.color = 'var(--apple-green)';
   } else {
     vibrate(180);
     resultIcon.textContent = '✕';
-    resultTitle.textContent = 'MANQUÉ';
-    resultTitle.style.color = '#f43f5e';
-    resultPoints.textContent = '+0 PTS';
-    resultPoints.style.color = '#71717a';
+    resultTitle.textContent = 'Manqué';
+    resultTitle.style.color = 'var(--apple-red)';
+    resultPoints.textContent = '+0 pt';
+    resultPoints.style.color = 'var(--text-tertiary)';
   }
 
   if (data.correctTrack && data.correctTrack.isDisney && data.correctTrack.disney) {
-    if (resultTypeLabel) resultTypeLabel.textContent = "FILM DISNEY :";
+    if (resultTypeLabel) resultTypeLabel.textContent = "Film Disney :";
     resultSongName.textContent = `${data.correctTrack.disney} — "${data.correctTrack.title}"`;
   } else if (data.correctTrack && data.correctTrack.isAnime && data.correctTrack.anime) {
-    if (resultTypeLabel) resultTypeLabel.textContent = "ANIMÉ CULTE :";
+    if (resultTypeLabel) resultTypeLabel.textContent = "Animé culte :";
     resultSongName.textContent = `${data.correctTrack.anime} — "${data.correctTrack.title}"`;
   } else {
-    if (resultTypeLabel) resultTypeLabel.textContent = "TITRE DU MORCEAU :";
+    if (resultTypeLabel) resultTypeLabel.textContent = "Titre du morceau :";
     resultSongName.textContent = `${data.correctTrack.title} — ${data.correctTrack.artist}`;
   }
   
-  const rankSuffix = data.rank === 1 ? '1ER' : `${data.rank}ÈME`;
-  resultRankText.textContent = `CLASSEMENT : ${rankSuffix} // ${data.totalScore.toLocaleString()} PTS`;
+  const rankSuffix = data.rank === 1 ? '1er' : `${data.rank}ème`;
+  resultRankText.textContent = `Rang : ${rankSuffix} · ${data.totalScore.toLocaleString('fr-FR')} pts`;
 });
 
 // Game Over feedback
@@ -253,29 +253,29 @@ socket.on('game_over_player', (data) => {
   if (data.rank === 1) {
     vibrate([100, 50, 100, 50, 200]);
     finalMedal.textContent = '🥇';
-    finalRankTitle.textContent = 'CHAMPION [01]';
-    finalRankTitle.style.color = '#fbbf24';
+    finalRankTitle.textContent = '1ère Place · Vainqueur !';
+    finalRankTitle.style.color = 'var(--apple-yellow)';
   } else if (data.rank === 2) {
     finalMedal.textContent = '🥈';
-    finalRankTitle.textContent = 'SILVER [02]';
+    finalRankTitle.textContent = '2ème Place';
     finalRankTitle.style.color = '#cbd5e1';
   } else if (data.rank === 3) {
     finalMedal.textContent = '🥉';
-    finalRankTitle.textContent = 'BRONZE [03]';
+    finalRankTitle.textContent = '3ème Place';
     finalRankTitle.style.color = '#f97316';
   } else {
     finalMedal.textContent = '🎮';
-    finalRankTitle.textContent = `RANG [0${data.rank}] / ${data.totalPlayers}`;
-    finalRankTitle.style.color = '#71717a';
+    finalRankTitle.textContent = `${data.rank}ème Place sur ${data.totalPlayers}`;
+    finalRankTitle.style.color = 'var(--text-secondary)';
   }
 
-  finalScoreDisplay.textContent = `${data.score.toLocaleString()} PTS`;
+  finalScoreDisplay.textContent = `${data.score.toLocaleString('fr-FR')} pts`;
 });
 
 // Back to lobby
 socket.on('back_to_lobby', () => {
   switchView('waiting');
-  document.getElementById('player-score-badge').textContent = '0 PTS';
+  document.getElementById('player-score-badge').textContent = '0 pts';
   document.getElementById('player-streak-badge').style.display = 'none';
 });
 
