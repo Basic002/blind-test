@@ -1,4 +1,8 @@
 const { getTracksForTheme } = require('./deezerService');
+const accountManager = require('./accountManager');
+
+// Strict nickname validation: 2 to 16 alphanumeric characters, accents, spaces, hyphens, and underscores
+const USERNAME_REGEX = /^[\p{L}\p{N}_\- ]{2,16}$/u;
 
 // Allowed characters for room codes (no O/0, I/1 to avoid confusion)
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -67,7 +71,7 @@ class RoomManager {
     return code ? this.rooms.get(code) : null;
   }
 
-  joinRoom(roomCode, socketId, nickname, avatar = '🎵') {
+  joinRoom(roomCode, socketId, nickname, avatar = '🎵', userId = null) {
     const room = this.getRoom(roomCode);
     if (!room) {
       throw new Error('Salon introuvable. Vérifie le code !');
@@ -77,20 +81,51 @@ class RoomManager {
       throw new Error('La partie a déjà commencé dans ce salon.');
     }
 
-    // Check nickname uniqueness in room
-    const cleanNick = (nickname || 'Joueur').trim().substring(0, 16);
+    // Check nickname length, characters & uniqueness in room
+    const rawNick = typeof nickname === 'string' ? nickname : 'Joueur';
+    const cleanNick = rawNick.trim().substring(0, 16);
+    if (!cleanNick || cleanNick.length < 2 || cleanNick.length > 16) {
+      throw new Error('Le pseudo doit contenir entre 2 et 16 caractères.');
+    }
+    if (!USERNAME_REGEX.test(cleanNick)) {
+      throw new Error('Le pseudo ne peut contenir que des lettres, chiffres, espaces, tirets et underscores.');
+    }
     for (const player of room.players.values()) {
       if (player.nickname.toLowerCase() === cleanNick.toLowerCase()) {
         throw new Error('Ce pseudo est déjà pris dans ce salon.');
       }
     }
 
+    const cleanAvatar = typeof avatar === 'string' && avatar.trim().length > 0 && avatar.trim().length <= 10
+      ? avatar.trim()
+      : '🎵';
+
+    let userLevel = 1;
+    let userTitle = 'Novice';
+    let userBadge = '🎵';
+    let registeredUserId = null;
+
+    if (userId && typeof userId === 'string') {
+      const user = accountManager.getUserById(userId);
+      if (user) {
+        registeredUserId = user.id;
+        userLevel = user.progression.level;
+        userTitle = user.progression.title;
+        userBadge = user.progression.badge;
+      }
+    }
+
     const player = {
       id: socketId,
+      userId: registeredUserId,
       nickname: cleanNick,
-      avatar: avatar || '🎵',
+      avatar: cleanAvatar,
       score: 0,
       streak: 0,
+      level: userLevel,
+      title: userTitle,
+      badge: userBadge,
+      correctAnswersCount: 0,
       hasAnswered: false,
       lastAnswer: null
     };
@@ -146,10 +181,14 @@ class RoomManager {
   getPlayersList(room) {
     return Array.from(room.players.values()).map(p => ({
       id: p.id,
+      userId: p.userId || null,
       nickname: p.nickname,
       avatar: p.avatar,
       score: p.score,
       streak: p.streak,
+      level: p.level || 1,
+      title: p.title || 'Novice',
+      badge: p.badge || '🎵',
       hasAnswered: p.hasAnswered
     })).sort((a, b) => b.score - a.score);
   }
@@ -186,6 +225,7 @@ class RoomManager {
     for (const player of room.players.values()) {
       player.score = 0;
       player.streak = 0;
+      player.correctAnswersCount = 0;
       player.hasAnswered = false;
       player.lastAnswer = null;
     }
@@ -350,6 +390,7 @@ class RoomManager {
 
       player.score += pointsEarned;
       player.streak += 1;
+      player.correctAnswersCount = (player.correctAnswersCount || 0) + 1;
     } else {
       player.streak = 0;
     }
@@ -364,9 +405,26 @@ class RoomManager {
 
     round.answers.set(socketId, player.lastAnswer);
 
+    // If player has a registered account, track progression and check achievements
+    let roundProgression = null;
+    if (player.userId) {
+      roundProgression = accountManager.recordRoundAnswer(player.userId, {
+        isCorrect,
+        responseTimeMs,
+        streak: player.streak,
+        themeId: room.themeId
+      });
+      if (roundProgression && roundProgression.levelInfo) {
+        player.level = roundProgression.levelInfo.level;
+        player.title = roundProgression.levelInfo.title;
+        player.badge = roundProgression.levelInfo.badge;
+      }
+    }
+
     // Notify player that answer was registered
     this.io.to(socketId).emit('answer_received', {
-      hasAnswered: true
+      hasAnswered: true,
+      progression: roundProgression
     });
 
     // Notify host that a player answered (shows count or checkmark on TV)
@@ -464,10 +522,24 @@ class RoomManager {
 
     for (const [socketId, player] of room.players) {
       const rank = finalLeaderboard.findIndex(p => p.id === socketId) + 1;
+      let gameProgression = null;
+
+      if (player.userId) {
+        gameProgression = accountManager.recordGameEnd(player.userId, {
+          score: player.score,
+          rank,
+          totalPlayers: room.players.size,
+          roundsTotal: room.settings.totalRounds,
+          correctCount: player.correctAnswersCount || 0,
+          themeId: room.themeId
+        });
+      }
+
       this.io.to(socketId).emit('game_over_player', {
         rank,
         score: player.score,
-        totalPlayers: room.players.size
+        totalPlayers: room.players.size,
+        progression: gameProgression
       });
     }
   }

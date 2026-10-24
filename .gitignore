@@ -2,7 +2,15 @@ node_modules/
 .DS_Store
 Thumbs.db
 npm-debug.log*
+*.log
 .env
+.env.*
 .agents/
 skills-lock.json
+data/*
+!data/.gitkeep
+*.pem
+*.key
+*.cert
+
 

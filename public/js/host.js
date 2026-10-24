@@ -199,6 +199,7 @@ function updateLobbyPlayers(players) {
       <div class="player-chip">
         <span class="player-avatar">${p.avatar}</span>
         <span class="player-name">${escapeHtml(p.nickname)}</span>
+        <span class="player-level-badge">Nv.${p.level || 1}</span>
       </div>
     `).join('');
     startBtn.disabled = false;
@@ -286,6 +287,7 @@ function renderRoundPlayersList(players) {
     <div id="round-player-${p.id}" class="player-chip" style="opacity: 0.55; transition: all 0.25s ease;">
       <span class="player-avatar">${p.avatar}</span>
       <span class="player-name">${escapeHtml(p.nickname)}</span>
+      <span class="player-level-badge">Nv.${p.level || 1}</span>
       <span class="answer-check" style="display: none; margin-left: 0.3rem;">⚡</span>
     </div>
   `).join('');
@@ -409,7 +411,13 @@ function renderLeaderboard(leaderboard) {
         <div class="leaderboard-player-info">
           <span style="font-size: 1.15rem; width: 28px; text-align: center; color: var(--text-secondary);">${medal}</span>
           <span class="player-avatar">${player.avatar}</span>
-          <span style="font-weight: 600;">${escapeHtml(player.nickname)}</span>
+          <div style="display: flex; flex-direction: column; text-align: left;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-weight: 700;">${escapeHtml(player.nickname)}</span>
+              <span class="player-level-badge">Nv.${player.level || 1}</span>
+            </div>
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">${escapeHtml(player.title || 'Novice')}</span>
+          </div>
           ${player.streak > 1 ? `<span class="streak-badge">🔥 ${player.streak}</span>` : ''}
         </div>
         <div class="leaderboard-score">${player.score.toLocaleString('fr-FR')} <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-tertiary);">pts</span></div>
@@ -441,6 +449,8 @@ socket.on('game_over_host', (data) => {
     p1.querySelector('.podium-avatar').textContent = podium[0].avatar;
     p1.querySelector('.podium-name').textContent = podium[0].nickname;
     p1.querySelector('.podium-score').textContent = `${podium[0].score.toLocaleString('fr-FR')} pts`;
+    const lvl1 = p1.querySelector('.podium-level');
+    if (lvl1) lvl1.textContent = `Nv.${podium[0].level || 1} · ${podium[0].title || 'Novice'}`;
   }
 
   // 2nd place
@@ -449,6 +459,8 @@ socket.on('game_over_host', (data) => {
     p2.querySelector('.podium-avatar').textContent = podium[1].avatar;
     p2.querySelector('.podium-name').textContent = podium[1].nickname;
     p2.querySelector('.podium-score').textContent = `${podium[1].score.toLocaleString('fr-FR')} pts`;
+    const lvl2 = p2.querySelector('.podium-level');
+    if (lvl2) lvl2.textContent = `Nv.${podium[1].level || 1} · ${podium[1].title || 'Novice'}`;
   }
 
   // 3rd place
@@ -457,6 +469,8 @@ socket.on('game_over_host', (data) => {
     p3.querySelector('.podium-avatar').textContent = podium[2].avatar;
     p3.querySelector('.podium-name').textContent = podium[2].nickname;
     p3.querySelector('.podium-score').textContent = `${podium[2].score.toLocaleString('fr-FR')} pts`;
+    const lvl3 = p3.querySelector('.podium-level');
+    if (lvl3) lvl3.textContent = `Nv.${podium[2].level || 1} · ${podium[2].title || 'Novice'}`;
   }
 });
 
@@ -506,9 +520,9 @@ function launchConfetti() {
 // Helper utility
 function escapeHtml(str) {
   if (!str) return '';
-  return str.replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+  return String(str).replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
 }

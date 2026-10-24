@@ -11,11 +11,18 @@
   <div class="mobile-view">
     <!-- Header Joueur (Dynamic Island inspired pill) -->
     <header class="player-header">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <span id="player-avatar-badge" class="player-avatar" style="width: 34px; height: 34px; font-size: 1.25rem;">🦊</span>
-        <span id="player-name-badge" style="font-weight: 700; font-size: 1.05rem; letter-spacing: -0.015em; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Joueur</span>
+      <div id="player-profile-header-trigger" style="display: flex; align-items: center; gap: 0.65rem; cursor: pointer; min-width: 0;">
+        <span id="player-avatar-badge" class="player-avatar" style="width: 36px; height: 36px; font-size: 1.25rem;">🦊</span>
+        <div style="display: flex; flex-direction: column; text-align: left; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <span id="player-name-badge" style="font-weight: 800; font-size: 0.95rem; letter-spacing: -0.015em; max-width: 95px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Joueur</span>
+            <span id="player-level-badge" class="player-level-badge">Nv. 1</span>
+          </div>
+          <span id="player-title-badge" style="font-size: 0.72rem; color: var(--party-cyan); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">Novice</span>
+        </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 0.65rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <button id="btn-open-profile-header" class="btn-profile-icon" title="Profil & Succès">🏆</button>
         <div id="player-streak-badge" class="streak-badge" style="display: none;">Streak 0</div>
         <div id="player-score-badge" class="player-score-pill">0 pts</div>
       </div>
@@ -23,15 +30,70 @@
 
     <!-- 1. VIEW JOIN -->
     <div id="view-join" class="game-panel" style="padding: 1.6rem 1.25rem; margin: auto 0; text-align: left; width: 100%; box-sizing: border-box;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.65rem; border-bottom: 2px solid var(--border-card);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.65rem; border-bottom: 2px solid var(--border-card);">
         <span style="font-size: 0.85rem; font-weight: 800; color: var(--party-cyan); letter-spacing: 0.05em; text-transform: uppercase;">Manette Joueur</span>
         <span style="font-size: 0.8rem; font-weight: 700; color: var(--party-emerald);">● En ligne</span>
       </div>
 
-      <h1 style="font-size: 2.2rem; font-weight: 900; margin-bottom: 0.25rem; letter-spacing: -0.01em;">
-        Blind-Test
-      </h1>
-      <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 600; margin-bottom: 1.5rem;">Entrez le code et choisissez votre avatar</p>
+      <!-- Logged User Card (visible if logged in) -->
+      <div id="logged-user-section" class="logged-user-banner" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+          <span id="logged-avatar" style="font-size: 1.6rem;">🦊</span>
+          <div style="display: flex; flex-direction: column; text-align: left; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 0.35rem;">
+              <span id="logged-username" style="font-weight: 800; font-size: 1rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Alex</span>
+              <span id="logged-level" class="player-level-badge">Nv. 1</span>
+            </div>
+            <span id="logged-title" style="font-size: 0.74rem; color: var(--party-cyan); font-weight: 700;">Novice</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.4rem;">
+          <button id="btn-logged-profile" class="btn btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.78rem;">Profil 🏆</button>
+          <button id="btn-logged-logout" class="btn btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.78rem; color: var(--party-coral);">✕</button>
+        </div>
+      </div>
+
+      <!-- Auth mode selector (Guest / Account) - visible if NOT logged in -->
+      <div id="auth-tabs" class="auth-tabs">
+        <button id="tab-btn-guest" class="auth-tab-btn active" type="button">🎮 Invité Rapide</button>
+        <button id="tab-btn-account" class="auth-tab-btn" type="button">👤 Mon Compte</button>
+      </div>
+
+      <!-- Account Auth Form (Login / Register) - inside Auth tab -->
+      <div id="account-auth-section" style="display: none; margin-bottom: 1.25rem; background: #0d1330; padding: 1.15rem; border-radius: 16px; border: 2px solid var(--border-card);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+          <h3 id="auth-form-title" style="font-size: 1.1rem; font-weight: 800;">Connexion</h3>
+          <span id="auth-switch-mode" style="font-size: 0.78rem; font-weight: 700; color: var(--party-cyan); cursor: pointer; text-decoration: underline;">Créer un compte</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <div>
+            <label style="font-weight: 600; font-size: 0.76rem; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 0.3rem;">Pseudonyme (max 16 car.)</label>
+            <input type="text" id="auth-input-username" class="form-input" placeholder="Ton pseudo..." maxlength="16">
+          </div>
+          <div>
+            <label style="font-weight: 600; font-size: 0.76rem; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 0.3rem;">Mot de passe</label>
+            <input type="password" id="auth-input-password" class="form-input" placeholder="Mot de passe (min 4 car.)...">
+          </div>
+          
+          <div id="auth-avatar-picker-group" style="display: none;">
+            <label style="font-weight: 600; font-size: 0.76rem; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 0.3rem;">Choix de l'avatar</label>
+            <div id="auth-avatar-picker" class="avatar-grid" style="margin: 0.5rem 0;">
+              <div class="avatar-option selected" data-avatar="🦊">🦊</div>
+              <div class="avatar-option" data-avatar="🐯">🐯</div>
+              <div class="avatar-option" data-avatar="🚀">🚀</div>
+              <div class="avatar-option" data-avatar="🎧">🎧</div>
+              <div class="avatar-option" data-avatar="⚡">⚡</div>
+            </div>
+          </div>
+
+          <div id="auth-error-msg" style="color: var(--party-coral); font-size: 0.85rem; font-weight: 700; display: none; text-align: center; padding: 0.35rem 0.5rem; background: rgba(255, 71, 102, 0.12); border-radius: 8px; border: 1px solid rgba(255, 71, 102, 0.3);"></div>
+
+          <button id="btn-auth-submit" class="btn btn-secondary" style="padding: 0.8rem; font-size: 1rem; width: 100%; border-color: var(--party-cyan); color: #fff;">
+            Se connecter ➔
+          </button>
+        </div>
+      </div>
 
       <div style="display: flex; flex-direction: column; gap: 1.15rem;">
         <div>
@@ -39,7 +101,7 @@
           <input type="text" id="input-room-code" class="form-input" placeholder="ABCD" maxlength="4" style="text-transform: uppercase; font-family: var(--font-mono); font-size: 1.75rem; text-align: center; letter-spacing: 6px; font-weight: 800; color: #ffffff; width: 100%; box-sizing: border-box;">
         </div>
 
-        <div>
+        <div id="guest-avatar-section">
           <label style="font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.4rem;">Choix de l'avatar</label>
           <div id="avatar-picker" class="avatar-grid">
             <div class="avatar-option selected" data-avatar="🦊">🦊</div>
@@ -55,12 +117,12 @@
           </div>
         </div>
 
-        <div>
-          <label style="font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.4rem;">Pseudonyme</label>
-          <input type="text" id="input-nickname" class="form-input" placeholder="Entrez votre prénom..." maxlength="15">
+        <div id="guest-nickname-section">
+          <label style="font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.4rem;">Pseudonyme (max 16 car.)</label>
+          <input type="text" id="input-nickname" class="form-input" placeholder="Entrez votre prénom..." maxlength="16">
         </div>
 
-        <button id="btn-join" class="btn btn-primary" style="margin-top: 0.5rem; padding: 1.1rem; font-size: 1.15rem; width: 100%;">
+        <button id="btn-join" class="btn btn-primary" style="margin-top: 0.35rem; padding: 1.1rem; font-size: 1.15rem; width: 100%;">
           Rejoindre la partie ▶
         </button>
       </div>
@@ -150,6 +212,93 @@
       <p style="color: var(--text-muted); font-size: 1.1rem; font-weight: 600;">Regardez le podium sur le grand écran !</p>
     </div>
   </div>
+
+  <!-- PROFILE & ACHIEVEMENTS MODAL -->
+  <div id="modal-profile" class="modal-overlay" style="display: none;">
+    <div class="modal-card game-panel">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.4rem;">🏆</span>
+          <h2 style="font-size: 1.35rem; font-weight: 800;">Profil & Succès</h2>
+        </div>
+        <button id="btn-close-profile" class="modal-close-btn" type="button">✕</button>
+      </div>
+
+      <div class="modal-content">
+        <!-- Level & Identity Card -->
+        <div class="profile-hero-card">
+          <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <span id="profile-avatar" class="player-avatar" style="width: 52px; height: 52px; font-size: 1.9rem;">🦊</span>
+            <div style="display: flex; flex-direction: column; text-align: left; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 0.45rem;">
+                <span id="profile-username" style="font-size: 1.25rem; font-weight: 800; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Joueur</span>
+                <span id="profile-level-badge" class="player-level-badge">Nv. 1</span>
+              </div>
+              <span id="profile-title" style="font-size: 0.82rem; color: var(--party-cyan); font-weight: 700;">Novice de la Musique</span>
+            </div>
+          </div>
+
+          <!-- XP Progress Bar -->
+          <div style="margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">
+              <span id="profile-xp-text">0 / 300 XP</span>
+              <span id="profile-xp-percent">0%</span>
+            </div>
+            <div class="xp-bar-container">
+              <div id="profile-xp-bar" class="xp-bar-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="profile-stats-grid">
+          <div class="stat-box">
+            <span class="stat-value" id="stat-games">0</span>
+            <span class="stat-label">Parties</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="stat-wins">0</span>
+            <span class="stat-label">Victoires</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="stat-podiums">0</span>
+            <span class="stat-label">Top 3</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="stat-accuracy">0%</span>
+            <span class="stat-label">Précision</span>
+          </div>
+          <div class="stat-box" style="grid-column: span 2;">
+            <span class="stat-value" id="stat-streak">🔥 0</span>
+            <span class="stat-label">Meilleure Série</span>
+          </div>
+        </div>
+
+        <!-- Achievements Section -->
+        <div style="margin-top: 1.25rem; text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 800;">Succès</h3>
+            <span id="achievements-count-badge" class="hud-font" style="font-size: 0.78rem; color: var(--party-gold);">0 / 16 Débloqués</span>
+          </div>
+          <div id="achievements-list" class="achievements-list">
+            <!-- Injecté par JS -->
+          </div>
+        </div>
+
+        <div style="margin-top: 1.25rem; display: flex; gap: 0.65rem;">
+          <button id="btn-logout" class="btn btn-secondary" style="flex: 1; padding: 0.75rem; font-size: 0.9rem;" type="button">
+            Déconnexion
+          </button>
+          <button id="btn-close-profile-bottom" class="btn btn-primary" style="flex: 1; padding: 0.75rem; font-size: 0.9rem;" type="button">
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="toast-container"></div>
 
   <script src="/js/player.js"></script>
 </body>

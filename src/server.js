@@ -7,7 +7,11 @@ const QRCode = require('qrcode');
 const cors = require('cors');
 
 const { THEMES } = require('./config/themes');
+const { ACHIEVEMENTS } = require('./config/achievements');
+const { LEVELS } = require('./config/levels');
 const RoomManager = require('./services/roomManager');
+const accountManager = require('./services/accountManager');
+const { authLimiter, registerLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 const server = http.createServer(app);
@@ -40,14 +44,62 @@ function getLocalIp() {
 
 const localIp = getLocalIp();
 
+// Security Headers Middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 // Middleware & static files
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10kb' })); // Mitigate body payload DoS attacks
 app.use(express.static(path.join(__dirname, '../public')));
 
 // API Routes
 app.get('/api/themes', (req, res) => {
   res.json({ themes: THEMES });
+});
+
+app.get('/api/achievements', (req, res) => {
+  res.json({ achievements: ACHIEVEMENTS, levels: LEVELS });
+});
+
+app.post('/api/auth/register', registerLimiter.middleware(), (req, res) => {
+  try {
+    const { username, password, avatar } = req.body || {};
+    const result = accountManager.register(username, password, avatar);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/login', authLimiter.middleware(), (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    const result = accountManager.login(username, password);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/auth/me', (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : req.query.token;
+  const user = accountManager.getUserByToken(token);
+  if (!user) return res.status(401).json({ error: 'Non authentifié' });
+  res.json({ user });
+});
+
+app.get('/api/profile/:userId', (req, res) => {
+  const user = accountManager.getUserById(req.params.userId);
+  if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' });
+  const achievements = accountManager.getAchievementsForUser(req.params.userId);
+  res.json({ user, achievements });
 });
 
 app.get('/api/server-info', (req, res) => {
@@ -119,10 +171,67 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Player joins a room
-  socket.on('join_room', ({ roomCode, nickname, avatar }) => {
+  // Auth & Account handlers via Socket.IO
+  socket.on('auth_register', (data) => {
     try {
-      const { room, player } = roomManager.joinRoom(roomCode, socket.id, nickname, avatar);
+      const clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address || 'unknown';
+      const rateCheck = registerLimiter.isAllowed(`socket:register:${clientIp}`);
+      if (!rateCheck.allowed) {
+        return socket.emit('auth_error', { message: rateCheck.message });
+      }
+      if (!data) throw new Error('Données manquantes');
+      const result = accountManager.register(data.username, data.password, data.avatar);
+      socket.emit('auth_success', result);
+    } catch (err) {
+      socket.emit('auth_error', { message: err.message || 'Erreur lors de la création du compte' });
+    }
+  });
+
+  socket.on('auth_login', (data) => {
+    try {
+      const clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address || 'unknown';
+      const rateCheck = authLimiter.isAllowed(`socket:login:${clientIp}`);
+      if (!rateCheck.allowed) {
+        return socket.emit('auth_error', { message: rateCheck.message });
+      }
+      if (!data) throw new Error('Données manquantes');
+      const result = accountManager.login(data.username, data.password);
+      socket.emit('auth_success', result);
+    } catch (err) {
+      socket.emit('auth_error', { message: err.message || 'Erreur de connexion' });
+    }
+  });
+
+  socket.on('auth_verify_token', (data) => {
+    try {
+      const token = data?.token;
+      const user = accountManager.getUserByToken(token);
+      if (user) {
+        socket.emit('auth_verified', { user, token });
+      } else {
+        socket.emit('auth_invalid');
+      }
+    } catch (err) {
+      socket.emit('auth_invalid');
+    }
+  });
+
+  socket.on('get_profile', ({ userId }) => {
+    try {
+      const user = accountManager.getUserById(userId);
+      if (user) {
+        const achievements = accountManager.getAchievementsForUser(userId);
+        socket.emit('profile_data', { user, achievements });
+      }
+    } catch (err) {
+      console.error('Erreur get_profile:', err);
+    }
+  });
+
+  // Player joins a room
+  socket.on('join_room', ({ roomCode, nickname, avatar, userId }) => {
+    try {
+      const { room, player } = roomManager.joinRoom(roomCode, socket.id, nickname, avatar, userId);
       socket.join(room.code);
 
       // Confirm to player
