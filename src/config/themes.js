@@ -38,6 +38,20 @@ const THEMES = [
     playlistId: '1743878062'
   },
   {
+    id: '80s-fr',
+    name: 'Années 80 FR',
+    icon: '🥖',
+    description: 'Goldman, Balavoine, France Gall, Indochine, Début de Soirée...',
+    playlistId: '7559091362'
+  },
+  {
+    id: '2000s-fr',
+    name: 'Années 2000 FR',
+    icon: '📼',
+    description: 'Kyo, Diam\'s, K-Maro, Tragédie, Jenifer, Calogero, Sinik...',
+    playlistId: '6647218664'
+  },
+  {
     id: 'pop-hits',
     name: 'Pop & Hits',
     icon: '🔥',

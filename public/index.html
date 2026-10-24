@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Blind-Test — Manette Joueur</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
@@ -22,21 +22,21 @@
     </header>
 
     <!-- 1. VIEW JOIN -->
-    <div id="view-join" class="game-panel" style="padding: 2.25rem 1.6rem; margin: auto 0; text-align: left;">
+    <div id="view-join" class="game-panel" style="padding: 1.6rem 1.25rem; margin: auto 0; text-align: left; width: 100%; box-sizing: border-box;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.65rem; border-bottom: 2px solid var(--border-card);">
         <span style="font-size: 0.85rem; font-weight: 800; color: var(--party-cyan); letter-spacing: 0.05em; text-transform: uppercase;">Manette Joueur</span>
         <span style="font-size: 0.8rem; font-weight: 700; color: var(--party-emerald);">● En ligne</span>
       </div>
 
-      <h1 style="font-size: 2.4rem; font-weight: 900; margin-bottom: 0.25rem; letter-spacing: -0.01em;">
+      <h1 style="font-size: 2.2rem; font-weight: 900; margin-bottom: 0.25rem; letter-spacing: -0.01em;">
         Blind-Test
       </h1>
-      <p style="color: var(--text-muted); font-size: 1rem; font-weight: 600; margin-bottom: 1.75rem;">Entrez le code et choisissez votre avatar</p>
+      <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 600; margin-bottom: 1.5rem;">Entrez le code et choisissez votre avatar</p>
 
-      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+      <div style="display: flex; flex-direction: column; gap: 1.15rem;">
         <div>
           <label style="font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.4rem;">Code du salon</label>
-          <input type="text" id="input-room-code" class="form-input" placeholder="ABCD" maxlength="4" style="text-transform: uppercase; font-family: var(--font-mono); font-size: 2rem; text-align: center; letter-spacing: 8px; font-weight: 800; color: #ffffff;">
+          <input type="text" id="input-room-code" class="form-input" placeholder="ABCD" maxlength="4" style="text-transform: uppercase; font-family: var(--font-mono); font-size: 1.75rem; text-align: center; letter-spacing: 6px; font-weight: 800; color: #ffffff; width: 100%; box-sizing: border-box;">
         </div>
 
         <div>

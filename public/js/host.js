@@ -62,6 +62,25 @@ function switchView(viewName) {
   if (views[viewName]) {
     views[viewName].classList.add('active');
   }
+
+  const quitBtn = document.getElementById('host-quit-btn');
+  if (quitBtn) {
+    if (viewName === 'round' || viewName === 'reveal') {
+      quitBtn.style.display = 'inline-flex';
+    } else {
+      quitBtn.style.display = 'none';
+    }
+  }
+}
+
+// Host Quits mid-game
+const hostQuitBtn = document.getElementById('host-quit-btn');
+if (hostQuitBtn) {
+  hostQuitBtn.addEventListener('click', () => {
+    if (confirm('Voulez-vous vraiment quitter la partie en cours et retourner au salon d\'attente ?')) {
+      socket.emit('host_quit_game');
+    }
+  });
 }
 
 // Volume & Audio control
@@ -447,11 +466,16 @@ document.getElementById('replay-btn').addEventListener('click', () => {
 });
 
 socket.on('back_to_lobby', (data) => {
+  if (roundTimerInterval) {
+    clearInterval(roundTimerInterval);
+    roundTimerInterval = null;
+  }
   if (audioFadeInterval) {
     clearInterval(audioFadeInterval);
     audioFadeInterval = null;
   }
   audioPlayer.pause();
+  audioPlayer.currentTime = 0;
   hideAudioPrompt();
   switchView('lobby');
   updateLobbyPlayers(data.players);

@@ -377,25 +377,13 @@ class RoomManager {
       players: this.getPlayersList(room)
     });
 
-    // If all players have answered, end round immediately
+    // Music continues playing until the round countdown timer reaches 0
     this.checkAllPlayersAnswered(room);
   }
 
   checkAllPlayersAnswered(room) {
+    // Music continues playing until the round timer finishes naturally
     if (!room.currentRound || room.status !== 'playing') return;
-    const answeredCount = room.currentRound.answers.size;
-    const totalPlayers = room.players.size;
-
-    if (totalPlayers > 0 && answeredCount >= totalPlayers) {
-      if (room.roundTimer) {
-        clearTimeout(room.roundTimer);
-        room.roundTimer = null;
-      }
-      // Small pause before revealing for visual satisfaction
-      setTimeout(() => {
-        this.endRound(room);
-      }, 700);
-    }
   }
 
   endRound(room) {

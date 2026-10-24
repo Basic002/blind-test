@@ -274,6 +274,11 @@ socket.on('game_over_player', (data) => {
 
 // Back to lobby
 socket.on('back_to_lobby', () => {
+  if (playerTimerInterval) {
+    clearInterval(playerTimerInterval);
+    playerTimerInterval = null;
+  }
+  hasAnsweredCurrentRound = false;
   switchView('waiting');
   document.getElementById('player-score-badge').textContent = '0 pts';
   document.getElementById('player-streak-badge').style.display = 'none';

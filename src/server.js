@@ -174,6 +174,14 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Host quits ongoing match back to lobby
+  socket.on('host_quit_game', () => {
+    const room = roomManager.getRoomBySocket(socket.id);
+    if (room && room.hostSocketId === socket.id) {
+      roomManager.resetRoomToLobby(room.code);
+    }
+  });
+
   // Handle disconnect
   socket.on('disconnect', () => {
     roomManager.removeSocket(socket.id);
