@@ -78,69 +78,29 @@ function parsePlaylistId(input) {
 }
 
 async function fetchAnimeCatalog() {
-  if (cachedAnimeData && Date.now() - cachedAnimeData.timestamp < CACHE_TTL_MS) {
-    return cachedAnimeData.tracks;
-  }
-
-  const trackPromises = ANIME_CATALOG.map(async (item) => {
-    try {
-      const res = await fetch(`https://api.deezer.com/track/${item.id}`);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (!data.preview) return null;
-
-      return {
-        id: String(item.id),
-        anime: item.anime,
-        title: item.title,
-        fullTitle: `${item.title} (${item.anime})`,
-        artist: item.artist,
-        preview: data.preview,
-        cover: data.album ? (data.album.cover_big || data.album.cover_medium) : null,
-        isAnime: true
-      };
-    } catch (e) {
-      return null;
-    }
-  });
-
-  const resolved = await Promise.all(trackPromises);
-  const tracks = resolved.filter(Boolean);
-  cachedAnimeData = { tracks, timestamp: Date.now() };
-  return tracks;
+  if (cachedAnimeData) return cachedAnimeData;
+  cachedAnimeData = ANIME_CATALOG.map(item => ({
+    id: String(item.id),
+    anime: item.anime,
+    title: item.title,
+    fullTitle: `${item.title} (${item.anime})`,
+    artist: item.artist,
+    isAnime: true
+  }));
+  return cachedAnimeData;
 }
 
 async function fetchDisneyCatalog() {
-  if (cachedDisneyData && Date.now() - cachedDisneyData.timestamp < CACHE_TTL_MS) {
-    return cachedDisneyData.tracks;
-  }
-
-  const trackPromises = DISNEY_CATALOG.map(async (item) => {
-    try {
-      const res = await fetch(`https://api.deezer.com/track/${item.id}`);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (!data.preview) return null;
-
-      return {
-        id: String(item.id),
-        disney: item.disney,
-        title: item.title,
-        fullTitle: `${item.title} (${item.disney})`,
-        artist: item.artist,
-        preview: data.preview,
-        cover: data.album ? (data.album.cover_big || data.album.cover_medium) : null,
-        isDisney: true
-      };
-    } catch (e) {
-      return null;
-    }
-  });
-
-  const resolved = await Promise.all(trackPromises);
-  const tracks = resolved.filter(Boolean);
-  cachedDisneyData = { tracks, timestamp: Date.now() };
-  return tracks;
+  if (cachedDisneyData) return cachedDisneyData;
+  cachedDisneyData = DISNEY_CATALOG.map(item => ({
+    id: String(item.id),
+    disney: item.disney,
+    title: item.title,
+    fullTitle: `${item.title} (${item.disney})`,
+    artist: item.artist,
+    isDisney: true
+  }));
+  return cachedDisneyData;
 }
 
 const RAP_FR_PLAYLISTS = [

@@ -5,6 +5,20 @@ const USERNAME_REGEX = /^[\p{L}\p{N}_\- ]{2,16}$/u;
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
+const FALLBACK_DISNEY_FILMS = [
+  'Le Roi Lion', 'La Reine des Neiges', 'Aladdin', 'Mulan', 'Tarzan',
+  'Vaiana', 'La Belle et la Bête', 'Hercule', 'La Petite Sirène', 'Pocahontas',
+  'Le Livre de la Jungle', 'Les Aristochats', 'Raiponce', 'Encanto', 'Coco',
+  'Toy Story', 'Ratatouille', 'Cendrillon', 'Pinocchio', 'Zootopie'
+];
+
+const FALLBACK_ANIMES = [
+  'Naruto', 'L\'Attaque des Titans', 'One Piece', 'Demon Slayer', 'Dragon Ball Z',
+  'Death Note', 'Tokyo Ghoul', 'Fullmetal Alchemist', 'Hunter x Hunter', 'My Hero Academia',
+  'Chainsaw Man', 'Bleach', 'Neon Genesis Evangelion', 'Sword Art Online', 'Spy x Family',
+  'Fairy Tail', 'Cowboy Bebop', 'Code Geass', 'Haikyuu!!', 'JoJo\'s Bizarre Adventure'
+];
+
 function generateRoomCode() {
   let code = '';
   for (let i = 0; i < 4; i++) {
@@ -49,6 +63,8 @@ class RoomManager {
       players: new Map(),
       tracksPool: [],
       gameTracks: [],
+      playedTrackIds: new Set(),
+      lastThemeId: 'disney',
       currentRoundIndex: 0,
       currentRound: null,
       roundTimer: null
@@ -209,7 +225,22 @@ class RoomManager {
 
     const totalRounds = Math.min(room.settings.totalRounds, tracks.length);
     room.settings.totalRounds = totalRounds;
-    room.gameTracks = shuffleArray(tracks).slice(0, totalRounds);
+
+    if (!room.playedTrackIds || room.lastThemeId !== room.themeId) {
+      room.playedTrackIds = new Set();
+      room.lastThemeId = room.themeId;
+    }
+
+    let availableTracks = room.tracksPool.filter(t => !room.playedTrackIds.has(t.id));
+    if (availableTracks.length < totalRounds) {
+      room.playedTrackIds.clear();
+      availableTracks = room.tracksPool;
+    }
+
+    room.gameTracks = shuffleArray(availableTracks).slice(0, totalRounds);
+    for (const t of room.gameTracks) {
+      room.playedTrackIds.add(t.id);
+    }
     room.currentRoundIndex = 0;
 
     for (const player of room.players.values()) {
@@ -252,6 +283,16 @@ class RoomManager {
         }
       }
 
+      if (disneyDistractors.length < 3) {
+        for (const fallback of FALLBACK_DISNEY_FILMS) {
+          if (!chosenDisney.has(fallback.toLowerCase())) {
+            chosenDisney.add(fallback.toLowerCase());
+            disneyDistractors.push({ id: `fb_disney_${disneyDistractors.length}`, disney: fallback });
+            if (disneyDistractors.length === 3) break;
+          }
+        }
+      }
+
       rawOptions = [
         { id: currentTrack.id, title: currentTrack.disney, artist: 'Film Disney' },
         ...disneyDistractors.map(d => ({ id: d.id, title: d.disney, artist: 'Film Disney' }))
@@ -265,6 +306,16 @@ class RoomManager {
           chosenAnimes.add(t.anime.toLowerCase());
           animeDistractors.push(t);
           if (animeDistractors.length === 3) break;
+        }
+      }
+
+      if (animeDistractors.length < 3) {
+        for (const fallback of FALLBACK_ANIMES) {
+          if (!chosenAnimes.has(fallback.toLowerCase())) {
+            chosenAnimes.add(fallback.toLowerCase());
+            animeDistractors.push({ id: `fb_anime_${animeDistractors.length}`, anime: fallback });
+            if (animeDistractors.length === 3) break;
+          }
         }
       }
 
