@@ -12,6 +12,7 @@ const { LEVELS } = require('./config/levels');
 const RoomManager = require('./services/roomManager');
 const accountManager = require('./services/accountManager');
 const { authLimiter, registerLimiter } = require('./middleware/rateLimiter');
+const { getFreshTrackPreview } = require('./services/deezerService');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,16 +22,13 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Helper to determine the best local LAN IP for smartphones on the same Wi-Fi
 function getLocalIp() {
   const nets = os.networkInterfaces();
   const candidates = [];
 
   for (const name of Object.keys(nets)) {
     for (const net of nets[name]) {
-      // IPv4 and not 127.0.0.1
       if (net.family === 'IPv4' && !net.internal) {
-        // Prefer Wi-Fi or Ethernet
         const isWiFi = /wi-?fi|wlan/i.test(name);
         const isEthernet = /ethernet|eth/i.test(name);
         candidates.push({ address: net.address, priority: isWiFi ? 3 : isEthernet ? 2 : 1 });
@@ -44,7 +42,6 @@ function getLocalIp() {
 
 const localIp = getLocalIp();
 
-// Security Headers Middleware
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -53,12 +50,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware & static files
 app.use(cors());
-app.use(express.json({ limit: '10kb' })); // Mitigate body payload DoS attacks
+app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, '../public')));
 
-// API Routes
 app.get('/api/themes', (req, res) => {
   res.json({ themes: THEMES });
 });
@@ -102,6 +97,22 @@ app.get('/api/profile/:userId', (req, res) => {
   res.json({ user, achievements });
 });
 
+app.get('/api/audio-preview/:trackId', async (req, res) => {
+  try {
+    const trackId = req.params.trackId;
+    if (!trackId || !/^\d+$/.test(trackId)) {
+      return res.status(400).send('Identifiant de piste invalide');
+    }
+    const previewUrl = await getFreshTrackPreview(trackId);
+    if (!previewUrl) {
+      return res.status(404).send('Extrait introuvable');
+    }
+    res.redirect(302, previewUrl);
+  } catch (err) {
+    res.status(500).send('Erreur lors de la récupération de l\'extrait audio');
+  }
+});
+
 app.get('/api/server-info', (req, res) => {
   res.json({
     ip: localIp,
@@ -110,7 +121,6 @@ app.get('/api/server-info', (req, res) => {
   });
 });
 
-// Explicit routes for easy access
 app.get('/host', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/host.html'));
 });
@@ -119,18 +129,14 @@ app.get('/play', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Initialize Room Manager
 const roomManager = new RoomManager(io);
 
-// Socket.io handlers
 io.on('connection', (socket) => {
-  // Host creates a room
   socket.on('create_room', async () => {
     try {
       const room = roomManager.createRoom(socket.id);
       socket.join(room.code);
 
-      // Join URL for players to scan
       const joinUrl = `http://${localIp}:${PORT}?room=${room.code}`;
       const qrDataUrl = await QRCode.toDataURL(joinUrl, {
         margin: 2,
@@ -154,7 +160,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Host updates settings (theme, rounds, duration)
   socket.on('update_settings', (settings) => {
     try {
       const room = roomManager.getRoomBySocket(socket.id);
@@ -171,7 +176,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Auth & Account handlers via Socket.IO
   socket.on('auth_register', (data) => {
     try {
       const clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address || 'unknown';
@@ -228,19 +232,16 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Player joins a room
   socket.on('join_room', ({ roomCode, nickname, avatar, userId }) => {
     try {
       const { room, player } = roomManager.joinRoom(roomCode, socket.id, nickname, avatar, userId);
       socket.join(room.code);
 
-      // Confirm to player
       socket.emit('join_success', {
         roomCode: room.code,
         player
       });
 
-      // Notify host and all players in the room
       io.to(room.hostSocketId).emit('player_joined', {
         player,
         players: roomManager.getPlayersList(room)
@@ -250,7 +251,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Host starts the game
   socket.on('start_game', async () => {
     try {
       const room = roomManager.getRoomBySocket(socket.id);
@@ -263,7 +263,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Player submits an answer
   socket.on('submit_answer', ({ optionId, clientTimestamp }) => {
     try {
       const room = roomManager.getRoomBySocket(socket.id);
@@ -275,7 +274,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Host restarts game back to lobby
   socket.on('restart_to_lobby', () => {
     const room = roomManager.getRoomBySocket(socket.id);
     if (room && room.hostSocketId === socket.id) {
@@ -283,7 +281,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Host quits ongoing match back to lobby
   socket.on('host_quit_game', () => {
     const room = roomManager.getRoomBySocket(socket.id);
     if (room && room.hostSocketId === socket.id) {
@@ -291,7 +288,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle disconnect
   socket.on('disconnect', () => {
     roomManager.removeSocket(socket.id);
   });

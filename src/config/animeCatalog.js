@@ -1,7 +1,3 @@
-/**
- * Curated and verified Anime Openings Catalog
- * Each entry maps the exact Anime Name to a Deezer track preview
- */
 const ANIME_CATALOG = [
   { anime: 'L\'Attaque des Titans', id: '472698952', title: 'Guren no Yumiya', artist: 'Linked Horizon' },
   { anime: 'L\'Attaque des Titans', id: '2122215167', title: 'Shinzou wo Sasageyo!', artist: 'Linked Horizon' },

@@ -1,16 +1,10 @@
-/**
- * In-memory sliding window rate limiter
- * Protects against brute-force attacks and abuse without external dependencies
- */
-
 class SimpleRateLimiter {
   constructor(windowMs = 60000, maxAttempts = 10, message = 'Trop de requêtes, veuillez réessayer plus tard.') {
     this.windowMs = windowMs;
     this.maxAttempts = maxAttempts;
     this.message = message;
-    this.records = new Map(); // key -> [timestamp, timestamp, ...]
+    this.records = new Map();
 
-    // Periodic cleanup of expired entries every 2 minutes
     this.cleanupTimer = setInterval(() => {
       this.cleanup();
     }, 120000);
@@ -65,14 +59,12 @@ class SimpleRateLimiter {
   }
 }
 
-// 10 login attempts per 5 minutes per IP
 const authLimiter = new SimpleRateLimiter(
   5 * 60 * 1000,
   10,
   'Trop de tentatives de connexion. Veuillez patienter 5 minutes avant de réessayer.'
 );
 
-// 5 registrations per 10 minutes per IP
 const registerLimiter = new SimpleRateLimiter(
   10 * 60 * 1000,
   5,

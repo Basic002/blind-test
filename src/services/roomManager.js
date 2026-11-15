@@ -1,10 +1,8 @@
 const { getTracksForTheme } = require('./deezerService');
 const accountManager = require('./accountManager');
 
-// Strict nickname validation: 2 to 16 alphanumeric characters, accents, spaces, hyphens, and underscores
 const USERNAME_REGEX = /^[\p{L}\p{N}_\- ]{2,16}$/u;
 
-// Allowed characters for room codes (no O/0, I/1 to avoid confusion)
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 function generateRoomCode() {
@@ -27,8 +25,8 @@ function shuffleArray(array) {
 class RoomManager {
   constructor(io) {
     this.io = io;
-    this.rooms = new Map(); // roomCode -> roomData
-    this.socketToRoom = new Map(); // socketId -> roomCode
+    this.rooms = new Map();
+    this.socketToRoom = new Map();
   }
 
   createRoom(hostSocketId) {
@@ -40,15 +38,15 @@ class RoomManager {
     const room = {
       code: roomCode,
       hostSocketId,
-      status: 'lobby', // 'lobby' | 'playing' | 'round_result' | 'game_over'
+      status: 'lobby',
       themeId: 'disney',
       customPlaylistId: null,
       settings: {
         totalRounds: 10,
-        roundDuration: 25, // seconds
-        revealDuration: 6 // seconds
+        roundDuration: 25,
+        revealDuration: 6
       },
-      players: new Map(), // socketId -> player
+      players: new Map(),
       tracksPool: [],
       gameTracks: [],
       currentRoundIndex: 0,
@@ -81,7 +79,6 @@ class RoomManager {
       throw new Error('La partie a déjà commencé dans ce salon.');
     }
 
-    // Check nickname length, characters & uniqueness in room
     const rawNick = typeof nickname === 'string' ? nickname : 'Joueur';
     const cleanNick = rawNick.trim().substring(0, 16);
     if (!cleanNick || cleanNick.length < 2 || cleanNick.length > 16) {
@@ -140,15 +137,13 @@ class RoomManager {
     const roomCode = this.socketToRoom.get(socketId);
     if (!roomCode) return null;
 
-    this.socketToRoom.delete(socketId);
     const room = this.rooms.get(roomCode);
+    this.socketToRoom.delete(socketId);
     if (!room) return null;
 
-    // If host leaves
     if (room.hostSocketId === socketId) {
       if (room.roundTimer) clearTimeout(room.roundTimer);
       this.io.to(room.code).emit('room_closed', { message: 'L\'hôte a quitté la partie.' });
-      // Clean up players map
       for (const pId of room.players.keys()) {
         this.socketToRoom.delete(pId);
       }
@@ -156,7 +151,6 @@ class RoomManager {
       return { type: 'host_left', roomCode };
     }
 
-    // If player leaves
     if (room.players.has(socketId)) {
       const player = room.players.get(socketId);
       room.players.delete(socketId);
@@ -167,7 +161,6 @@ class RoomManager {
         players: this.getPlayersList(room)
       });
 
-      // If playing and this was the last pending answer
       if (room.status === 'playing') {
         this.checkAllPlayersAnswered(room);
       }
@@ -211,17 +204,14 @@ class RoomManager {
     if (!room) throw new Error('Salon introuvable');
     if (room.players.size === 0) throw new Error('Il faut au moins 1 joueur pour lancer !');
 
-    // Load tracks from Deezer
     const tracks = await getTracksForTheme(room.themeId, room.customPlaylistId);
     room.tracksPool = tracks;
 
-    // Pick unique tracks for game
     const totalRounds = Math.min(room.settings.totalRounds, tracks.length);
     room.settings.totalRounds = totalRounds;
     room.gameTracks = shuffleArray(tracks).slice(0, totalRounds);
     room.currentRoundIndex = 0;
 
-    // Reset scores
     for (const player of room.players.values()) {
       player.score = 0;
       player.streak = 0;
@@ -251,7 +241,6 @@ class RoomManager {
     let rawOptions = [];
 
     if (isDisney && currentTrack.disney) {
-      // Pick 3 distractors with UNIQUE Disney movie names
       const chosenDisney = new Set([currentTrack.disney.toLowerCase()]);
       const disneyDistractors = [];
 
@@ -268,7 +257,6 @@ class RoomManager {
         ...disneyDistractors.map(d => ({ id: d.id, title: d.disney, artist: 'Film Disney' }))
       ];
     } else if (isAnime && currentTrack.anime) {
-      // Pick 3 distractors with UNIQUE anime names
       const chosenAnimes = new Set([currentTrack.anime.toLowerCase()]);
       const animeDistractors = [];
 
@@ -285,7 +273,6 @@ class RoomManager {
         ...animeDistractors.map(d => ({ id: d.id, title: d.anime, artist: 'Animé' }))
       ];
     } else {
-      // Pick 3 distractors from the remaining pool with unique title + artist
       const currentKey = `${(currentTrack.title || '').toLowerCase()}:::${(currentTrack.artist || '').toLowerCase()}`;
       const chosenKeys = new Set([currentKey]);
       const distractors = [];
@@ -308,7 +295,6 @@ class RoomManager {
 
     const shuffledOptions = shuffleArray(rawOptions);
 
-    // Reset player round answers
     for (const player of room.players.values()) {
       player.hasAnswered = false;
       player.lastAnswer = null;
@@ -330,18 +316,17 @@ class RoomManager {
 
     room.status = 'playing';
 
-    // Send audio & display info to Host (TV)
     this.io.to(room.hostSocketId).emit('round_start_host', {
       roundIndex: room.currentRoundIndex + 1,
       totalRounds: room.settings.totalRounds,
-      audioPreview: currentTrack.preview,
+      audioPreview: `/api/audio-preview/${currentTrack.id}`,
+      fallbackPreview: currentTrack.preview,
       isAnime,
       isDisney,
       duration,
       players: this.getPlayersList(room)
     });
 
-    // Send ONLY choices to smartphones (never the audio or the solution!)
     for (const [socketId] of room.players) {
       this.io.to(socketId).emit('round_start_player', {
         roundIndex: room.currentRoundIndex + 1,
@@ -359,10 +344,9 @@ class RoomManager {
       });
     }
 
-    // Set server timeout for round end
     room.roundTimer = setTimeout(() => {
       this.endRound(room);
-    }, duration * 1000 + 500); // +500ms safety margin for network
+    }, duration * 1000 + 500);
   }
 
   submitAnswer(roomCode, socketId, optionId, clientTimestamp) {
@@ -379,12 +363,10 @@ class RoomManager {
 
     let pointsEarned = 0;
     if (isCorrect) {
-      // Base formula: up to 1000 points based on speed
       const totalTimeMs = round.duration * 1000;
       const speedFactor = Math.max(0, 1 - (responseTimeMs / totalTimeMs));
       const basePoints = Math.round(500 + (500 * speedFactor));
       
-      // Streak bonus: +50 per streak level up to +200
       const streakBonus = Math.min(200, player.streak * 50);
       pointsEarned = basePoints + streakBonus;
 
@@ -405,7 +387,6 @@ class RoomManager {
 
     round.answers.set(socketId, player.lastAnswer);
 
-    // If player has a registered account, track progression and check achievements
     let roundProgression = null;
     if (player.userId) {
       roundProgression = accountManager.recordRoundAnswer(player.userId, {
@@ -421,13 +402,11 @@ class RoomManager {
       }
     }
 
-    // Notify player that answer was registered
     this.io.to(socketId).emit('answer_received', {
       hasAnswered: true,
       progression: roundProgression
     });
 
-    // Notify host that a player answered (shows count or checkmark on TV)
     this.io.to(room.hostSocketId).emit('player_answered', {
       playerId: socketId,
       answeredCount: round.answers.size,
@@ -435,12 +414,10 @@ class RoomManager {
       players: this.getPlayersList(room)
     });
 
-    // Music continues playing until the round countdown timer reaches 0
     this.checkAllPlayersAnswered(room);
   }
 
   checkAllPlayersAnswered(room) {
-    // Music continues playing until the round timer finishes naturally
     if (!room.currentRound || room.status !== 'playing') return;
   }
 
@@ -456,7 +433,6 @@ class RoomManager {
 
     const leaderboard = this.getPlayersList(room);
 
-    // Notify host with full reveal (cover, track name, artist, anime, disney, leaderboard)
     this.io.to(room.hostSocketId).emit('round_ended_host', {
       track: {
         id: correctTrack.id,
@@ -473,7 +449,6 @@ class RoomManager {
       revealDuration: room.settings.revealDuration
     });
 
-    // Notify each player individually with their score & whether they got it right
     for (const [socketId, player] of room.players) {
       const answer = player.lastAnswer || { isCorrect: false, pointsEarned: 0 };
       const rank = leaderboard.findIndex(p => p.id === socketId) + 1;
@@ -495,7 +470,6 @@ class RoomManager {
       });
     }
 
-    // Schedule next round or game over
     room.roundTimer = setTimeout(() => {
       room.currentRoundIndex += 1;
       if (room.currentRoundIndex >= room.settings.totalRounds) {

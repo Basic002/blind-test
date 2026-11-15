@@ -7,14 +7,13 @@ const { ACHIEVEMENTS } = require('../config/achievements');
 const DATA_DIR = path.join(__dirname, '../../data');
 const ACCOUNTS_FILE = path.join(DATA_DIR, 'accounts.json');
 
-// Strict username validation: 2 to 16 alphanumeric characters, accents, spaces, hyphens, and underscores
 const USERNAME_REGEX = /^[\p{L}\p{N}_\- ]{2,16}$/u;
 
 class AccountManager {
   constructor() {
-    this.accounts = new Map(); // id -> user
-    this.usernameIndex = new Map(); // lowercase username -> id
-    this.sessions = new Map(); // token -> id
+    this.accounts = new Map();
+    this.usernameIndex = new Map();
+    this.sessions = new Map();
     this.initStorage();
   }
 
@@ -220,15 +219,12 @@ class AccountManager {
     return this.sanitizeUser(user);
   }
 
-  /**
-   * Check and unlock achievements
-   */
   checkAchievements(user, context = {}) {
     const newlyUnlocked = [];
     if (!user.achievements) user.achievements = {};
 
     for (const ach of ACHIEVEMENTS) {
-      if (user.achievements[ach.id]) continue; // already unlocked
+      if (user.achievements[ach.id]) continue;
 
       let unlocked = false;
       try {
@@ -241,7 +237,6 @@ class AccountManager {
         user.achievements[ach.id] = {
           unlockedAt: Date.now()
         };
-        // Award achievement XP bonus
         user.progression.xp = (user.progression.xp || 0) + ach.xpReward;
         newlyUnlocked.push({
           id: ach.id,
@@ -253,7 +248,6 @@ class AccountManager {
       }
     }
 
-    // Update level if XP changed
     const levelInfo = getLevelInfo(user.progression.xp);
     user.progression.level = levelInfo.level;
     user.progression.title = levelInfo.title;
@@ -261,9 +255,6 @@ class AccountManager {
     return newlyUnlocked;
   }
 
-  /**
-   * Record a single round answer for a user
-   */
   recordRoundAnswer(userId, { isCorrect, responseTimeMs, streak, themeId }) {
     const user = this.accounts.get(userId);
     if (!user) return null;
@@ -282,7 +273,6 @@ class AccountManager {
         }
       }
 
-      // Update theme stats
       if (themeId) {
         if (!user.stats.themeStats[themeId]) {
           user.stats.themeStats[themeId] = { correct: 0, total: 0 };
@@ -298,22 +288,20 @@ class AccountManager {
       user.stats.themeStats[themeId].total += 1;
     }
 
-    // Calculate XP for this round
     let xpGained = 0;
     if (isCorrect) {
-      xpGained += 25; // Base XP for correct answer
+      xpGained += 25;
       if (responseTimeMs && responseTimeMs <= 3000) {
-        xpGained += 15; // Speed bonus
+        xpGained += 15;
       }
       if (streak && streak >= 3) {
-        xpGained += 20; // Streak milestone
+        xpGained += 20;
       }
     }
 
     const prevLevel = user.progression.level || 1;
     user.progression.xp = (user.progression.xp || 0) + xpGained;
 
-    // Check round achievements
     const newlyUnlocked = this.checkAchievements(user, {
       isCorrect,
       responseTimeMs,
@@ -336,9 +324,6 @@ class AccountManager {
     };
   }
 
-  /**
-   * Record end of match for a user
-   */
   recordGameEnd(userId, { score, rank, totalPlayers, roundsTotal, correctCount, themeId }) {
     const user = this.accounts.get(userId);
     if (!user) return null;
@@ -355,19 +340,16 @@ class AccountManager {
       user.stats.podiums = (user.stats.podiums || 0) + 1;
     }
 
-    // End-of-game XP reward
-    let endXp = 50; // Game participation
+    let endXp = 50;
     if (rank === 1) endXp += 250;
     else if (rank === 2) endXp += 150;
     else if (rank === 3) endXp += 80;
 
-    // Score bonus: +10 XP per 1000 points
     endXp += Math.floor((score || 0) / 1000) * 10;
 
     const prevLevel = user.progression.level || 1;
     user.progression.xp = (user.progression.xp || 0) + endXp;
 
-    // Check game end achievements
     const newlyUnlocked = this.checkAchievements(user, {
       isGameEnd: true,
       score,
@@ -394,9 +376,6 @@ class AccountManager {
     };
   }
 
-  /**
-   * Get full achievements list with user's unlocked state
-   */
   getAchievementsForUser(userId) {
     const user = this.accounts.get(userId);
     const userAchs = user?.achievements || {};
@@ -414,7 +393,6 @@ class AccountManager {
   }
 }
 
-// Singleton instance
 const accountManager = new AccountManager();
 
 module.exports = accountManager;

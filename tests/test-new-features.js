@@ -9,7 +9,6 @@ async function runTests() {
   console.log('🧪 TEST DES NOUVELLES FONCTIONNALITÉS DU BLIND TEST');
   console.log('========================================================\n');
 
-  // 1. Vérification des nouvelles catégories dans THEMES
   console.log('1. Vérification des catégories 80s FR et 2000s FR...');
   const theme80FR = THEMES.find(t => t.id === '80s-fr');
   const theme2000FR = THEMES.find(t => t.id === '2000s-fr');
@@ -19,7 +18,6 @@ async function runTests() {
   console.log(`   ✅ Thème 80s-fr trouvé : "${theme80FR.name}" (${theme80FR.playlistId})`);
   console.log(`   ✅ Thème 2000s-fr trouvé : "${theme2000FR.name}" (${theme2000FR.playlistId})`);
 
-  // 2. Vérification de l'expansion des catalogues Anime et Disney
   console.log('\n2. Vérification des bases de données Anime et Disney...');
   console.log(`   Catalog Anime : ${ANIME_CATALOG.length} morceaux (attendu > 50)`);
   console.log(`   Catalog Disney : ${DISNEY_CATALOG.length} morceaux (attendu > 50)`);
@@ -27,14 +25,12 @@ async function runTests() {
   if (DISNEY_CATALOG.length < 50) throw new Error('Catalogue Disney insuffisant');
   console.log('   ✅ Catalogues agrandis avec succès !');
 
-  // 3. Chargement réel des playlists 80s FR et 2000s FR
   console.log('\n3. Chargement des morceaux 80s FR et 2000s FR...');
   const tracks80 = await getTracksForTheme('80s-fr');
   const tracks2000 = await getTracksForTheme('2000s-fr');
   console.log(`   ✅ 80s FR : ${tracks80.length} morceaux récupérés.`);
   console.log(`   ✅ 2000s FR : ${tracks2000.length} morceaux récupérés.`);
 
-  // 4. Test du serveur Socket.IO : Quitter en pleine partie (Hôte) & Musique jusqu'à la fin du timer
   console.log('\n4. Démarrage de la simulation serveur...');
   const PORT = process.env.PORT || 3000;
   const http = require('http');
@@ -66,7 +62,6 @@ async function runTests() {
   await new Promise(r => p1.on('join_success', r));
   console.log('   ✅ Joueur Testeur connecté');
 
-  // Test 4A: Musique qui continue jusqu'à la fin du timer (même si tout le monde a répondu)
   console.log('\n5. Test : La musique continue quand tout le monde a répondu...');
   host.emit('update_settings', { themeId: '80s-fr', totalRounds: 2, roundDuration: 3, revealDuration: 2 });
   host.emit('start_game');
@@ -77,12 +72,10 @@ async function runTests() {
   ]);
 
   const answerStart = Date.now();
-  // Player answers immediately (after 100ms)
   setTimeout(() => {
     p1.emit('submit_answer', { optionId: p1Round1.options[0].id, clientTimestamp: Date.now() });
   }, 100);
 
-  // Measure time until round_ended_host is emitted
   const hostRevealData = await new Promise(r => host.once('round_ended_host', r));
   const elapsed = Date.now() - answerStart;
   console.log(`   Temps écoulé avant la fin de manche : ${elapsed}ms (durée configurée : 3000ms)`);
@@ -91,9 +84,7 @@ async function runTests() {
   }
   console.log('   ✅ La musique continue jusqu\'à la fin du chrono même avec toutes les réponses soumises !');
 
-  // Test 4B: Host quitte en pleine partie
   console.log('\n6. Test : L\'hôte quitte en pleine partie...');
-  // Wait for round 2 to start
   await new Promise(r => host.once('round_start_host', r));
   console.log('   Manche 2 en cours...');
 
@@ -102,7 +93,6 @@ async function runTests() {
     new Promise(r => p1.once('back_to_lobby', r))
   ]);
 
-  // Host emits host_quit_game
   host.emit('host_quit_game');
 
   await backToLobbyPromise;

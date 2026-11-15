@@ -19,7 +19,6 @@ async function runTest() {
     console.log(`   (Serveur déjà actif sur ${baseUrl})`);
   }
 
-  // 1. Host creates room
   console.log('1. Connexion de l\'écran Hôte...');
   const host = io(baseUrl);
   await new Promise(resolve => host.on('connect', resolve));
@@ -32,7 +31,6 @@ async function runTest() {
   console.log(`   URL Joueur générée : ${roomData.joinUrl}`);
   console.log(`   QR Code généré avec succès (${roomData.qrDataUrl.substring(0, 30)}...)`);
 
-  // 2. Connect Players
   console.log('\n2. Connexion des joueurs smartphones...');
   const p1 = io(baseUrl);
   await new Promise(r => p1.on('connect', r));
@@ -46,10 +44,8 @@ async function runTest() {
   const p2Join = await new Promise(r => p2.on('join_success', r));
   console.log(`✅ Joueur 2 rejoint : ${p2Join.player.nickname} (${p2Join.player.avatar})`);
 
-  // 3. Settings: 1 fast round
   host.emit('update_settings', { themeId: 'disney', totalRounds: 1, roundDuration: 3, revealDuration: 1 });
 
-  // 4. Start game
   console.log('\n3. Lancement de la partie par l\'Hôte...');
   host.emit('start_game');
 
@@ -63,14 +59,10 @@ async function runTest() {
   console.log(`   Hôte : Extrait MP3 reçu (${hostRound.audioPreview ? 'Valide' : 'Manquant'})`);
   console.log(`   Smartphones : 4 choix reçus sans spoil -> [${p1Round.options.map(o => o.title).join(' | ')}]`);
 
-  // 5. Submit answers
   console.log('\n4. Réponse des joueurs...');
-  // P1 picks option 0
   p1.emit('submit_answer', { optionId: p1Round.options[0].id, clientTimestamp: Date.now() });
-  // P2 picks option 1
   p2.emit('submit_answer', { optionId: p1Round.options[1].id, clientTimestamp: Date.now() });
 
-  // 6. Round reveal
   const revealData = await new Promise(r => host.on('round_ended_host', r));
   console.log(`✅ Fin de manche révélée !`);
   console.log(`   Morceau : "${revealData.track.title}" par ${revealData.track.artist}`);
@@ -79,7 +71,6 @@ async function runTest() {
     console.log(`   - ${p.avatar} ${p.nickname}: ${p.score} pts`);
   });
 
-  // 7. Game Over
   const gameOverData = await new Promise(r => host.on('game_over_host', r));
   console.log('\n5. Fin de partie et Podium !');
   console.log(`   Vainqueur : ${gameOverData.podium[0]?.nickname} (${gameOverData.podium[0]?.score} pts)`);

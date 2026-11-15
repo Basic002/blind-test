@@ -1,7 +1,3 @@
-/**
- * Curated and verified Disney Catalog
- * Each entry maps the exact French Disney Movie Name to a Deezer track preview
- */
 const DISNEY_CATALOG = [
   { disney: 'Le Roi Lion', id: '13277559', title: 'Hakuna Matata', artist: 'Dimitri Rougeul' },
   { disney: 'Le Roi Lion', id: '1040155412', title: 'L’histoire de la vie', artist: 'Debbie Davis' },

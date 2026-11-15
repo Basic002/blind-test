@@ -50,13 +50,14 @@ Application web de Blind-Test multijoueur en temps réel avec **Écran Hôte (TV
 Les joueurs peuvent rejoindre en **mode Invité** express ou créer un **Compte joueur** persistant :
 
 ### Niveaux & Titres Honorifiques
-Accumulez de l'XP à chaque manche et en fin de partie pour gravir les échelons du Niveau 1 au Niveau 15 :
+Accumulez de l'XP à chaque manche et en fin de partie pour monter en niveau sans aucune limite (progression infinie avec titres de prestige) :
 - 🎵 **Niveau 1** : Novice de la Musique
-- 🎧 **Niveau 3** : Oreille Attentive
+- 🎧 **Niveau 3** : Oreille Musicale
 - ⚡ **Niveau 5** : Buzzer Express
-- 💿 **Niveau 7** : Chasseur de Hits
-- 🎷 **Niveau 9** : Maestro des Blind-Tests
-- 👑 **Niveau 15** : Dieu du Blind-Test
+- 🎸 **Niveau 7** : Virtuose du Rythme
+- 🏆 **Niveau 10** : Légende du Blind-Test
+- 🌌 **Niveau 15** : Dieu de la Musique
+- 💫 **Niveau 16+** : Titres et échelons de prestige infinis (Titan Acoustique, Dieu Suprême, Entité Céleste, etc.)
 
 ### Succès & Trophées
 16 succès thématiques déblocables avec récompenses d'XP :
@@ -132,7 +133,7 @@ blind-test/
 │   ├── server.js              # Serveur Express, WebSocket, en-têtes de sécurité et routes
 │   ├── config/
 │   │   ├── themes.js          # Configuration des thèmes & playlists Deezer
-│   │   ├── levels.js          # Courbe d'XP, titres et badges des niveaux 1 à 15
+│   │   ├── levels.js          # Courbe d'XP, titres et badges sans limite de niveau
 │   │   ├── achievements.js    # Définition des 16 succès et récompenses
 │   │   ├── animeCatalog.js    # Catalogue et associations des génériques d'animés
 │   │   └── disneyCatalog.js   # Catalogue et associations des films Disney

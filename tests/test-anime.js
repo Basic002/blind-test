@@ -24,7 +24,6 @@ async function testAnimeMode() {
   await new Promise(r => p1.on('join_success', r));
   console.log('✅ Joueur Otaku connecté');
 
-  // Select anime theme and 1 round
   host.emit('update_settings', { themeId: 'anime', totalRounds: 1, roundDuration: 3, revealDuration: 1 });
 
   console.log('Lancement du mode Anime...');
@@ -44,12 +43,10 @@ async function testAnimeMode() {
     console.log(`     [${['A','B','C','D'][idx]}] ${opt.title}`);
   });
 
-  // Verify that options are indeed anime names and not random songs
   if (!p1Round.isAnime) {
     throw new Error('isAnime should be true in round_start_player');
   }
 
-  // Submit answer
   p1.emit('submit_answer', { optionId: p1Round.options[0].id, clientTimestamp: Date.now() });
 
   const revealData = await new Promise(r => host.on('round_ended_host', r));

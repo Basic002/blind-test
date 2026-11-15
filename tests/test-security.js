@@ -12,9 +12,6 @@ async function runSecurityAudit() {
 
   let passedChecks = 0;
 
-  // -------------------------------------------------------------------------
-  // 1. VÉRIFICATION GIT & FICHIERS DE DONNÉES
-  // -------------------------------------------------------------------------
   console.log('1. Vérification de l\'exclusion Git (fichiers de données et secrets)...');
 
   try {
@@ -25,7 +22,6 @@ async function runSecurityAudit() {
       throw new Error('.gitignore ne contient pas l\'exclusion du dossier data/');
     }
 
-    // Tester avec git check-ignore
     const testFiles = ['data/accounts.json', 'data/test_dump.json', 'data/users.db', '.env', '.env.local'];
     for (const file of testFiles) {
       const ignored = execSync(`git check-ignore ${file}`, { encoding: 'utf8' }).trim();
@@ -34,12 +30,10 @@ async function runSecurityAudit() {
       }
     }
 
-    // Vérifier que data/.gitkeep est bien conservé
     try {
       execSync('git check-ignore data/.gitkeep', { stdio: 'pipe' });
       throw new Error('data/.gitkeep ne devrait pas être ignoré (whitelist)');
     } catch (e) {
-      // Exit code 1 means NOT ignored, which is expected for whitelisted .gitkeep
     }
 
     console.log('   ✅ Tous les fichiers de données (data/*) et fichiers d\'environnement (.env) sont 100% ignorés par Git.');
@@ -49,9 +43,6 @@ async function runSecurityAudit() {
     throw err;
   }
 
-  // -------------------------------------------------------------------------
-  // 2. VÉRIFICATION DONNÉES PERSONNELLES (ZÉRO PII / PRIVACY-BY-DESIGN)
-  // -------------------------------------------------------------------------
   console.log('\n2. Vérification de l\'absence de collecte de données personnelles (RGPD / Privacy-by-Design)...');
 
   const testUser = 'SafeUser_' + Math.floor(Math.random() * 10000);
@@ -59,7 +50,6 @@ async function runSecurityAudit() {
 
   const rawUser = accountManager.accounts.get(regResult.user.id);
 
-  // Vérifier qu'aucun champ PII n'existe
   const forbiddenFields = ['email', 'mail', 'phone', 'telephone', 'firstName', 'lastName', 'nom', 'prenom', 'birthdate', 'ip', 'address'];
   for (const field of forbiddenFields) {
     if (rawUser[field] !== undefined) {
@@ -67,7 +57,6 @@ async function runSecurityAudit() {
     }
   }
 
-  // Vérifier qu'aucun cookie traceur / analytics n'est injecté dans les fichiers HTML
   const hostHtml = fs.readFileSync(path.join(__dirname, '../public/host.html'), 'utf8');
   const indexHtml = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
   const htmls = [hostHtml, indexHtml];
@@ -82,9 +71,6 @@ async function runSecurityAudit() {
   console.log('   ✅ Aucun traceur tiers, cookie publicitaire ou script analytique présent.');
   passedChecks++;
 
-  // -------------------------------------------------------------------------
-  // 3. SÉCURITÉ DU HASHAGE DES MOTS DE PASSE & ISOLATION DES SECRETS
-  // -------------------------------------------------------------------------
   console.log('\n3. Vérification du hashage des mots de passe (PBKDF2 + Salt)...');
 
   if (!rawUser.passwordHash || rawUser.passwordHash === 'safePass123') {
@@ -95,7 +81,6 @@ async function runSecurityAudit() {
     throw new Error('Le salt cryptographique doit faire au moins 16 caractères hex.');
   }
 
-  // Vérifier que sanitizeUser ne fuite NI le hash, NI le salt, NI les tokens
   const sanitized = accountManager.sanitizeUser(rawUser);
   if (sanitized.passwordHash !== undefined || sanitized.salt !== undefined || sanitized.tokens !== undefined) {
     throw new Error('sanitizeUser fuite des données sensibles (hash, salt ou tokens) !');
@@ -105,9 +90,6 @@ async function runSecurityAudit() {
   console.log('   ✅ Aucun secret (hash, salt, tokens de session) n\'est exposé aux clients.');
   passedChecks++;
 
-  // -------------------------------------------------------------------------
-  // 4. PROTECTION CONTRE LES INJECTIONS ET XSS (SANITIZATION PSEUDO)
-  // -------------------------------------------------------------------------
   console.log('\n4. Vérification de la validation et désinfection des entrées utilisateur...');
 
   const maliciousUsernames = [
@@ -115,8 +97,8 @@ async function runSecurityAudit() {
     'Pseudo"onfocus=',
     'Admin\' OR 1=1--',
     'Test\x00Injection',
-    'A', // Trop court (< 2)
-    'PseudoDePlusDe16CaracteresTropLong' // Trop long (> 16)
+    'A',
+    'PseudoDePlusDe16CaracteresTropLong'
   ];
 
   for (const badNick of maliciousUsernames) {
@@ -131,7 +113,6 @@ async function runSecurityAudit() {
     }
   }
 
-  // Vérification de la limitation de longueur du mot de passe (protection contre DoS CPU)
   try {
     const hugePassword = 'A'.repeat(500);
     accountManager.register('UserNormal', hugePassword, '🦊');
@@ -146,9 +127,6 @@ async function runSecurityAudit() {
   console.log('   ✅ Longueur des mots de passe strictement encadrée (protection DoS CPU).');
   passedChecks++;
 
-  // -------------------------------------------------------------------------
-  // 5. TEST DU RATE LIMITER (ANTI BRUTE-FORCE)
-  // -------------------------------------------------------------------------
   console.log('\n5. Test du limiteur de débit (Rate Limiter anti force-brute)...');
 
   const testLimiter = new SimpleRateLimiter(5000, 3, 'Trop de tentatives');
@@ -170,9 +148,6 @@ async function runSecurityAudit() {
   console.log(`   ✅ Blocage effectif après 3 tentatives (Retry-After: ${try4.retryAfterSeconds}s).`);
   passedChecks++;
 
-  // -------------------------------------------------------------------------
-  // 6. TEST DES EN-TÊTES DE SÉCURITÉ HTTP & LIMITATION DE TAILLE JSON
-  // -------------------------------------------------------------------------
   console.log('\n6. Test des en-têtes HTTP et de la protection DoS mémoire (limite payload 10kb)...');
 
   const TEST_SEC_PORT = 3989;
@@ -180,7 +155,6 @@ async function runSecurityAudit() {
   require('../src/server.js');
   await new Promise(r => setTimeout(r, 600));
 
-  // Vérifier en-têtes HTTP
   await new Promise((resolve, reject) => {
     http.get(`http://localhost:${TEST_SEC_PORT}/api/themes`, (res) => {
       try {
@@ -200,12 +174,11 @@ async function runSecurityAudit() {
     }).on('error', reject);
   });
 
-  // Vérifier rejet payload trop volumineux (> 10kb)
   await new Promise((resolve, reject) => {
     const hugePayload = JSON.stringify({
       username: 'TestUser',
       password: 'password123',
-      junk: 'X'.repeat(15 * 1024) // 15 KB > 10 KB limit
+      junk: 'X'.repeat(15 * 1024)
     });
 
     const req = http.request({

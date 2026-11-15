@@ -1,26 +1,19 @@
-/* ==========================================================================
-   BLIND-TEST // PARTY GAME MODERN & CLASSE
-   Inspiré de l'énergie festive et tactile de Gartic Phone & Jackbox Party
-   - Boutons physiques 3D avec feedback tactile au clic/toucher (press depth)
-   - Palette chaleureuse : Indigo nuit profond, Jaune soleil, Cyan électrique, Corail
-   - Typographie moderne, ronde et affirmée (Outfit & Plus Jakarta Sans)
-   - Cartes et modules arrondis avec réelle profondeur ludique
-   ========================================================================== */
+
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 :root {
-  /* Typographie Moderne & Chaleureuse */
+  
   --font-party: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Plus Jakarta Sans', var(--font-party), sans-serif;
   --font-mono: "SF Mono", Menlo, Monaco, Consolas, monospace;
 
-  /* Compatibilité scripts */
+  
   --font-game: var(--font-party);
   --font-hud: var(--font-party);
   --font-display: var(--font-party);
 
-  /* Palette Festive & Nocturne (Indigo Profond & Reliefs) */
+  
   --bg-dark: #0a0e24;
   --bg-card: #131938;
   --bg-card-hover: #18224d;
@@ -29,7 +22,7 @@
   --border-card-hover: #3b4d94;
   --depth-shadow: #070a1a;
 
-  /* Couleurs Signatures Festives */
+  
   --party-gold: #ffc21a;
   --party-gold-dark: #b88600;
   --party-gold-glow: rgba(255, 194, 26, 0.4);
@@ -49,7 +42,7 @@
   --party-purple: #a855f7;
   --party-blue: #3b82f6;
 
-  /* Compatibilité scripts */
+  
   --game-gold: var(--party-gold);
   --game-gold-glow: var(--party-gold-glow);
   --game-cyan: var(--party-cyan);
@@ -60,13 +53,13 @@
   --apple-green: var(--party-emerald);
   --accent-lime: var(--party-emerald);
 
-  /* 4 Boutons Manette Tactiles (Rouge, Bleu, Orange, Vert) */
+  
   --btn-a: var(--party-coral);
   --btn-b: var(--party-blue);
   --btn-c: var(--party-orange);
   --btn-d: var(--party-emerald);
 
-  /* Textes & Labels */
+  
   --text-main: #ffffff;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
@@ -74,21 +67,18 @@
   --text-secondary: var(--text-muted);
   --text-tertiary: var(--text-dim);
 
-  /* Rayons arrondis conviviaux */
+  
   --radius-sm: 12px;
   --radius-md: 18px;
   --radius-lg: 24px;
   --radius-full: 9999px;
   --radius-game: var(--radius-lg);
 
-  /* Courbes physiques d'animation */
+  
   --spring-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --spring-bounce: cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
-/* ==========================================================================
-   RESET & FOND DE JEU
-   ========================================================================== */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -117,7 +107,7 @@ body {
   position: relative;
   -webkit-font-smoothing: antialiased;
 
-  /* Texture de salle de jeu conviviale (motif à pois subtil & lueur chaleureuse) */
+  
   background-image: 
     radial-gradient(circle at 50% -10%, rgba(30, 42, 100, 0.65) 0%, transparent 70%),
     radial-gradient(circle at 10% 90%, rgba(255, 194, 26, 0.06) 0%, transparent 40%),
@@ -127,9 +117,6 @@ body {
   background-attachment: fixed;
 }
 
-/* ==========================================================================
-   TYPOGRAPHIE
-   ========================================================================== */
 h1, h2, h3, h4, .game-title {
   font-family: var(--font-party);
   font-weight: 800;
@@ -159,9 +146,6 @@ h3 {
   text-transform: uppercase;
 }
 
-/* ==========================================================================
-   CARTES & CONTENEURS (Tactile 3D Depth)
-   ========================================================================== */
 .game-panel {
   position: relative;
   background: var(--bg-card);
@@ -171,9 +155,6 @@ h3 {
   transition: transform 0.15s var(--spring-ease), box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-/* ==========================================================================
-   HEADER LOBBY (Barre festive supérieure)
-   ========================================================================== */
 .app-header {
   position: sticky;
   top: 0;
@@ -239,9 +220,6 @@ h3 {
   box-shadow: 0 3px 0 var(--depth-shadow);
 }
 
-/* ==========================================================================
-   BOUTONS PHYSIQUES 3D (Tactile Push Buttons)
-   ========================================================================== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -260,7 +238,6 @@ h3 {
   transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
 }
 
-/* Bouton Jaune / Or 3D Signature Gartic Phone */
 .btn-primary {
   background: linear-gradient(180deg, #ffc926 0%, #f59e0b 100%);
   color: #1a1200;
@@ -311,9 +288,6 @@ h3 {
   box-shadow: 0 1px 0 #0e142e;
 }
 
-/* ==========================================================================
-   VUES PRINCIPALES
-   ========================================================================== */
 .view {
   position: relative;
   z-index: 1;
@@ -342,9 +316,6 @@ h3 {
   }
 }
 
-/* ==========================================================================
-   ÉCRAN HÔTE : LOBBY DU JEU
-   ========================================================================== */
 .lobby-grid {
   display: grid;
   grid-template-columns: 420px 1fr;
@@ -379,7 +350,6 @@ h3 {
   margin-bottom: 0.4rem;
 }
 
-/* Badge Code de Salon Style Gartic / Jackbox */
 .room-code-display {
   font-family: var(--font-party);
   font-size: 4.6rem;
@@ -429,9 +399,6 @@ h3 {
   box-shadow: 0 4px 0 var(--depth-shadow);
 }
 
-/* ==========================================================================
-   SÉLECTEUR DE THÈMES (Tuiles de jeu 3D)
-   ========================================================================== */
 .themes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -505,9 +472,6 @@ h3 {
   box-shadow: 0 2px 0 var(--party-coral-dark);
 }
 
-/* ==========================================================================
-   PARAMÈTRES DU JEU (Listes Déroulantes Classiques & Lisibles)
-   ========================================================================== */
 select.form-input,
 .form-select {
   appearance: none;
@@ -553,9 +517,6 @@ select.form-input option:checked,
   color: #111736 !important;
 }
 
-/* ==========================================================================
-   SALON D'ATTENTE JOUEURS
-   ========================================================================== */
 .lobby-players-card {
   padding: 1.75rem 2rem;
   display: flex;
@@ -636,9 +597,6 @@ select.form-input option:checked,
   text-overflow: clip;
 }
 
-/* ==========================================================================
-   ÉCRAN HÔTE : MANCHE EN COURS
-   ========================================================================== */
 .round-container {
   display: flex;
   flex-direction: column;
@@ -685,7 +643,6 @@ select.form-input option:checked,
   box-shadow: 0 4px 0 #1f0b20;
 }
 
-/* Plateau Audio Visualiseur Fête */
 .vinyl-stage {
   position: relative;
   width: 100%;
@@ -714,7 +671,6 @@ select.form-input option:checked,
   letter-spacing: 0.08em;
 }
 
-/* Égaliseur Sonore Festif */
 .visualizer-container {
   display: flex;
   align-items: flex-end;
@@ -748,7 +704,6 @@ select.form-input option:checked,
   100% { height: 85px; transform: scaleY(1); }
 }
 
-/* Barre de Chronomètre */
 .timer-container {
   width: 100%;
   height: 12px;
@@ -795,9 +750,6 @@ select.form-input option:checked,
   box-shadow: 0 4px 0 var(--depth-shadow);
 }
 
-/* ==========================================================================
-   ÉCRAN HÔTE : RÉVÉLATION DU MORCEAU
-   ========================================================================== */
 .reveal-card {
   display: flex;
   align-items: center;
@@ -876,7 +828,6 @@ select.form-input option:checked,
   color: var(--text-muted);
 }
 
-/* Classement de la Manche */
 .leaderboard-list {
   display: flex;
   flex-direction: column;
@@ -934,9 +885,6 @@ select.form-input option:checked,
   color: #ffffff;
 }
 
-/* ==========================================================================
-   MANETTE SMARTPHONE (Boutons Buzzers 3D Tactiles)
-   ========================================================================== */
 .mobile-view {
   display: flex;
   flex-direction: column;
@@ -950,7 +898,6 @@ select.form-input option:checked,
   overflow-x: hidden;
 }
 
-/* Barre de navigation joueur mobile */
 .player-header {
   display: flex;
   justify-content: space-between;
@@ -984,7 +931,6 @@ select.form-input option:checked,
   box-shadow: 0 3px 0 #9a3412;
 }
 
-/* 4 Grands Boutons Buzzers 3D sur Mobile */
 .choices-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -1010,7 +956,6 @@ select.form-input option:checked,
   transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
 }
 
-/* Pression physique tactile sur le bouton */
 .choice-btn:active {
   transform: translateY(4px);
 }
@@ -1057,7 +1002,6 @@ select.form-input option:checked,
   margin-top: 0.2rem;
 }
 
-/* 4 Couleurs Joyeuses et Tactiles (Fraise, Bleu, Orange, Émeraude) */
 .choice-btn-0 {
   background: linear-gradient(180deg, #ff4766 0%, #e11d48 100%);
   border-color: #ffa4b6;
@@ -1094,7 +1038,6 @@ select.form-input option:checked,
   box-shadow: 0 2px 0 #065f46;
 }
 
-/* État sélectionné lumineux */
 .choice-btn.selected {
   border-color: #ffffff !important;
   box-shadow: 0 0 0 4px #ffffff, 0 10px 30px rgba(255, 255, 255, 0.5) !important;
@@ -1106,9 +1049,6 @@ select.form-input option:checked,
   pointer-events: none;
 }
 
-/* ==========================================================================
-   CHAMPS DE FORMULAIRE & AVATARS
-   ========================================================================== */
 .form-input {
   width: 100%;
   box-sizing: border-box;
@@ -1118,7 +1058,7 @@ select.form-input option:checked,
   border: 2px solid #283770;
   color: #ffffff;
   font-family: var(--font-party);
-  font-size: 16px; /* Empêche le zoom automatique sur iOS */
+  font-size: 16px; 
   font-weight: 600;
   outline: none;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -1130,7 +1070,6 @@ select.form-input option:checked,
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
 }
 
-/* Sélecteur d'Avatars Ludique */
 .avatar-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -1198,9 +1137,6 @@ select.form-input option:checked,
   }
 }
 
-/* ==========================================================================
-   PODIUM FINAL (Marches 3D Festives)
-   ========================================================================== */
 .podium-box {
   background: #131938;
   border: 3px solid var(--border-card);
@@ -1229,7 +1165,6 @@ select.form-input option:checked,
   max-width: 100%;
 }
 
-/* Confetti canvas */
 #confetti-canvas {
   position: fixed;
   top: 0;
@@ -1240,7 +1175,6 @@ select.form-input option:checked,
   z-index: 9999;
 }
 
-/* Audio Unmute Alert */
 .audio-unmute-pill {
   position: fixed;
   top: 80px;
@@ -1269,9 +1203,6 @@ select.form-input option:checked,
   100% { transform: translateX(-50%) scale(1); }
 }
 
-/* ==========================================================================
-   SYSTÈME DE NIVEAUX, COMPTES & SUCCÈS
-   ========================================================================== */
 .player-level-badge {
   font-family: var(--font-party);
   font-size: 0.72rem;
@@ -1309,7 +1240,6 @@ select.form-input option:checked,
   box-shadow: 0 1px 0 var(--depth-shadow);
 }
 
-/* Onglets d'authentification */
 .auth-tabs {
   display: flex;
   gap: 0.5rem;
@@ -1340,7 +1270,6 @@ select.form-input option:checked,
   box-shadow: 0 3px 0 var(--depth-shadow);
 }
 
-/* Carte utilisateur connecté */
 .logged-user-banner {
   display: flex;
   align-items: center;
@@ -1352,7 +1281,6 @@ select.form-input option:checked,
   margin-bottom: 1.25rem;
 }
 
-/* Modal Profil & Succès */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1418,7 +1346,6 @@ select.form-input option:checked,
   flex: 1;
 }
 
-/* Carte Héro de Profil */
 .profile-hero-card {
   background: #0d1330;
   border: 2px solid var(--border-card);
@@ -1427,7 +1354,6 @@ select.form-input option:checked,
   box-shadow: 0 4px 0 var(--depth-shadow);
 }
 
-/* Barre de progression XP */
 .xp-bar-container {
   width: 100%;
   height: 10px;
@@ -1445,7 +1371,6 @@ select.form-input option:checked,
   transition: width 0.4s var(--spring-bounce);
 }
 
-/* Grille de stats */
 .profile-stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1479,7 +1404,6 @@ select.form-input option:checked,
   letter-spacing: 0.04em;
 }
 
-/* Liste des Succès */
 .achievements-list {
   display: flex;
   flex-direction: column;
@@ -1554,7 +1478,6 @@ select.form-input option:checked,
   white-space: nowrap;
 }
 
-/* Toast Notifications Flottantes (Succès débloqués & Montée de niveau) */
 .toast-container {
   position: fixed;
   top: 16px;

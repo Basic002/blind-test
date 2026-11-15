@@ -1,12 +1,16 @@
 const { THEMES } = require('../config/themes');
+const { ANIME_CATALOG } = require('../config/animeCatalog');
+const { DISNEY_CATALOG } = require('../config/disneyCatalog');
 
-// In-memory cache for playlists: { [playlistId]: { timestamp, tracks, title } }
 const playlistCache = new Map();
-const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hour
+const trackPreviewCache = new Map();
+const CACHE_TTL_MS = 1000 * 60 * 8;
 
-/**
- * Clean up title to avoid spoiling or making it too long
- */
+let cachedAnimeData = null;
+let cachedDisneyData = null;
+let cachedRapFrData = null;
+let cachedRockData = null;
+
 function cleanTitle(rawTitle) {
   if (!rawTitle) return '';
   return rawTitle
@@ -16,9 +20,6 @@ function cleanTitle(rawTitle) {
     .trim();
 }
 
-/**
- * Fetch tracks from Deezer API for a given playlist ID
- */
 async function fetchPlaylistTracks(playlistId) {
   const cached = playlistCache.get(playlistId);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
@@ -41,11 +42,10 @@ async function fetchPlaylistTracks(playlistId) {
     throw new Error('La playlist ne contient aucun morceau exploitable');
   }
 
-  // Filter only tracks with valid preview 30s audio
   const validTracks = data.tracks.data
     .filter(track => track.preview && track.preview.length > 0)
     .map(track => ({
-      id: track.id,
+      id: String(track.id),
       title: cleanTitle(track.title_short || track.title),
       fullTitle: track.title,
       artist: track.artist ? track.artist.name : 'Inconnu',
@@ -68,29 +68,18 @@ async function fetchPlaylistTracks(playlistId) {
   return result;
 }
 
-/**
- * Parse a Deezer playlist ID from a raw string or URL
- */
 function parsePlaylistId(input) {
   if (!input) return null;
   const str = input.toString().trim();
-  // If it's a URL like https://www.deezer.com/fr/playlist/12345678
   const match = str.match(/playlist\/(\d+)/i);
   if (match) return match[1];
-  // If it's just numbers
   if (/^\d+$/.test(str)) return str;
   return null;
 }
 
-const { ANIME_CATALOG } = require('../config/animeCatalog');
-const { DISNEY_CATALOG } = require('../config/disneyCatalog');
-
-let cachedAnimeTracks = null;
-let cachedDisneyTracks = null;
-
 async function fetchAnimeCatalog() {
-  if (cachedAnimeTracks && cachedAnimeTracks.length > 0) {
-    return cachedAnimeTracks;
+  if (cachedAnimeData && Date.now() - cachedAnimeData.timestamp < CACHE_TTL_MS) {
+    return cachedAnimeData.tracks;
   }
 
   const trackPromises = ANIME_CATALOG.map(async (item) => {
@@ -116,13 +105,14 @@ async function fetchAnimeCatalog() {
   });
 
   const resolved = await Promise.all(trackPromises);
-  cachedAnimeTracks = resolved.filter(Boolean);
-  return cachedAnimeTracks;
+  const tracks = resolved.filter(Boolean);
+  cachedAnimeData = { tracks, timestamp: Date.now() };
+  return tracks;
 }
 
 async function fetchDisneyCatalog() {
-  if (cachedDisneyTracks && cachedDisneyTracks.length > 0) {
-    return cachedDisneyTracks;
+  if (cachedDisneyData && Date.now() - cachedDisneyData.timestamp < CACHE_TTL_MS) {
+    return cachedDisneyData.tracks;
   }
 
   const trackPromises = DISNEY_CATALOG.map(async (item) => {
@@ -148,34 +138,29 @@ async function fetchDisneyCatalog() {
   });
 
   const resolved = await Promise.all(trackPromises);
-  cachedDisneyTracks = resolved.filter(Boolean);
-  return cachedDisneyTracks;
+  const tracks = resolved.filter(Boolean);
+  cachedDisneyData = { tracks, timestamp: Date.now() };
+  return tracks;
 }
 
-// Curated playlist IDs covering all eras of French Rap (90s, 2000s, 2010s, 2020s & recent hits)
 const RAP_FR_PLAYLISTS = [
-  '1999435002', // Rap Français Classiques (IAM, NTM, Fonky Family, Booba débuts, Rohff, Sniper, 113...)
-  '11355471784', // Rap FR All Time (PNL, Damso, Nekfeu, SCH, Orelsan, Freeze Corleone, Lunatic, Kaaris, Dinos...)
-  '10692649262', // Bangers Rap FR (PLK, Maes, Ninho, Gazo, Luv Resval, Koba LaD, Naps...)
-  '9563400362',  // Rapstars : années 2020 (Werenoi, SDM, Tiakola, Gazo, PLK, Favé...)
-  '3272614282'   // Rapstars Actuel (les plus gros hits récents 2023-2026)
+  '1999435002',
+  '11355471784',
+  '10692649262',
+  '9563400362',
+  '3272614282'
 ];
 
-let cachedRapFrTracks = null;
-
 async function fetchRapFrTracks() {
-  if (cachedRapFrTracks && cachedRapFrTracks.length > 0) {
-    return cachedRapFrTracks;
+  if (cachedRapFrData && Date.now() - cachedRapFrData.timestamp < CACHE_TTL_MS) {
+    return cachedRapFrData.tracks;
   }
 
   const responses = await Promise.all(
     RAP_FR_PLAYLISTS.map(id =>
       fetch(`https://api.deezer.com/playlist/${id}`)
         .then(r => r.json())
-        .catch(err => {
-          console.error(`Erreur chargement playlist rap ${id}:`, err.message);
-          return null;
-        })
+        .catch(() => null)
     )
   );
 
@@ -212,13 +197,90 @@ async function fetchRapFrTracks() {
     throw new Error('Impossible de charger les morceaux de Rap Français');
   }
 
-  cachedRapFrTracks = tracks;
-  return cachedRapFrTracks;
+  cachedRapFrData = { tracks, timestamp: Date.now() };
+  return tracks;
 }
 
-/**
- * Get tracks by theme ID or custom playlist
- */
+const ROCK_PLAYLISTS = [
+  '1306931615',
+  '2655390504',
+  '61217294'
+];
+
+async function fetchRockTracks() {
+  if (cachedRockData && Date.now() - cachedRockData.timestamp < CACHE_TTL_MS) {
+    return cachedRockData.tracks;
+  }
+
+  const responses = await Promise.all(
+    ROCK_PLAYLISTS.map(id =>
+      fetch(`https://api.deezer.com/playlist/${id}`)
+        .then(r => r.json())
+        .catch(() => null)
+    )
+  );
+
+  const seenIds = new Set();
+  const seenKeys = new Set();
+  const tracks = [];
+
+  for (const p of responses) {
+    if (!p || !p.tracks || !p.tracks.data) continue;
+    for (const t of p.tracks.data) {
+      if (!t.preview || t.preview.length === 0) continue;
+      if (seenIds.has(t.id)) continue;
+
+      const title = cleanTitle(t.title_short || t.title);
+      const artist = t.artist ? t.artist.name : 'Inconnu';
+      const key = `${artist.toLowerCase()}:::${title.toLowerCase()}`.replace(/\s+/g, ' ').trim();
+      if (seenKeys.has(key)) continue;
+
+      seenIds.add(t.id);
+      seenKeys.add(key);
+
+      tracks.push({
+        id: String(t.id),
+        title,
+        fullTitle: t.title,
+        artist,
+        preview: t.preview,
+        cover: t.album ? (t.album.cover_big || t.album.cover_medium) : null
+      });
+    }
+  }
+
+  if (tracks.length < 4) {
+    throw new Error('Impossible de charger les morceaux de Rock/Métal');
+  }
+
+  cachedRockData = { tracks, timestamp: Date.now() };
+  return tracks;
+}
+
+async function getFreshTrackPreview(trackId) {
+  if (!trackId) return null;
+  const strId = String(trackId);
+  const cached = trackPreviewCache.get(strId);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.url;
+  }
+
+  try {
+    const res = await fetch(`https://api.deezer.com/track/${strId}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.preview) return null;
+
+    trackPreviewCache.set(strId, {
+      url: data.preview,
+      expiresAt: Date.now() + 1000 * 60 * 8
+    });
+    return data.preview;
+  } catch (err) {
+    return null;
+  }
+}
+
 async function getTracksForTheme(themeId, customPlaylistId = null) {
   if (themeId === 'anime') {
     return await fetchAnimeCatalog();
@@ -228,6 +290,9 @@ async function getTracksForTheme(themeId, customPlaylistId = null) {
   }
   if (themeId === 'rap-fr') {
     return await fetchRapFrTracks();
+  }
+  if (themeId === 'rock') {
+    return await fetchRockTracks();
   }
 
   let targetPlaylistId = null;
@@ -254,6 +319,8 @@ module.exports = {
   fetchAnimeCatalog,
   fetchDisneyCatalog,
   fetchRapFrTracks,
+  fetchRockTracks,
+  getFreshTrackPreview,
   parsePlaylistId,
   getTracksForTheme,
   cleanTitle

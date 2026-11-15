@@ -1,21 +1,17 @@
-// Player Controller Script
 const socket = io();
 
-// State
 let selectedAvatar = '🦊';
 let myPlayerInfo = null;
 let currentOptions = [];
 let playerTimerInterval = null;
 let hasAnsweredCurrentRound = false;
 
-// Auth & Account State
 let currentUser = null;
 let authToken = localStorage.getItem('blindtest_token') || null;
-let currentAuthTab = 'guest'; // 'guest' | 'account'
-let authFormMode = 'login'; // 'login' | 'register'
+let currentAuthTab = 'guest';
+let authFormMode = 'login';
 let authSelectedAvatar = '🦊';
 
-// DOM Elements
 const views = {
   join: document.getElementById('view-join'),
   waiting: document.getElementById('view-waiting'),
@@ -33,7 +29,6 @@ function switchView(viewName) {
   }
 }
 
-// Check URL params for room code (from QR code scan)
 const urlParams = new URLSearchParams(window.location.search);
 const roomParam = urlParams.get('room');
 if (roomParam) {
@@ -41,20 +36,14 @@ if (roomParam) {
   roomInput.value = roomParam.toUpperCase().trim();
 }
 
-// ---------------------------------------------------------------------------
-// GESTION DU COMPTE & DE L'AUTHENTIFICATION
-// ---------------------------------------------------------------------------
-
 function applyUserState(user) {
   currentUser = user;
   if (user) {
-    // Header
     document.getElementById('player-avatar-badge').textContent = user.avatar || '🦊';
     document.getElementById('player-name-badge').textContent = user.username;
     document.getElementById('player-level-badge').textContent = `Nv. ${user.progression?.level || 1}`;
     document.getElementById('player-title-badge').textContent = user.progression?.title || 'Novice';
 
-    // View Join Banner
     document.getElementById('logged-user-section').style.display = 'flex';
     document.getElementById('logged-avatar').textContent = user.avatar || '🦊';
     document.getElementById('logged-username').textContent = user.username;
@@ -69,20 +58,17 @@ function applyUserState(user) {
     document.getElementById('input-nickname').value = user.username;
     selectedAvatar = user.avatar || '🦊';
   } else {
-    // Header guest state
     document.getElementById('player-avatar-badge').textContent = selectedAvatar;
     document.getElementById('player-name-badge').textContent = 'Joueur';
     document.getElementById('player-level-badge').textContent = 'Nv. 1';
     document.getElementById('player-title-badge').textContent = 'Invité';
 
-    // View Join
     document.getElementById('logged-user-section').style.display = 'none';
     document.getElementById('auth-tabs').style.display = 'flex';
     switchAuthTab(currentAuthTab);
   }
 }
 
-// Auto-login verification on load
 if (authToken) {
   socket.emit('auth_verify_token', { token: authToken });
 }
@@ -97,7 +83,6 @@ socket.on('auth_invalid', () => {
   applyUserState(null);
 });
 
-// Tab Switcher (Invité vs Mon Compte)
 function switchAuthTab(tab) {
   currentAuthTab = tab;
   const guestBtn = document.getElementById('tab-btn-guest');
@@ -122,7 +107,6 @@ if (tabGuestBtn) tabGuestBtn.addEventListener('click', () => switchAuthTab('gues
 const tabAccBtn = document.getElementById('tab-btn-account');
 if (tabAccBtn) tabAccBtn.addEventListener('click', () => switchAuthTab('account'));
 
-// Switch Login / Register mode
 const authSwitchMode = document.getElementById('auth-switch-mode');
 if (authSwitchMode) {
   authSwitchMode.addEventListener('click', () => {
@@ -145,7 +129,6 @@ if (authSwitchMode) {
   });
 }
 
-// Avatar selection in auth form
 document.querySelectorAll('#auth-avatar-picker .avatar-option').forEach(el => {
   el.addEventListener('click', () => {
     document.querySelectorAll('#auth-avatar-picker .avatar-option').forEach(o => o.classList.remove('selected'));
@@ -155,7 +138,6 @@ document.querySelectorAll('#auth-avatar-picker .avatar-option').forEach(el => {
   });
 });
 
-// Submit Auth (Direct HTTP REST with timeout & Socket fallback)
 const btnAuthSubmit = document.getElementById('btn-auth-submit');
 
 async function handleAuthSubmit() {
@@ -207,21 +189,19 @@ async function handleAuthSubmit() {
       throw new Error(data.error || 'Erreur lors de l\'authentification.');
     }
 
-    // Success!
     localStorage.setItem('blindtest_token', data.token);
     authToken = data.token;
     applyUserState(data.user);
     showToast('🎉', 'Connexion réussie', `Bienvenue ${data.user.username} !`);
     vibrate(60);
   } catch (err) {
-    // If fetch failed (e.g. offline/network issue), fallback to socket emit
     if (socket && socket.connected) {
       if (authFormMode === 'register') {
         socket.emit('auth_register', { username, password, avatar: authSelectedAvatar });
       } else {
         socket.emit('auth_login', { username, password });
       }
-      return; // Wait for socket response
+      return;
     }
 
     const msg = err.name === 'AbortError'
@@ -280,7 +260,6 @@ socket.on('auth_error', (data) => {
   }
 });
 
-// Logout
 function logoutUser() {
   localStorage.removeItem('blindtest_token');
   authToken = null;
@@ -295,10 +274,6 @@ if (btnLoggedLogout) btnLoggedLogout.addEventListener('click', logoutUser);
 const btnModalLogout = document.getElementById('btn-logout');
 if (btnModalLogout) btnModalLogout.addEventListener('click', logoutUser);
 
-// ---------------------------------------------------------------------------
-// MODAL PROFIL & SUCCÈS
-// ---------------------------------------------------------------------------
-
 function openProfileModal() {
   const modal = document.getElementById('modal-profile');
   if (!modal) return;
@@ -307,7 +282,6 @@ function openProfileModal() {
   if (currentUser) {
     socket.emit('get_profile', { userId: currentUser.id });
   } else {
-    // Guest dummy profile
     document.getElementById('profile-avatar').textContent = selectedAvatar;
     document.getElementById('profile-username').textContent = document.getElementById('input-nickname').value || 'Invité';
     document.getElementById('profile-level-badge').textContent = 'Nv. 1';
@@ -321,7 +295,6 @@ function openProfileModal() {
     document.getElementById('stat-accuracy').textContent = '0%';
     document.getElementById('stat-streak').textContent = '🔥 0';
 
-    // Fetch achievements list definition
     fetch('/api/achievements')
       .then(r => r.json())
       .then(data => {
@@ -342,7 +315,6 @@ document.getElementById('btn-logged-profile')?.addEventListener('click', openPro
 document.getElementById('btn-close-profile')?.addEventListener('click', closeProfileModal);
 document.getElementById('btn-close-profile-bottom')?.addEventListener('click', closeProfileModal);
 
-// Close on backdrop click
 document.getElementById('modal-profile')?.addEventListener('click', (e) => {
   if (e.target.id === 'modal-profile') closeProfileModal();
 });
@@ -363,7 +335,6 @@ socket.on('profile_data', (data) => {
     document.getElementById('profile-xp-bar').style.width = `${lvlInfo.progressPercent}%`;
   }
 
-  // Stats
   document.getElementById('stat-games').textContent = (user.stats.gamesPlayed || 0).toLocaleString('fr-FR');
   document.getElementById('stat-wins').textContent = (user.stats.gamesWon || 0).toLocaleString('fr-FR');
   document.getElementById('stat-podiums').textContent = (user.stats.podiums || 0).toLocaleString('fr-FR');
@@ -373,7 +344,6 @@ socket.on('profile_data', (data) => {
   document.getElementById('stat-accuracy').textContent = `${acc}%`;
   document.getElementById('stat-streak').textContent = `🔥 ${user.stats.bestStreak || 0}`;
 
-  // Achievements
   renderAchievementsList(achievements, user.achievements || {});
 });
 
@@ -395,10 +365,6 @@ function renderAchievementsList(achievements) {
     </div>
   `).join('');
 }
-
-// ---------------------------------------------------------------------------
-// TOAST NOTIFICATIONS (Succès & Montée de niveau)
-// ---------------------------------------------------------------------------
 
 function showToast(icon, title, subtitle, isLevelUp = false) {
   const container = document.getElementById('toast-container');
@@ -424,7 +390,6 @@ function showToast(icon, title, subtitle, isLevelUp = false) {
   }, 4500);
 }
 
-// Avatar selection for guest
 document.querySelectorAll('#avatar-picker .avatar-option').forEach(el => {
   el.addEventListener('click', () => {
     document.querySelectorAll('#avatar-picker .avatar-option').forEach(o => o.classList.remove('selected'));
@@ -434,7 +399,6 @@ document.querySelectorAll('#avatar-picker .avatar-option').forEach(el => {
   });
 });
 
-// Join Button
 const btnJoin = document.getElementById('btn-join');
 btnJoin.addEventListener('click', () => {
   const roomCode = document.getElementById('input-room-code').value.trim().toUpperCase();
@@ -462,7 +426,6 @@ btnJoin.addEventListener('click', () => {
   });
 });
 
-// Join response handlers
 socket.on('join_success', (data) => {
   myPlayerInfo = data.player;
   
@@ -482,7 +445,6 @@ socket.on('join_error', (data) => {
   btnJoin.textContent = 'REJOINDRE 🎮';
 });
 
-// Round Start on Mobile
 socket.on('round_start_player', (data) => {
   hasAnsweredCurrentRound = false;
   currentOptions = data.options;
@@ -490,7 +452,6 @@ socket.on('round_start_player', (data) => {
   vibrate(60);
   switchView('play');
 
-  // Update header
   document.getElementById('player-round-badge').textContent = `Manche 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
   const modeText = document.getElementById('player-question-mode');
   if (modeText) {
@@ -508,7 +469,6 @@ socket.on('round_start_player', (data) => {
 
   document.getElementById('answer-locked-banner').style.display = 'none';
 
-  // Render 4 buttons
   const buttons = document.querySelectorAll('.choice-btn');
   buttons.forEach((btn, index) => {
     btn.classList.remove('selected', 'disabled');
@@ -525,11 +485,9 @@ socket.on('round_start_player', (data) => {
     }
   });
 
-  // Start visual sync countdown
   startMobileTimer(data.duration);
 });
 
-// Answer Button click
 document.querySelectorAll('.choice-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     if (hasAnsweredCurrentRound) return;
@@ -538,7 +496,6 @@ document.querySelectorAll('.choice-btn').forEach(btn => {
     const optionId = btn.dataset.optionId;
     vibrate(40);
 
-    // Lock UI
     document.querySelectorAll('.choice-btn').forEach(b => {
       if (b === btn) {
         b.classList.add('selected');
@@ -550,7 +507,6 @@ document.querySelectorAll('.choice-btn').forEach(btn => {
 
     document.getElementById('answer-locked-banner').style.display = 'block';
 
-    // Send answer to server
     socket.emit('submit_answer', {
       optionId,
       clientTimestamp: Date.now()
@@ -558,7 +514,6 @@ document.querySelectorAll('.choice-btn').forEach(btn => {
   });
 });
 
-// Progression feedback during round
 socket.on('round_progression_update', (progression) => {
   if (!progression) return;
 
@@ -599,13 +554,11 @@ function startMobileTimer(durationSeconds) {
   }, 50);
 }
 
-// Round Ended feedback
 socket.on('round_ended_player', (data) => {
   if (playerTimerInterval) clearInterval(playerTimerInterval);
 
   switchView('result');
 
-  // Update top score & streak
   document.getElementById('player-score-badge').textContent = `${data.totalScore.toLocaleString('fr-FR')} pts`;
   const streakBadge = document.getElementById('player-streak-badge');
   if (data.streak > 1) {
@@ -653,7 +606,6 @@ socket.on('round_ended_player', (data) => {
   resultRankText.textContent = `Rang : ${rankSuffix} · ${data.totalScore.toLocaleString('fr-FR')} pts`;
 });
 
-// Game Over feedback
 socket.on('game_over_player', (data) => {
   if (playerTimerInterval) clearInterval(playerTimerInterval);
 
@@ -684,7 +636,6 @@ socket.on('game_over_player', (data) => {
 
   finalScoreDisplay.textContent = `${data.score.toLocaleString('fr-FR')} pts`;
 
-  // Game End Progression (XP & Achievements)
   if (data.progression) {
     const prog = data.progression;
     if (prog.newAchievements && prog.newAchievements.length > 0) {
@@ -705,7 +656,6 @@ socket.on('game_over_player', (data) => {
   }
 });
 
-// Back to lobby
 socket.on('back_to_lobby', () => {
   if (playerTimerInterval) {
     clearInterval(playerTimerInterval);
@@ -717,18 +667,15 @@ socket.on('back_to_lobby', () => {
   document.getElementById('player-streak-badge').style.display = 'none';
 });
 
-// Haptic feedback helper
 function vibrate(pattern) {
   if (navigator && navigator.vibrate) {
     try {
       navigator.vibrate(pattern);
     } catch (e) {
-      // Ignore if not supported / permissions
     }
   }
 }
 
-// Utility escape
 function escapeHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;')

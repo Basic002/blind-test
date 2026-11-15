@@ -7,7 +7,6 @@ async function runAccountTests() {
   console.log('🧪 TEST DU SYSTÈME DE COMPTES, NIVEAUX ET SUCCÈS');
   console.log('========================================================\n');
 
-  // 1. Test unitaire AccountManager
   console.log('1. Test de création de compte & authentification...');
   const testUserNick = 'Player_' + Math.floor(Math.random() * 10000);
   const testPass = 'secret123';
@@ -18,7 +17,6 @@ async function runAccountTests() {
     throw new Error('Le niveau initial devrait être 1');
   }
 
-  // Duplicate username check
   try {
     accountManager.register(testUserNick, 'autrePass');
     throw new Error('La création d\'un compte avec un pseudo en double aurait dû échouer');
@@ -26,7 +24,6 @@ async function runAccountTests() {
     console.log('   ✅ Détection correcte des doublons de pseudo.');
   }
 
-  // 16 characters limit check
   try {
     accountManager.register('PseudoTropLongPlus17Chars', 'pass123');
     throw new Error('Un pseudo de plus de 16 caractères aurait dû être rejeté');
@@ -34,11 +31,10 @@ async function runAccountTests() {
     console.log('   ✅ Rejet correct d\'un pseudo de plus de 16 caractères.');
   }
 
-  const valid16User = ('User16_' + Math.floor(100000000 + Math.random() * 900000000)).substring(0, 16); // Exactly 16 characters
+  const valid16User = ('User16_' + Math.floor(100000000 + Math.random() * 900000000)).substring(0, 16);
   const valid16Result = accountManager.register(valid16User, 'pass123', '🦊');
   console.log(`   ✅ Acceptation d\'un pseudo de 16 caractères : "${valid16Result.user.username}" (longueur : ${valid16Result.user.username.length})`);
 
-  // Bad login check
   try {
     accountManager.login(testUserNick, 'mauvaisMdp');
     throw new Error('Le login avec mauvais mot de passe aurait dû échouer');
@@ -46,13 +42,10 @@ async function runAccountTests() {
     console.log('   ✅ Rejet correct d\'un mot de passe erroné.');
   }
 
-  // Valid login
   const loginResult = accountManager.login(testUserNick, testPass);
   console.log(`   ✅ Connexion réussie, token généré : ${loginResult.token.substring(0, 10)}...`);
 
-  // 2. Test progression XP & Succès sur une manche
   console.log('\n2. Test de gain d\'XP et déblocage de succès en manche...');
-  // Répondre juste en 1.5s avec un streak de 3
   const roundProg1 = accountManager.recordRoundAnswer(regResult.user.id, {
     isCorrect: true,
     responseTimeMs: 1500,
@@ -71,7 +64,6 @@ async function runAccountTests() {
   }
   console.log('   ✅ Succès "Buzzer Éclair" et "En Plein Feu" débloqués avec succès !');
 
-  // 3. Test fin de partie (Victoire & Montée de niveau)
   console.log('\n3. Test de fin de partie, XP de victoire et passage de niveau...');
   const gameProg = accountManager.recordGameEnd(regResult.user.id, {
     score: 5200,
@@ -100,7 +92,14 @@ async function runAccountTests() {
   }
   console.log('   ✅ Montée de niveau validée avec succès !');
 
-  // 4. Test d'intégration Socket.IO
+  const lvl15 = getLevelInfo(25000);
+  const lvl16 = getLevelInfo(29500);
+  const lvl50 = getLevelInfo(500000);
+  if (lvl15.level !== 15 || lvl16.level !== 16 || lvl50.level !== 50 || lvl50.isMaxLevel !== false) {
+    throw new Error('Le système de niveaux infinis ne fonctionne pas correctement');
+  }
+  console.log('   ✅ Système de progression infinie validé (Niveaux 15, 16, 50+ sans plafond)');
+
   console.log('\n4. Test multijoueur Socket.IO avec joueur authentifié...');
   const TEST_PORT = 3987;
   process.env.PORT = String(TEST_PORT);
@@ -121,7 +120,6 @@ async function runAccountTests() {
   const p1 = io(baseUrl);
   await new Promise(r => p1.on('connect', r));
 
-  // Join room with authenticated userId
   p1.emit('join_room', {
     roomCode: roomData.roomCode,
     nickname: testUserNick,
@@ -141,7 +139,6 @@ async function runAccountTests() {
     throw new Error('Le niveau du joueur n\'a pas été correctement transmis à l\'écran hôte !');
   }
 
-  // Profile data fetch test via socket
   const profileData = await new Promise(r => {
     p1.emit('get_profile', { userId: regResult.user.id });
     p1.on('profile_data', r);

@@ -1,6 +1,3 @@
-/**
- * List of Achievements (Succès) in the Blind-Test game
- */
 const ACHIEVEMENTS = [
   {
     id: 'first_step',

@@ -1,7 +1,5 @@
-// Initialize Socket.io
 const socket = io();
 
-// State
 let roomCode = null;
 let currentThemes = [];
 let selectedThemeId = 'disney';
@@ -9,8 +7,8 @@ let roundTimerInterval = null;
 let audioFadeInterval = null;
 let audioPlayer = document.getElementById('audio-player');
 let currentPlayers = [];
+let currentAudioFallback = null;
 
-// Silent 1-sample WAV data URI to unlock audio during user gesture without any lag
 const SILENT_AUDIO = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
 
 function showAudioPrompt() {
@@ -25,7 +23,16 @@ function showAudioPrompt() {
       e.stopPropagation();
       audioPlayer.play().then(() => {
         hideAudioPrompt();
-      }).catch(err => console.warn('User prompt play failed:', err));
+      }).catch(err => {
+        console.warn('Playback error:', err);
+        if (currentAudioFallback && audioPlayer.src !== currentAudioFallback) {
+          audioPlayer.src = currentAudioFallback;
+          audioPlayer.load();
+          audioPlayer.play().then(() => hideAudioPrompt()).catch(() => hideAudioPrompt());
+        } else {
+          hideAudioPrompt();
+        }
+      });
     });
   }
   prompt.style.display = 'flex';
@@ -42,14 +49,22 @@ audioPlayer.addEventListener('playing', () => {
   hideAudioPrompt();
 });
 
-// Global user interaction fallback: clicking anywhere on the screen during a round will play if paused
+audioPlayer.addEventListener('error', () => {
+  if (currentAudioFallback && audioPlayer.src !== currentAudioFallback) {
+    audioPlayer.src = currentAudioFallback;
+    audioPlayer.load();
+    audioPlayer.play().then(() => hideAudioPrompt()).catch(() => showAudioPrompt());
+  } else {
+    hideAudioPrompt();
+  }
+});
+
 document.addEventListener('click', () => {
   if (views.round && views.round.classList.contains('active') && audioPlayer.paused && audioPlayer.src && audioPlayer.src !== SILENT_AUDIO) {
     audioPlayer.play().then(() => hideAudioPrompt()).catch(() => {});
   }
 });
 
-// Views
 const views = {
   lobby: document.getElementById('view-lobby'),
   round: document.getElementById('view-round'),
@@ -73,7 +88,6 @@ function switchView(viewName) {
   }
 }
 
-// Host Quits mid-game
 const hostQuitBtn = document.getElementById('host-quit-btn');
 if (hostQuitBtn) {
   hostQuitBtn.addEventListener('click', () => {
@@ -83,23 +97,20 @@ if (hostQuitBtn) {
   });
 }
 
-// Volume & Audio control
 const volumeSlider = document.getElementById('volume-slider');
 audioPlayer.volume = parseFloat(volumeSlider.value);
 volumeSlider.addEventListener('input', (e) => {
   audioPlayer.volume = parseFloat(e.target.value);
 });
 
-// Fullscreen toggle
 document.getElementById('fullscreen-btn').addEventListener('click', () => {
   if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(err => console.log(err));
+    document.documentElement.requestFullscreen().catch(() => {});
   } else {
-    document.exitFullscreen().catch(err => console.log(err));
+    document.exitFullscreen().catch(() => {});
   }
 });
 
-// Join Room creation
 socket.emit('create_room');
 
 socket.on('room_created', (data) => {
@@ -111,9 +122,10 @@ socket.on('room_created', (data) => {
   document.getElementById('qr-code-img').src = data.qrDataUrl;
 
   renderThemes(data.themes, data.themeId);
+  document.getElementById('rounds-select').value = data.settings.totalRounds;
+  document.getElementById('duration-select').value = data.settings.roundDuration;
 });
 
-// Render Themes
 function renderThemes(themes, activeThemeId) {
   const container = document.getElementById('themes-grid');
   container.innerHTML = '';
@@ -149,7 +161,6 @@ function renderThemes(themes, activeThemeId) {
   });
 }
 
-// Settings updates
 function sendSettingsUpdate() {
   const rounds = parseInt(document.getElementById('rounds-select').value, 10);
   const duration = parseInt(document.getElementById('duration-select').value, 10);
@@ -167,7 +178,6 @@ document.getElementById('rounds-select').addEventListener('change', sendSettings
 document.getElementById('duration-select').addEventListener('change', sendSettingsUpdate);
 document.getElementById('custom-playlist-input').addEventListener('input', sendSettingsUpdate);
 
-// Player joined / left handlers
 socket.on('player_joined', (data) => {
   currentPlayers = data.players;
   updateLobbyPlayers(data.players);
@@ -207,32 +217,29 @@ function updateLobbyPlayers(players) {
   }
 }
 
-// Start Game button
 const startBtn = document.getElementById('start-game-btn');
 startBtn.addEventListener('click', () => {
-  // Prime and unlock audio during direct user interaction
   try {
     audioPlayer.src = SILENT_AUDIO;
-    audioPlayer.volume = parseFloat(volumeSlider.value);
     audioPlayer.play().catch(() => {});
-  } catch (e) {
-    console.warn('Audio prime failed:', e);
-  }
+  } catch (e) {}
 
-  startBtn.disabled = true;
-  startBtn.textContent = 'Chargement des morceaux... ⏳';
   socket.emit('start_game');
+  startBtn.disabled = true;
+  startBtn.textContent = 'Lancement en cours...';
+});
+
+socket.on('game_loading', (data) => {
+  startBtn.textContent = data.message || 'Chargement...';
 });
 
 socket.on('game_start_error', (data) => {
-  alert(data.message || 'Erreur lors du lancement');
+  alert('Erreur: ' + data.message);
   startBtn.disabled = false;
   startBtn.textContent = 'Lancer la Partie 🚀';
 });
 
-// Round Start on Host
 socket.on('round_start_host', (data) => {
-  // Clear any existing fade-out intervals immediately
   if (audioFadeInterval) {
     clearInterval(audioFadeInterval);
     audioFadeInterval = null;
@@ -257,11 +264,10 @@ socket.on('round_start_host', (data) => {
     document.getElementById('round-question-subtext').textContent = 'Devinez le bon titre sur votre manette !';
   }
 
-  // Setup live answered indicator
   updateAnsweredCount(0, data.players.length);
   renderRoundPlayersList(data.players);
 
-  // Reset volume & prepare audio preview
+  currentAudioFallback = data.fallbackPreview || null;
   audioPlayer.pause();
   audioPlayer.volume = parseFloat(volumeSlider.value);
   audioPlayer.src = data.audioPreview;
@@ -277,7 +283,6 @@ socket.on('round_start_host', (data) => {
     });
   }
 
-  // Start smooth visual timer
   startRoundTimer(data.duration);
 });
 
@@ -293,11 +298,9 @@ function renderRoundPlayersList(players) {
   `).join('');
 }
 
-// Player answered event
 socket.on('player_answered', (data) => {
   updateAnsweredCount(data.answeredCount, data.totalPlayers);
 
-  // Mark player chip as answered (Apple Green feedback)
   const playerChip = document.getElementById(`round-player-${data.playerId}`);
   if (playerChip) {
     playerChip.style.opacity = '1';
@@ -341,12 +344,10 @@ function startRoundTimer(durationSeconds) {
   }, 50);
 }
 
-// Round Ended Reveal on Host
 socket.on('round_ended_host', (data) => {
   if (roundTimerInterval) clearInterval(roundTimerInterval);
   hideAudioPrompt();
   
-  // Fade out audio preview gently
   if (audioFadeInterval) clearInterval(audioFadeInterval);
   let fadeVolume = audioPlayer.volume;
   audioFadeInterval = setInterval(() => {
@@ -396,7 +397,6 @@ socket.on('round_ended_host', (data) => {
     if (extraEl) extraEl.style.display = 'none';
   }
 
-  // Display leaderboard
   renderLeaderboard(data.leaderboard);
 });
 
@@ -426,7 +426,6 @@ function renderLeaderboard(leaderboard) {
   }).join('');
 }
 
-// Game Over & Podium
 socket.on('game_over_host', (data) => {
   if (roundTimerInterval) clearInterval(roundTimerInterval);
   if (audioFadeInterval) {
@@ -437,13 +436,10 @@ socket.on('game_over_host', (data) => {
   hideAudioPrompt();
 
   switchView('gameover');
-
-  // Launch confetti fireworks!
   launchConfetti();
 
   const podium = data.podium || [];
   
-  // 1st place
   if (podium[0]) {
     const p1 = document.getElementById('podium-1');
     p1.querySelector('.podium-avatar').textContent = podium[0].avatar;
@@ -453,7 +449,6 @@ socket.on('game_over_host', (data) => {
     if (lvl1) lvl1.textContent = `Nv.${podium[0].level || 1} · ${podium[0].title || 'Novice'}`;
   }
 
-  // 2nd place
   if (podium[1]) {
     const p2 = document.getElementById('podium-2');
     p2.querySelector('.podium-avatar').textContent = podium[1].avatar;
@@ -463,7 +458,6 @@ socket.on('game_over_host', (data) => {
     if (lvl2) lvl2.textContent = `Nv.${podium[1].level || 1} · ${podium[1].title || 'Novice'}`;
   }
 
-  // 3rd place
   if (podium[2]) {
     const p3 = document.getElementById('podium-3');
     p3.querySelector('.podium-avatar').textContent = podium[2].avatar;
@@ -474,7 +468,6 @@ socket.on('game_over_host', (data) => {
   }
 });
 
-// Replay button
 document.getElementById('replay-btn').addEventListener('click', () => {
   socket.emit('restart_to_lobby');
 });
@@ -495,7 +488,6 @@ socket.on('back_to_lobby', (data) => {
   updateLobbyPlayers(data.players);
 });
 
-// Confetti generator
 function launchConfetti() {
   if (typeof confetti !== 'undefined') {
     const duration = 5 * 1000;
@@ -517,7 +509,6 @@ function launchConfetti() {
   }
 }
 
-// Helper utility
 function escapeHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;')

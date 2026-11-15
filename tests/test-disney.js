@@ -5,19 +5,16 @@ const { getTracksForTheme } = require('../src/services/deezerService');
 async function testDisneyMode() {
   console.log('--- TEST DU NOUVEAU MODE DISNEY & DE LA CATÉGORIE ROCK/MÉTAL ---');
   
-  // 1. Verify Rock/Métal theme in themes config
   const rockTheme = THEMES.find(t => t.id === 'rock');
   console.log(`1. Vérification thème Rock : Nom="${rockTheme?.name}", PlaylistId="${rockTheme?.playlistId}"`);
   if (rockTheme?.name !== 'Rock/Métal') {
     throw new Error('Le thème Rock devrait s\'appeler Rock/Métal');
   }
 
-  // Check if Rock/Métal tracks load
   console.log('   Chargement des morceaux Rock/Métal...');
   const rockTracks = await getTracksForTheme('rock');
   console.log(`   ✅ Morceaux Rock/Métal chargés : ${rockTracks.length} pistes.`);
 
-  // 2. Test Disney Mode simulation
   console.log('\n2. Démarrage de la simulation multijoueur Disney...');
   const PORT = process.env.PORT || 3000;
   const http = require('http');
@@ -49,7 +46,6 @@ async function testDisneyMode() {
   await new Promise(r => p1.on('join_success', r));
   console.log('   ✅ Joueur MickeyFan connecté');
 
-  // Select Disney theme, 1 round, fast timer
   host.emit('update_settings', { themeId: 'disney', totalRounds: 1, roundDuration: 3, revealDuration: 1 });
 
   console.log('\n3. Lancement de la manche Disney...');
@@ -73,7 +69,6 @@ async function testDisneyMode() {
     throw new Error('isDisney doit être vrai pour la manche Disney');
   }
 
-  // Submit answer
   p1.emit('submit_answer', { optionId: p1Round.options[0].id, clientTimestamp: Date.now() });
 
   const revealData = await new Promise(r => host.on('round_ended_host', r));

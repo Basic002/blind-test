@@ -10,7 +10,6 @@ async function testRapMode() {
     throw new Error(`Trop peu de morceaux trouvés : ${tracks.length}`);
   }
 
-  // Check eras
   const classics = tracks.filter(t => /iam|ntm|fonky|sniper|lunatic|rohff|113/i.test(t.artist));
   const middleEra = tracks.filter(t => /booba|orelsan|nekfeu|kaaris|lacrim|jul|damso|pnl/i.test(t.artist));
   const modernEra = tracks.filter(t => /ninho|gazo|sdm|werenoi|tiakola|plk|maes|freeze corleone|favé/i.test(t.artist));
@@ -23,7 +22,6 @@ async function testRapMode() {
     throw new Error('Une des époques manque dans le catalogue !');
   }
 
-  // Check valid audio previews
   const validPreviews = tracks.filter(t => t.preview && t.preview.startsWith('http'));
   console.log(`- Titres avec extraits audio 30s fonctionnels : ${validPreviews.length}/${tracks.length}`);
 

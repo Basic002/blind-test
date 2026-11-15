@@ -1,6 +1,3 @@
-/**
- * Curated list of Deezer playlists for themes
- */
 const THEMES = [
   {
     id: 'disney',
@@ -63,7 +60,7 @@ const THEMES = [
     name: 'Rock/Métal',
     icon: '🎸',
     description: 'AC/DC, Metallica, Nirvana, Linkin Park et les hymnes du rock & métal',
-    playlistId: '61217294'
+    playlistId: '1306931615'
   },
   {
     id: 'custom',
