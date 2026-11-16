@@ -486,7 +486,15 @@ socket.on('round_start_player', (data) => {
     const option = data.options[index];
     if (option) {
       btn.dataset.optionId = option.id;
-      btn.querySelector('.choice-title').textContent = option.title;
+      const titleEl = btn.querySelector('.choice-title');
+      titleEl.textContent = option.title;
+      if (option.title && option.title.length > 34) {
+        titleEl.style.fontSize = '0.88rem';
+      } else if (option.title && option.title.length > 24) {
+        titleEl.style.fontSize = '1.02rem';
+      } else {
+        titleEl.style.fontSize = '';
+      }
       const subLabel = data.isDisney ? 'Film Disney' : (data.isAnime ? 'Animé' : (data.isCinema ? 'Film culte' : (data.isSeries ? 'Série TV' : (data.isGaming ? 'Jeu Vidéo' : option.artist))));
       btn.querySelector('.choice-artist').textContent = subLabel;
       btn.style.display = 'flex';
