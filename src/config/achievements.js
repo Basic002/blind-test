@@ -99,6 +99,39 @@ const ACHIEVEMENTS = [
     }
   },
   {
+    id: 'cinema_master',
+    name: 'Cinéphile Averti',
+    description: 'Identifier 5 musiques de films cultes',
+    icon: '🎬',
+    category: 'Thèmes',
+    xpReward: 300,
+    check: (user) => {
+      return (user.stats.themeStats?.cinema?.correct || 0) >= 5;
+    }
+  },
+  {
+    id: 'series_master',
+    name: 'Sériephile Accro',
+    description: 'Identifier 5 génériques de séries TV',
+    icon: '📺',
+    category: 'Thèmes',
+    xpReward: 300,
+    check: (user) => {
+      return (user.stats.themeStats?.series?.correct || 0) >= 5;
+    }
+  },
+  {
+    id: 'gaming_master',
+    name: 'Gamer Ultime',
+    description: 'Identifier 5 musiques de jeux vidéo',
+    icon: '🎮',
+    category: 'Thèmes',
+    xpReward: 300,
+    check: (user) => {
+      return (user.stats.themeStats?.gaming?.correct || 0) >= 5;
+    }
+  },
+  {
     id: 'rap_master',
     name: 'Kickeur Né',
     description: 'Trouver 5 morceaux de Rap Français',

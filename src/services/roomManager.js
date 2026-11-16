@@ -19,6 +19,27 @@ const FALLBACK_ANIMES = [
   'Fairy Tail', 'Cowboy Bebop', 'Code Geass', 'Haikyuu!!', 'JoJo\'s Bizarre Adventure'
 ];
 
+const FALLBACK_CINEMA_FILMS = [
+  'Star Wars', 'Harry Potter', 'Le Seigneur des Anneaux', 'Gladiator', 'Inception',
+  'Interstellar', 'Titanic', 'Jurassic Park', 'Pulp Fiction', 'Retour vers le Futur',
+  'James Bond', 'Le Bon, la Brute et le Truand', 'Le Parrain', 'Rocky', 'Mission Impossible',
+  'Indiana Jones', 'Forrest Gump', 'Top Gun', 'Pirates des Caraïbes', 'The Dark Knight (Batman)'
+];
+
+const FALLBACK_SERIES = [
+  'Game of Thrones', 'Stranger Things', 'Friends', 'Peaky Blinders', 'Breaking Bad',
+  'La Casa de Papel', 'The Walking Dead', 'Prison Break', 'Narcos', 'Vikings',
+  'Sherlock', 'The Crown', 'Dexter', 'Lost', 'Buffy contre les vampires',
+  'Le Prince de Bel-Air', 'Desperate Housewives', 'The Big Bang Theory', 'Dr House', 'Squid Game'
+];
+
+const FALLBACK_GAMES = [
+  'The Legend of Zelda', 'Super Mario', 'The Elder Scrolls V: Skyrim', 'Minecraft', 'The Witcher 3',
+  'Pokémon', 'Grand Theft Auto (GTA)', 'Final Fantasy', 'Halo', 'League of Legends',
+  'DOOM', 'Cyberpunk 2077', 'Dark Souls', 'Elden Ring', 'Assassin\'s Creed',
+  'God of War', 'Undertale', 'Sonic the Hedgehog', 'Street Fighter', 'Tetris'
+];
+
 function generateRoomCode() {
   let code = '';
   for (let i = 0; i < 4; i++) {
@@ -269,6 +290,9 @@ class RoomManager {
 
     const isAnime = Boolean(currentTrack.isAnime || room.themeId === 'anime');
     const isDisney = Boolean(currentTrack.isDisney || room.themeId === 'disney');
+    const isCinema = Boolean(currentTrack.isCinema || room.themeId === 'cinema');
+    const isSeries = Boolean(currentTrack.isSeries || room.themeId === 'series');
+    const isGaming = Boolean(currentTrack.isGaming || room.themeId === 'gaming');
     let rawOptions = [];
 
     if (isDisney && currentTrack.disney) {
@@ -323,6 +347,84 @@ class RoomManager {
         { id: currentTrack.id, title: currentTrack.anime, artist: 'Animé' },
         ...animeDistractors.map(d => ({ id: d.id, title: d.anime, artist: 'Animé' }))
       ];
+    } else if (isCinema && currentTrack.cinema) {
+      const chosenCinema = new Set([currentTrack.cinema.toLowerCase()]);
+      const cinemaDistractors = [];
+
+      for (const t of shuffleArray(room.tracksPool)) {
+        if (t.cinema && !chosenCinema.has(t.cinema.toLowerCase())) {
+          chosenCinema.add(t.cinema.toLowerCase());
+          cinemaDistractors.push(t);
+          if (cinemaDistractors.length === 3) break;
+        }
+      }
+
+      if (cinemaDistractors.length < 3) {
+        for (const fallback of FALLBACK_CINEMA_FILMS) {
+          if (!chosenCinema.has(fallback.toLowerCase())) {
+            chosenCinema.add(fallback.toLowerCase());
+            cinemaDistractors.push({ id: `fb_cinema_${cinemaDistractors.length}`, cinema: fallback });
+            if (cinemaDistractors.length === 3) break;
+          }
+        }
+      }
+
+      rawOptions = [
+        { id: currentTrack.id, title: currentTrack.cinema, artist: 'Film culte' },
+        ...cinemaDistractors.map(d => ({ id: d.id, title: d.cinema, artist: 'Film culte' }))
+      ];
+    } else if (isSeries && currentTrack.series) {
+      const chosenSeries = new Set([currentTrack.series.toLowerCase()]);
+      const seriesDistractors = [];
+
+      for (const t of shuffleArray(room.tracksPool)) {
+        if (t.series && !chosenSeries.has(t.series.toLowerCase())) {
+          chosenSeries.add(t.series.toLowerCase());
+          seriesDistractors.push(t);
+          if (seriesDistractors.length === 3) break;
+        }
+      }
+
+      if (seriesDistractors.length < 3) {
+        for (const fallback of FALLBACK_SERIES) {
+          if (!chosenSeries.has(fallback.toLowerCase())) {
+            chosenSeries.add(fallback.toLowerCase());
+            seriesDistractors.push({ id: `fb_series_${seriesDistractors.length}`, series: fallback });
+            if (seriesDistractors.length === 3) break;
+          }
+        }
+      }
+
+      rawOptions = [
+        { id: currentTrack.id, title: currentTrack.series, artist: 'Série TV' },
+        ...seriesDistractors.map(d => ({ id: d.id, title: d.series, artist: 'Série TV' }))
+      ];
+    } else if (isGaming && currentTrack.gaming) {
+      const chosenGaming = new Set([currentTrack.gaming.toLowerCase()]);
+      const gamingDistractors = [];
+
+      for (const t of shuffleArray(room.tracksPool)) {
+        if (t.gaming && !chosenGaming.has(t.gaming.toLowerCase())) {
+          chosenGaming.add(t.gaming.toLowerCase());
+          gamingDistractors.push(t);
+          if (gamingDistractors.length === 3) break;
+        }
+      }
+
+      if (gamingDistractors.length < 3) {
+        for (const fallback of FALLBACK_GAMES) {
+          if (!chosenGaming.has(fallback.toLowerCase())) {
+            chosenGaming.add(fallback.toLowerCase());
+            gamingDistractors.push({ id: `fb_gaming_${gamingDistractors.length}`, gaming: fallback });
+            if (gamingDistractors.length === 3) break;
+          }
+        }
+      }
+
+      rawOptions = [
+        { id: currentTrack.id, title: currentTrack.gaming, artist: 'Jeu Vidéo' },
+        ...gamingDistractors.map(d => ({ id: d.id, title: d.gaming, artist: 'Jeu Vidéo' }))
+      ];
     } else {
       const currentKey = `${(currentTrack.title || '').toLowerCase()}:::${(currentTrack.artist || '').toLowerCase()}`;
       const chosenKeys = new Set([currentKey]);
@@ -362,6 +464,9 @@ class RoomManager {
       duration,
       isAnime,
       isDisney,
+      isCinema,
+      isSeries,
+      isGaming,
       answers: new Map()
     };
 
@@ -374,9 +479,24 @@ class RoomManager {
       fallbackPreview: currentTrack.preview,
       isAnime,
       isDisney,
+      isCinema,
+      isSeries,
+      isGaming,
       duration,
       players: this.getPlayersList(room)
     });
+
+    const questionLabel = isDisney
+      ? 'Trouve le Disney !'
+      : (isAnime
+        ? 'Trouve l\'animé !'
+        : (isCinema
+          ? 'Trouve le film !'
+          : (isSeries
+            ? 'Trouve la série !'
+            : (isGaming
+              ? 'Trouve le jeu vidéo !'
+              : 'Trouve le morceau !'))));
 
     for (const [socketId] of room.players) {
       this.io.to(socketId).emit('round_start_player', {
@@ -384,7 +504,10 @@ class RoomManager {
         totalRounds: room.settings.totalRounds,
         isAnime,
         isDisney,
-        questionLabel: isDisney ? 'Trouve le Disney !' : (isAnime ? 'Trouve l\'animé !' : 'Trouve le morceau !'),
+        isCinema,
+        isSeries,
+        isGaming,
+        questionLabel,
         options: shuffledOptions.map((opt, idx) => ({
           id: opt.id,
           index: idx,
@@ -491,8 +614,14 @@ class RoomManager {
         artist: correctTrack.artist,
         anime: correctTrack.anime || null,
         disney: correctTrack.disney || null,
+        cinema: correctTrack.cinema || null,
+        series: correctTrack.series || null,
+        gaming: correctTrack.gaming || null,
         isAnime: Boolean(correctTrack.isAnime || round.isAnime),
         isDisney: Boolean(correctTrack.isDisney || round.isDisney),
+        isCinema: Boolean(correctTrack.isCinema || round.isCinema),
+        isSeries: Boolean(correctTrack.isSeries || round.isSeries),
+        isGaming: Boolean(correctTrack.isGaming || round.isGaming),
         cover: correctTrack.cover,
         preview: correctTrack.preview
       },
@@ -515,8 +644,14 @@ class RoomManager {
           artist: correctTrack.artist,
           anime: correctTrack.anime || null,
           disney: correctTrack.disney || null,
+          cinema: correctTrack.cinema || null,
+          series: correctTrack.series || null,
+          gaming: correctTrack.gaming || null,
           isAnime: Boolean(correctTrack.isAnime || round.isAnime),
-          isDisney: Boolean(correctTrack.isDisney || round.isDisney)
+          isDisney: Boolean(correctTrack.isDisney || round.isDisney),
+          isCinema: Boolean(correctTrack.isCinema || round.isCinema),
+          isSeries: Boolean(correctTrack.isSeries || round.isSeries),
+          isGaming: Boolean(correctTrack.isGaming || round.isGaming)
         }
       });
     }

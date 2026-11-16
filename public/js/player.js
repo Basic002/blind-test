@@ -461,6 +461,15 @@ socket.on('round_start_player', (data) => {
     } else if (data.isAnime) {
       modeText.textContent = "Trouve l'animé !";
       modeText.style.color = "var(--party-coral)";
+    } else if (data.isCinema) {
+      modeText.textContent = "Trouve le film !";
+      modeText.style.color = "#ef4444";
+    } else if (data.isSeries) {
+      modeText.textContent = "Trouve la série !";
+      modeText.style.color = "#a855f7";
+    } else if (data.isGaming) {
+      modeText.textContent = "Trouve le jeu vidéo !";
+      modeText.style.color = "#10b981";
     } else {
       modeText.textContent = "Trouve le morceau !";
       modeText.style.color = "var(--party-cyan)";
@@ -478,7 +487,8 @@ socket.on('round_start_player', (data) => {
     if (option) {
       btn.dataset.optionId = option.id;
       btn.querySelector('.choice-title').textContent = option.title;
-      btn.querySelector('.choice-artist').textContent = data.isDisney ? 'Film Disney' : (data.isAnime ? 'Animé' : option.artist);
+      const subLabel = data.isDisney ? 'Film Disney' : (data.isAnime ? 'Animé' : (data.isCinema ? 'Film culte' : (data.isSeries ? 'Série TV' : (data.isGaming ? 'Jeu Vidéo' : option.artist))));
+      btn.querySelector('.choice-artist').textContent = subLabel;
       btn.style.display = 'flex';
     } else {
       btn.style.display = 'none';
@@ -597,6 +607,15 @@ socket.on('round_ended_player', (data) => {
   } else if (data.correctTrack && data.correctTrack.isAnime && data.correctTrack.anime) {
     if (resultTypeLabel) resultTypeLabel.textContent = "Animé culte :";
     resultSongName.textContent = `${data.correctTrack.anime} — "${data.correctTrack.title}"`;
+  } else if (data.correctTrack && data.correctTrack.isCinema && data.correctTrack.cinema) {
+    if (resultTypeLabel) resultTypeLabel.textContent = "Film culte :";
+    resultSongName.textContent = `${data.correctTrack.cinema} — "${data.correctTrack.title}"`;
+  } else if (data.correctTrack && data.correctTrack.isSeries && data.correctTrack.series) {
+    if (resultTypeLabel) resultTypeLabel.textContent = "Série TV :";
+    resultSongName.textContent = `${data.correctTrack.series} — "${data.correctTrack.title}"`;
+  } else if (data.correctTrack && data.correctTrack.isGaming && data.correctTrack.gaming) {
+    if (resultTypeLabel) resultTypeLabel.textContent = "Jeu vidéo :";
+    resultSongName.textContent = `${data.correctTrack.gaming} — "${data.correctTrack.title}"`;
   } else {
     if (resultTypeLabel) resultTypeLabel.textContent = "Titre du morceau :";
     resultSongName.textContent = `${data.correctTrack.title} — ${data.correctTrack.artist}`;

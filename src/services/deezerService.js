@@ -1,6 +1,9 @@
 const { THEMES } = require('../config/themes');
 const { ANIME_CATALOG } = require('../config/animeCatalog');
 const { DISNEY_CATALOG } = require('../config/disneyCatalog');
+const { CINEMA_CATALOG } = require('../config/cinemaCatalog');
+const { SERIES_CATALOG } = require('../config/seriesCatalog');
+const { GAMING_CATALOG } = require('../config/gamingCatalog');
 
 const playlistCache = new Map();
 const trackPreviewCache = new Map();
@@ -8,6 +11,9 @@ const CACHE_TTL_MS = 1000 * 60 * 8;
 
 let cachedAnimeData = null;
 let cachedDisneyData = null;
+let cachedCinemaData = null;
+let cachedSeriesData = null;
+let cachedGamingData = null;
 let cachedRapFrData = null;
 let cachedRockData = null;
 
@@ -101,6 +107,48 @@ async function fetchDisneyCatalog() {
     isDisney: true
   }));
   return cachedDisneyData;
+}
+
+async function fetchCinemaCatalog() {
+  if (cachedCinemaData) return cachedCinemaData;
+  cachedCinemaData = CINEMA_CATALOG.map(item => ({
+    id: String(item.id),
+    cinema: item.cinema,
+    title: item.title,
+    fullTitle: `${item.title} (${item.cinema})`,
+    artist: item.artist,
+    cover: item.cover || null,
+    isCinema: true
+  }));
+  return cachedCinemaData;
+}
+
+async function fetchSeriesCatalog() {
+  if (cachedSeriesData) return cachedSeriesData;
+  cachedSeriesData = SERIES_CATALOG.map(item => ({
+    id: String(item.id),
+    series: item.series,
+    title: item.title,
+    fullTitle: `${item.title} (${item.series})`,
+    artist: item.artist,
+    cover: item.cover || null,
+    isSeries: true
+  }));
+  return cachedSeriesData;
+}
+
+async function fetchGamingCatalog() {
+  if (cachedGamingData) return cachedGamingData;
+  cachedGamingData = GAMING_CATALOG.map(item => ({
+    id: String(item.id),
+    gaming: item.gaming,
+    title: item.title,
+    fullTitle: `${item.title} (${item.gaming})`,
+    artist: item.artist,
+    cover: item.cover || null,
+    isGaming: true
+  }));
+  return cachedGamingData;
 }
 
 const RAP_FR_PLAYLISTS = [
@@ -248,6 +296,15 @@ async function getTracksForTheme(themeId, customPlaylistId = null) {
   if (themeId === 'disney') {
     return await fetchDisneyCatalog();
   }
+  if (themeId === 'cinema') {
+    return await fetchCinemaCatalog();
+  }
+  if (themeId === 'series') {
+    return await fetchSeriesCatalog();
+  }
+  if (themeId === 'gaming') {
+    return await fetchGamingCatalog();
+  }
   if (themeId === 'rap-fr') {
     return await fetchRapFrTracks();
   }
@@ -278,6 +335,9 @@ module.exports = {
   fetchPlaylistTracks,
   fetchAnimeCatalog,
   fetchDisneyCatalog,
+  fetchCinemaCatalog,
+  fetchSeriesCatalog,
+  fetchGamingCatalog,
   fetchRapFrTracks,
   fetchRockTracks,
   getFreshTrackPreview,

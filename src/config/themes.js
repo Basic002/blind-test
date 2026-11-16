@@ -28,6 +28,27 @@ const THEMES = [
     playlistId: '9016993522'
   },
   {
+    id: 'cinema',
+    name: 'Cinéma & Films Cultes',
+    icon: '🎬',
+    description: 'Devine le film culte derrière chaque bande originale',
+    playlistId: null
+  },
+  {
+    id: 'series',
+    name: 'Séries TV',
+    icon: '📺',
+    description: 'Devine la série télévisée culte derrière chaque générique',
+    playlistId: null
+  },
+  {
+    id: 'gaming',
+    name: 'Jeux Vidéo',
+    icon: '🎮',
+    description: 'Devine le jeu vidéo culte derrière chaque musique',
+    playlistId: null
+  },
+  {
     id: '80s',
     name: 'Années 80',
     icon: '🪩',

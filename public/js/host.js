@@ -137,6 +137,9 @@ function renderThemes(themes, activeThemeId) {
     card.innerHTML = `
       ${theme.id === 'anime' ? '<span class="theme-badge-anime">ANIME</span>' : ''}
       ${theme.id === 'disney' ? '<span class="theme-badge-anime" style="background: #0284c7;">DISNEY</span>' : ''}
+      ${theme.id === 'cinema' ? '<span class="theme-badge-anime" style="background: #dc2626;">CINÉMA</span>' : ''}
+      ${theme.id === 'series' ? '<span class="theme-badge-anime" style="background: #9333ea;">SÉRIES</span>' : ''}
+      ${theme.id === 'gaming' ? '<span class="theme-badge-anime" style="background: #059669;">GAMING</span>' : ''}
       <div class="theme-icon">${theme.icon}</div>
       <div class="theme-title">${theme.name}</div>
     `;
@@ -257,6 +260,18 @@ socket.on('round_start_host', (data) => {
     document.getElementById('round-mode-display').textContent = 'Mode Animé';
     document.getElementById('round-question-heading').textContent = 'De quel animé vient cet opening ?';
     document.getElementById('round-question-subtext').textContent = 'Devinez le bon animé sur votre manette !';
+  } else if (data.isCinema) {
+    document.getElementById('round-mode-display').textContent = 'Mode Cinéma';
+    document.getElementById('round-question-heading').textContent = 'De quel film culte vient cette musique ?';
+    document.getElementById('round-question-subtext').textContent = 'Devinez le bon film sur votre manette !';
+  } else if (data.isSeries) {
+    document.getElementById('round-mode-display').textContent = 'Mode Séries TV';
+    document.getElementById('round-question-heading').textContent = 'De quelle série TV vient ce générique ?';
+    document.getElementById('round-question-subtext').textContent = 'Devinez la bonne série sur votre manette !';
+  } else if (data.isGaming) {
+    document.getElementById('round-mode-display').textContent = 'Mode Jeux Vidéo';
+    document.getElementById('round-question-heading').textContent = 'De quel jeu vidéo vient cette musique ?';
+    document.getElementById('round-question-subtext').textContent = 'Devinez le bon jeu vidéo sur votre manette !';
   } else {
     const themeObj = currentThemes.find(t => t.id === selectedThemeId);
     document.getElementById('round-mode-display').textContent = themeObj ? themeObj.name : 'Blind-Test';
@@ -388,6 +403,30 @@ socket.on('round_ended_host', (data) => {
     artistEl.textContent = `Opening : "${data.track.title}"`;
     if (extraEl) {
       extraEl.textContent = `Artiste : ${data.track.artist}`;
+      extraEl.style.display = 'block';
+    }
+  } else if (data.track.isCinema && data.track.cinema) {
+    categoryEl.textContent = 'FILM CULTE';
+    titleEl.textContent = data.track.cinema;
+    artistEl.textContent = `Musique : "${data.track.title}"`;
+    if (extraEl) {
+      extraEl.textContent = `Compositeur / Artiste : ${data.track.artist}`;
+      extraEl.style.display = 'block';
+    }
+  } else if (data.track.isSeries && data.track.series) {
+    categoryEl.textContent = 'SÉRIE TV';
+    titleEl.textContent = data.track.series;
+    artistEl.textContent = `Générique : "${data.track.title}"`;
+    if (extraEl) {
+      extraEl.textContent = `Artiste : ${data.track.artist}`;
+      extraEl.style.display = 'block';
+    }
+  } else if (data.track.isGaming && data.track.gaming) {
+    categoryEl.textContent = 'JEU VIDÉO';
+    titleEl.textContent = data.track.gaming;
+    artistEl.textContent = `Piste : "${data.track.title}"`;
+    if (extraEl) {
+      extraEl.textContent = `Compositeur : ${data.track.artist}`;
       extraEl.style.display = 'block';
     }
   } else {

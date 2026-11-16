@@ -77,6 +77,9 @@ L'application intègre une sélection variée de playlists Deezer prêtes à l'e
 | :--- | :--- |
 | 🏰 **Disney & Enfance** | Catalogue enrichi de classiques Disney (Le Roi Lion, Aladdin, Tarzan, Mulan, Vaiana...) |
 | ⚡ **Openings d'Animés** | Catalogue étendu d'animés cultes (Naruto, SNK, One Piece, Death Note, Demon Slayer, JJK...) |
+| 🎬 **Cinéma & Films Cultes** | Bandes originales inoubliables du 7ème art (Star Wars, Harry Potter, Gladiator, Inception, Titanic...) |
+| 📺 **Séries TV** | Les génériques cultes du petit écran (Game of Thrones, Stranger Things, Friends, Peaky Blinders...) |
+| 🎮 **Jeux Vidéo** | Les musiques légendaires du gaming (Zelda, Mario, Skyrim, Minecraft, The Witcher 3, Pokémon, GTA...) |
 | 🎤 **Rap Français** | Des classiques 90s/2000s aux bangers actuels (Booba, PNL, Ninho, Gazo, Damso, SDM...) |
 | 💾 **Années 2000 FR** | Les tubes francophones cultes des années 2000 |
 | 🪩 **Années 80 FR** | Les pépites et hymnes francophones des années 80 |
