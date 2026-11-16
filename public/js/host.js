@@ -11,6 +11,163 @@ let currentAudioFallback = null;
 
 const SILENT_AUDIO = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
 
+const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let sfxEnabled = true;
+
+function getAudioContext() {
+  if (!audioCtx && AudioContextClass) {
+    audioCtx = new AudioContextClass();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+  return audioCtx;
+}
+
+function getMasterSfxVolume() {
+  if (!sfxEnabled) return 0;
+  const vol = parseFloat(volumeSlider ? volumeSlider.value : 0.8);
+  return Math.max(0, Math.min(1, vol));
+}
+
+function playRoundStartSfx() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const masterVol = getMasterSfxVolume();
+  if (masterVol <= 0) return;
+
+  const notes = [523.25, 659.25, 783.99, 1046.50];
+  notes.forEach((freq, idx) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+
+    gain.gain.setValueAtTime(0, now + idx * 0.08);
+    gain.gain.linearRampToValueAtTime(0.22 * masterVol, now + idx * 0.08 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now + idx * 0.08);
+    osc.stop(now + idx * 0.08 + 0.36);
+  });
+}
+
+function playPlayerAnswerSfx() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const masterVol = getMasterSfxVolume();
+  if (masterVol <= 0) return;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(750, now);
+  osc.frequency.exponentialRampToValueAtTime(1350, now + 0.07);
+
+  gain.gain.setValueAtTime(0.2 * masterVol, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.13);
+}
+
+function playCountdownTickSfx(secondsLeft) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const masterVol = getMasterSfxVolume();
+  if (masterVol <= 0) return;
+
+  const isUrgent = secondsLeft <= 3;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const freq = isUrgent ? 1150 : 850;
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, now);
+  osc.frequency.exponentialRampToValueAtTime(freq * 0.45, now + 0.06);
+
+  const vol = (isUrgent ? 0.38 : 0.22) * masterVol;
+  gain.gain.setValueAtTime(vol, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.08);
+}
+
+function playRevealSfx() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const masterVol = getMasterSfxVolume();
+  if (masterVol <= 0) return;
+
+  const chord = [392.00, 493.88, 587.33, 783.99, 987.77];
+  chord.forEach((freq, idx) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+    osc.frequency.setValueAtTime(freq, now + idx * 0.035);
+
+    gain.gain.setValueAtTime(0, now + idx * 0.035);
+    gain.gain.linearRampToValueAtTime(0.18 * masterVol, now + idx * 0.035 + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.035 + 0.7);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now + idx * 0.035);
+    osc.stop(now + idx * 0.035 + 0.72);
+  });
+}
+
+function playPodiumFanfareSfx() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const masterVol = getMasterSfxVolume();
+  if (masterVol <= 0) return;
+
+  const melody = [
+    { freq: 392.00, time: 0.0, dur: 0.12 },
+    { freq: 523.25, time: 0.14, dur: 0.12 },
+    { freq: 659.25, time: 0.28, dur: 0.14 },
+    { freq: 783.99, time: 0.44, dur: 0.22 },
+    { freq: 659.25, time: 0.70, dur: 0.12 },
+    { freq: 783.99, time: 0.84, dur: 0.14 },
+    { freq: 1046.50, time: 1.02, dur: 0.6 }
+  ];
+
+  melody.forEach(note => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(note.freq, now + note.time);
+
+    gain.gain.setValueAtTime(0, now + note.time);
+    gain.gain.linearRampToValueAtTime(0.25 * masterVol, now + note.time + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.dur);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now + note.time);
+    osc.stop(now + note.time + note.dur + 0.02);
+  });
+}
+
 function showAudioPrompt() {
   let prompt = document.getElementById('audio-unmute-prompt');
   if (!prompt) {
@@ -102,6 +259,16 @@ audioPlayer.volume = parseFloat(volumeSlider.value);
 volumeSlider.addEventListener('input', (e) => {
   audioPlayer.volume = parseFloat(e.target.value);
 });
+
+const sfxToggleBtn = document.getElementById('sfx-toggle-btn');
+if (sfxToggleBtn) {
+  sfxToggleBtn.addEventListener('click', () => {
+    sfxEnabled = !sfxEnabled;
+    sfxToggleBtn.textContent = sfxEnabled ? '🔔 Bruitages ON' : '🔕 Bruitages OFF';
+    sfxToggleBtn.style.opacity = sfxEnabled ? '1' : '0.6';
+    getAudioContext();
+  });
+}
 
 document.getElementById('fullscreen-btn').addEventListener('click', () => {
   if (!document.fullscreenElement) {
@@ -222,6 +389,7 @@ function updateLobbyPlayers(players) {
 
 const startBtn = document.getElementById('start-game-btn');
 startBtn.addEventListener('click', () => {
+  getAudioContext();
   try {
     audioPlayer.src = SILENT_AUDIO;
     audioPlayer.play().catch(() => {});
@@ -248,6 +416,7 @@ socket.on('round_start_host', (data) => {
     audioFadeInterval = null;
   }
 
+  playRoundStartSfx();
   switchView('round');
 
   document.getElementById('round-number-display').textContent = `Manche 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
@@ -314,6 +483,7 @@ function renderRoundPlayersList(players) {
 }
 
 socket.on('player_answered', (data) => {
+  playPlayerAnswerSfx();
   updateAnsweredCount(data.answeredCount, data.totalPlayers);
 
   const playerChip = document.getElementById(`round-player-${data.playerId}`);
@@ -341,6 +511,7 @@ function startRoundTimer(durationSeconds) {
   const timerSeconds = document.getElementById('timer-seconds');
   const startTime = Date.now();
   const totalMs = durationSeconds * 1000;
+  let lastTickSecond = -1;
 
   timerBar.style.width = '100%';
   timerSeconds.textContent = durationSeconds;
@@ -351,7 +522,13 @@ function startRoundTimer(durationSeconds) {
     const percent = (remaining / totalMs) * 100;
 
     timerBar.style.width = `${percent}%`;
-    timerSeconds.textContent = Math.ceil(remaining / 1000);
+    const secCeil = Math.ceil(remaining / 1000);
+    timerSeconds.textContent = secCeil;
+
+    if (secCeil <= 5 && secCeil > 0 && secCeil !== lastTickSecond) {
+      lastTickSecond = secCeil;
+      playCountdownTickSfx(secCeil);
+    }
 
     if (remaining <= 0) {
       clearInterval(roundTimerInterval);
@@ -362,6 +539,7 @@ function startRoundTimer(durationSeconds) {
 socket.on('round_ended_host', (data) => {
   if (roundTimerInterval) clearInterval(roundTimerInterval);
   hideAudioPrompt();
+  playRevealSfx();
   
   if (audioFadeInterval) clearInterval(audioFadeInterval);
   let fadeVolume = audioPlayer.volume;
@@ -475,6 +653,7 @@ socket.on('game_over_host', (data) => {
   hideAudioPrompt();
 
   switchView('gameover');
+  playPodiumFanfareSfx();
   launchConfetti();
 
   const podium = data.podium || [];

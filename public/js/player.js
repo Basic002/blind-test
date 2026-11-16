@@ -12,6 +12,86 @@ let currentAuthTab = 'guest';
 let authFormMode = 'login';
 let authSelectedAvatar = '🦊';
 
+const MobileAudioCtxClass = window.AudioContext || window.webkitAudioContext;
+let mobileAudioCtx = null;
+
+function getMobileAudioCtx() {
+  try {
+    if (!mobileAudioCtx && MobileAudioCtxClass) {
+      mobileAudioCtx = new MobileAudioCtxClass();
+    }
+    if (mobileAudioCtx && mobileAudioCtx.state === 'suspended') {
+      mobileAudioCtx.resume().catch(() => {});
+    }
+    return mobileAudioCtx;
+  } catch (e) {
+    return null;
+  }
+}
+
+function playMobileTapSfx() {
+  const ctx = getMobileAudioCtx();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(650, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.06);
+  } catch (e) {}
+}
+
+function playMobileResultSfx(isCorrect) {
+  const ctx = getMobileAudioCtx();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    if (isCorrect) {
+      [880, 1318.5].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+
+        gain.gain.setValueAtTime(0, now + idx * 0.08);
+        gain.gain.linearRampToValueAtTime(0.18, now + idx * 0.08 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.22);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.23);
+      });
+    } else {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(140, now + 0.15);
+
+      gain.gain.setValueAtTime(0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.17);
+    }
+  } catch (e) {}
+}
+
 const views = {
   join: document.getElementById('view-join'),
   waiting: document.getElementById('view-waiting'),
@@ -401,6 +481,7 @@ document.querySelectorAll('#avatar-picker .avatar-option').forEach(el => {
 
 const btnJoin = document.getElementById('btn-join');
 btnJoin.addEventListener('click', () => {
+  getMobileAudioCtx();
   const roomCode = document.getElementById('input-room-code').value.trim().toUpperCase();
   const nickname = currentUser ? currentUser.username : document.getElementById('input-nickname').value.trim();
   const avatar = currentUser ? currentUser.avatar : selectedAvatar;
@@ -513,6 +594,7 @@ document.querySelectorAll('.choice-btn').forEach(btn => {
 
     const optionId = btn.dataset.optionId;
     vibrate(40);
+    playMobileTapSfx();
 
     document.querySelectorAll('.choice-btn').forEach(b => {
       if (b === btn) {
@@ -595,6 +677,7 @@ socket.on('round_ended_player', (data) => {
 
   if (data.isCorrect) {
     vibrate([70, 40, 70]);
+    playMobileResultSfx(true);
     resultIcon.textContent = '✓';
     resultTitle.textContent = 'Excellent !';
     resultTitle.style.color = 'var(--party-emerald)';
@@ -602,6 +685,7 @@ socket.on('round_ended_player', (data) => {
     resultPoints.style.color = 'var(--party-emerald)';
   } else {
     vibrate(180);
+    playMobileResultSfx(false);
     resultIcon.textContent = '✕';
     resultTitle.textContent = 'Manqué';
     resultTitle.style.color = 'var(--party-coral)';
