@@ -3,7 +3,7 @@ const ACHIEVEMENTS = [
     id: 'first_step',
     name: 'Premier Pas',
     description: 'Terminer sa toute première partie de blind-test',
-    icon: '🚀',
+    icon: 'rocket',
     category: 'Général',
     xpReward: 150,
     check: (user, context) => {
@@ -14,7 +14,7 @@ const ACHIEVEMENTS = [
     id: 'speed_demon',
     name: 'Buzzer Éclair',
     description: 'Donner une bonne réponse en moins de 3 secondes',
-    icon: '⚡',
+    icon: 'bolt',
     category: 'Vitesse',
     xpReward: 200,
     check: (user, context) => {
@@ -25,7 +25,7 @@ const ACHIEVEMENTS = [
     id: 'streak_3',
     name: 'En Plein Feu',
     description: 'Atteindre une série de 3 bonnes réponses consécutives',
-    icon: '🔥',
+    icon: 'flame',
     category: 'Précision',
     xpReward: 200,
     check: (user, context) => {
@@ -36,7 +36,7 @@ const ACHIEVEMENTS = [
     id: 'streak_5',
     name: 'Inarrêtable',
     description: 'Enchaîner une série de 5 bonnes réponses consécutives',
-    icon: '☄️',
+    icon: 'flame',
     category: 'Précision',
     xpReward: 350,
     check: (user, context) => {
@@ -47,7 +47,7 @@ const ACHIEVEMENTS = [
     id: 'first_victory',
     name: 'Numéro 1',
     description: 'Remporter une victoire (1ère place) dans une partie',
-    icon: '👑',
+    icon: 'crown',
     category: 'Victoire',
     xpReward: 400,
     check: (user, context) => {
@@ -58,7 +58,7 @@ const ACHIEVEMENTS = [
     id: 'podium',
     name: 'Sur le Podium',
     description: 'Finir dans le Top 3 d\'une partie multijoueur',
-    icon: '🥈',
+    icon: 'medal-silver',
     category: 'Victoire',
     xpReward: 200,
     check: (user, context) => {
@@ -69,7 +69,7 @@ const ACHIEVEMENTS = [
     id: 'perfect_game',
     name: 'Sans Faute',
     description: 'Faire un 100% de bonnes réponses sur une partie complète',
-    icon: '🎯',
+    icon: 'sniper',
     category: 'Précision',
     xpReward: 600,
     check: (user, context) => {
@@ -80,7 +80,7 @@ const ACHIEVEMENTS = [
     id: 'disney_master',
     name: 'Prince(sse) Disney',
     description: 'Deviner 5 films Disney correctement',
-    icon: '🏰',
+    icon: 'disney',
     category: 'Thèmes',
     xpReward: 300,
     check: (user) => {
@@ -91,7 +91,7 @@ const ACHIEVEMENTS = [
     id: 'anime_otaku',
     name: 'Véritable Otaku',
     description: 'Identifier 5 openings d\'animés correctement',
-    icon: '⚡',
+    icon: 'anime',
     category: 'Thèmes',
     xpReward: 300,
     check: (user) => {
@@ -102,7 +102,7 @@ const ACHIEVEMENTS = [
     id: 'cinema_master',
     name: 'Cinéphile Averti',
     description: 'Identifier 5 musiques de films cultes',
-    icon: '🎬',
+    icon: 'cinema',
     category: 'Thèmes',
     xpReward: 300,
     check: (user) => {
@@ -113,7 +113,7 @@ const ACHIEVEMENTS = [
     id: 'series_master',
     name: 'Sériephile Accro',
     description: 'Identifier 5 génériques de séries TV',
-    icon: '📺',
+    icon: 'series',
     category: 'Thèmes',
     xpReward: 300,
     check: (user) => {
@@ -124,7 +124,7 @@ const ACHIEVEMENTS = [
     id: 'gaming_master',
     name: 'Gamer Ultime',
     description: 'Identifier 5 musiques de jeux vidéo',
-    icon: '🎮',
+    icon: 'gaming',
     category: 'Thèmes',
     xpReward: 300,
     check: (user) => {
@@ -135,7 +135,7 @@ const ACHIEVEMENTS = [
     id: 'rap_master',
     name: 'Kickeur Né',
     description: 'Trouver 5 morceaux de Rap Français',
-    icon: '🎤',
+    icon: 'rap-fr',
     category: 'Thèmes',
     xpReward: 300,
     check: (user) => {
@@ -146,7 +146,7 @@ const ACHIEVEMENTS = [
     id: '80s_master',
     name: 'Nostalgie 80s',
     description: 'Trouver 5 morceaux des Années 80',
-    icon: '🥖',
+    icon: '80s-fr',
     category: 'Thèmes',
     xpReward: 300,
     check: (user) => {
@@ -159,7 +159,7 @@ const ACHIEVEMENTS = [
     id: '2000s_master',
     name: 'Génération 2000',
     description: 'Trouver 5 morceaux des Années 2000',
-    icon: '📼',
+    icon: '2000s-fr',
     category: 'Thèmes',
     xpReward: 300,
     check: (user) => {
@@ -172,7 +172,7 @@ const ACHIEVEMENTS = [
     id: 'score_5000',
     name: 'Scoreur d\'Élite',
     description: 'Atteindre ou dépasser 5 000 points en une seule partie',
-    icon: '🌟',
+    icon: 'star',
     category: 'Score',
     xpReward: 350,
     check: (user, context) => {
@@ -183,7 +183,7 @@ const ACHIEVEMENTS = [
     id: 'veteran_5_games',
     name: 'Fidèle au Poste',
     description: 'Jouer 5 parties complètes de blind-test',
-    icon: '🕹️',
+    icon: 'gamepad',
     category: 'Général',
     xpReward: 400,
     check: (user) => {
@@ -194,7 +194,7 @@ const ACHIEVEMENTS = [
     id: 'level_5',
     name: 'Buzzer Confirmé',
     description: 'Atteindre le Niveau 5 (Buzzer Express)',
-    icon: '🎖️',
+    icon: 'award',
     category: 'Progression',
     xpReward: 500,
     check: (user) => {
@@ -205,7 +205,7 @@ const ACHIEVEMENTS = [
     id: 'level_10',
     name: 'Légende Vivante',
     description: 'Atteindre le Niveau 10 (Légende du Blind-Test)',
-    icon: '💎',
+    icon: 'diamond',
     category: 'Progression',
     xpReward: 1000,
     check: (user) => {

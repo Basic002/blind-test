@@ -57,6 +57,138 @@ function shuffleArray(array) {
   return arr;
 }
 
+function calculateAwards(room, finalLeaderboard) {
+  const awards = [];
+  const players = Array.from(room.players.values()).filter(p => p.gameStats);
+  if (players.length === 0) return awards;
+
+  let bestSpeedPlayer = null;
+  let bestAvgSpeed = Infinity;
+
+  let bestSniperPlayer = null;
+  let bestSniperRatio = -1;
+
+  let fastestAnswerPlayer = null;
+  let fastestAnswerTime = Infinity;
+
+  let bestStreakPlayer = null;
+  let highestStreak = 0;
+
+  let mostLatePlayer = null;
+  let mostLateCount = 0;
+
+  let mostWrongPlayer = null;
+  let mostWrongCount = 0;
+
+  for (const p of players) {
+    const s = p.gameStats;
+    if (s.correctTimes && s.correctTimes.length > 0) {
+      const avg = s.correctTimes.reduce((a, b) => a + b, 0) / s.correctTimes.length;
+      if (avg < bestAvgSpeed) {
+        bestAvgSpeed = avg;
+        bestSpeedPlayer = p;
+      }
+    }
+
+    const total = (s.correctCount || 0) + (s.wrongCount || 0);
+    if (total > 0) {
+      const ratio = (s.correctCount || 0) / total;
+      if (ratio > bestSniperRatio && (s.correctCount || 0) >= 2) {
+        bestSniperRatio = ratio;
+        bestSniperPlayer = p;
+      }
+    }
+
+    if (s.fastestAnswerMs && s.fastestAnswerMs < fastestAnswerTime) {
+      fastestAnswerTime = s.fastestAnswerMs;
+      fastestAnswerPlayer = p;
+    }
+
+    if (s.bestStreak && s.bestStreak > highestStreak && s.bestStreak >= 3) {
+      highestStreak = s.bestStreak;
+      bestStreakPlayer = p;
+    }
+
+    if (s.lateAnswersCount && s.lateAnswersCount > mostLateCount && s.lateAnswersCount >= 1) {
+      mostLateCount = s.lateAnswersCount;
+      mostLatePlayer = p;
+    }
+
+    if (s.wrongCount && s.wrongCount > mostWrongCount && s.wrongCount >= 2) {
+      mostWrongCount = s.wrongCount;
+      mostWrongPlayer = p;
+    }
+  }
+
+  if (bestSpeedPlayer && bestAvgSpeed < Infinity) {
+    awards.push({
+      id: 'fusee',
+      title: 'La Fusée',
+      icon: 'fusee',
+      desc: 'Vitesse de réponse moyenne éclair',
+      value: `${(bestAvgSpeed / 1000).toFixed(2)}s moy.`,
+      player: { id: bestSpeedPlayer.id || '', nickname: bestSpeedPlayer.nickname, avatar: bestSpeedPlayer.avatar }
+    });
+  }
+
+  if (bestSniperPlayer && bestSniperRatio > 0 && (!bestSpeedPlayer || bestSniperPlayer.id !== bestSpeedPlayer.id)) {
+    awards.push({
+      id: 'sniper',
+      title: 'Le Sniper',
+      icon: 'sniper',
+      desc: 'Précision chirurgicale sur les manches',
+      value: `${Math.round(bestSniperRatio * 100)}% de réussite`,
+      player: { id: bestSniperPlayer.id || '', nickname: bestSniperPlayer.nickname, avatar: bestSniperPlayer.avatar }
+    });
+  }
+
+  if (fastestAnswerPlayer && fastestAnswerTime < Infinity && fastestAnswerTime <= 3000) {
+    awards.push({
+      id: 'eclair',
+      title: 'L\'Éclair',
+      icon: 'eclair',
+      desc: 'Bonne réponse la plus rapide de la partie',
+      value: `${(fastestAnswerTime / 1000).toFixed(2)}s chrono`,
+      player: { id: fastestAnswerPlayer.id || '', nickname: fastestAnswerPlayer.nickname, avatar: fastestAnswerPlayer.avatar }
+    });
+  }
+
+  if (bestStreakPlayer && highestStreak >= 3) {
+    awards.push({
+      id: 'incendiaire',
+      title: 'L\'Incendiaire',
+      icon: 'incendiaire',
+      desc: 'Plus longue série de bonnes réponses',
+      value: `Série de ${highestStreak}`,
+      player: { id: bestStreakPlayer.id || '', nickname: bestStreakPlayer.nickname, avatar: bestStreakPlayer.avatar }
+    });
+  }
+
+  if (mostLatePlayer && mostLateCount >= 1) {
+    awards.push({
+      id: 'tortue',
+      title: 'La Tortue',
+      icon: 'tortue',
+      desc: 'A validé in extremis au buzzer',
+      value: `${mostLateCount} fois in extremis`,
+      player: { id: mostLatePlayer.id || '', nickname: mostLatePlayer.nickname, avatar: mostLatePlayer.avatar }
+    });
+  }
+
+  if (mostWrongPlayer && mostWrongCount >= 2) {
+    awards.push({
+      id: 'chat_noir',
+      title: 'Le Chat Noir',
+      icon: 'chat_noir',
+      desc: 'Le joueur qui n\'a vraiment pas eu de chance',
+      value: `${mostWrongCount} erreurs`,
+      player: { id: mostWrongPlayer.id || '', nickname: mostWrongPlayer.nickname, avatar: mostWrongPlayer.avatar }
+    });
+  }
+
+  return awards;
+}
+
 class RoomManager {
   constructor(io) {
     this.io = io;
@@ -106,7 +238,7 @@ class RoomManager {
     return code ? this.rooms.get(code) : null;
   }
 
-  joinRoom(roomCode, socketId, nickname, avatar = '🎵', userId = null) {
+  joinRoom(roomCode, socketId, nickname, avatar = 'fox', userId = null) {
     const room = this.getRoom(roomCode);
     if (!room) {
       throw new Error('Salon introuvable. Vérifie le code !');
@@ -130,13 +262,13 @@ class RoomManager {
       }
     }
 
-    const cleanAvatar = typeof avatar === 'string' && avatar.trim().length > 0 && avatar.trim().length <= 10
+    const cleanAvatar = typeof avatar === 'string' && avatar.trim().length > 0 && avatar.trim().length <= 30
       ? avatar.trim()
-      : '🎵';
+      : 'fox';
 
     let userLevel = 1;
     let userTitle = 'Novice';
-    let userBadge = '🎵';
+    let userBadge = 'music';
     let registeredUserId = null;
 
     if (userId && typeof userId === 'string') {
@@ -218,7 +350,7 @@ class RoomManager {
       streak: p.streak,
       level: p.level || 1,
       title: p.title || 'Novice',
-      badge: p.badge || '🎵',
+      badge: p.badge || 'music',
       hasAnswered: p.hasAnswered
     })).sort((a, b) => b.score - a.score);
   }
@@ -270,6 +402,15 @@ class RoomManager {
       player.correctAnswersCount = 0;
       player.hasAnswered = false;
       player.lastAnswer = null;
+      player.gameStats = {
+        correctCount: 0,
+        wrongCount: 0,
+        totalAnswerTimeMs: 0,
+        correctTimes: [],
+        bestStreak: 0,
+        lateAnswersCount: 0,
+        fastestAnswerMs: Infinity
+      };
     }
 
     room.status = 'playing';
@@ -551,6 +692,37 @@ class RoomManager {
       player.streak = 0;
     }
 
+    if (!player.gameStats) {
+      player.gameStats = {
+        correctCount: 0,
+        wrongCount: 0,
+        totalAnswerTimeMs: 0,
+        correctTimes: [],
+        bestStreak: 0,
+        lateAnswersCount: 0,
+        fastestAnswerMs: Infinity
+      };
+    }
+
+    player.gameStats.totalAnswerTimeMs += responseTimeMs;
+    if (responseTimeMs > (round.duration - 4) * 1000) {
+      player.gameStats.lateAnswersCount += 1;
+    }
+
+    if (isCorrect) {
+      player.gameStats.correctCount += 1;
+      player.gameStats.correctTimes.push(responseTimeMs);
+      if (responseTimeMs < player.gameStats.fastestAnswerMs) {
+        player.gameStats.fastestAnswerMs = responseTimeMs;
+      }
+    } else {
+      player.gameStats.wrongCount += 1;
+    }
+
+    if (player.streak > player.gameStats.bestStreak) {
+      player.gameStats.bestStreak = player.streak;
+    }
+
     player.hasAnswered = true;
     player.lastAnswer = {
       isCorrect,
@@ -581,14 +753,23 @@ class RoomManager {
       progression: roundProgression
     });
 
+    const allAnswered = round.answers.size >= room.players.size && room.players.size > 0;
+
     this.io.to(room.hostSocketId).emit('player_answered', {
       playerId: socketId,
       answeredCount: round.answers.size,
       totalPlayers: room.players.size,
+      allAnswered,
       players: this.getPlayersList(room)
     });
 
     this.checkAllPlayersAnswered(room);
+  }
+
+  skipRound(roomCode, socketId) {
+    const room = this.getRoom(roomCode);
+    if (!room || room.status !== 'playing' || room.hostSocketId !== socketId) return;
+    this.endRound(room);
   }
 
   checkAllPlayersAnswered(room) {
@@ -674,10 +855,12 @@ class RoomManager {
 
     room.status = 'game_over';
     const finalLeaderboard = this.getPlayersList(room);
+    const awards = calculateAwards(room, finalLeaderboard);
 
     this.io.to(room.hostSocketId).emit('game_over_host', {
       podium: finalLeaderboard.slice(0, 3),
-      leaderboard: finalLeaderboard
+      leaderboard: finalLeaderboard,
+      awards
     });
 
     for (const [socketId, player] of room.players) {
@@ -695,11 +878,14 @@ class RoomManager {
         });
       }
 
+      const playerAward = awards.find(a => a.player.id === socketId) || null;
+
       this.io.to(socketId).emit('game_over_player', {
         rank,
         score: player.score,
         totalPlayers: room.players.size,
-        progression: gameProgression
+        progression: gameProgression,
+        award: playerAward
       });
     }
   }
@@ -719,6 +905,15 @@ class RoomManager {
       player.streak = 0;
       player.hasAnswered = false;
       player.lastAnswer = null;
+      player.gameStats = {
+        correctCount: 0,
+        wrongCount: 0,
+        totalAnswerTimeMs: 0,
+        correctTimes: [],
+        bestStreak: 0,
+        lateAnswersCount: 0,
+        fastestAnswerMs: Infinity
+      };
     }
 
     this.io.to(room.code).emit('back_to_lobby', {

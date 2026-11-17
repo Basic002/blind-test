@@ -660,7 +660,7 @@ select.form-input option:checked,
 }
 
 .vinyl-stage::before {
-  content: 'EXTRAIT EN DIRECT 🎵';
+  content: 'EXTRAIT EN DIRECT';
   position: absolute;
   top: 14px;
   left: 20px;
@@ -1216,6 +1216,15 @@ select.form-input option:checked,
   0% { transform: translateX(-50%) scale(1); }
   50% { transform: translateX(-50%) scale(1.05); }
   100% { transform: translateX(-50%) scale(1); }
+}
+
+#skip-round-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.6);
+}
+
+#skip-round-btn:active {
+  transform: translateY(2px) scale(0.98);
 }
 
 .player-level-badge {

@@ -6,6 +6,7 @@
   <title>Blind-Test — Salon Principal</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/icons.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 <body>
@@ -14,7 +15,7 @@
 
   <header class="app-header">
     <div class="brand-wrapper">
-      <div class="brand-badge">⚡</div>
+      <div class="brand-badge" id="host-brand-badge"></div>
       <div>
         <span class="brand-text">Blind-Test</span>
         <span class="brand-tag">Écran Hôte</span>
@@ -25,9 +26,9 @@
         <span>Volume</span>
         <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" style="cursor: pointer; accent-color: var(--apple-blue); width: 110px;">
       </div>
-      <button id="sfx-toggle-btn" class="btn btn-secondary" style="padding: 0.45rem 0.95rem; font-size: 0.85rem;" title="Activer ou couper les bruitages">🔔 Bruitages ON</button>
+      <button id="sfx-toggle-btn" class="btn btn-secondary" style="padding: 0.45rem 0.95rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.45rem;" title="Activer ou couper les bruitages"><span id="sfx-btn-icon"></span><span id="sfx-btn-text">Bruitages ON</span></button>
       <button id="fullscreen-btn" class="btn btn-secondary" style="padding: 0.45rem 1.15rem; font-size: 0.85rem;">Plein Écran</button>
-      <button id="host-quit-btn" class="btn btn-secondary" style="display: none; padding: 0.45rem 1.15rem; font-size: 0.85rem; background: #2a1520; color: #ff5c7c; border: 2px solid #5a1d2e;">Quitter la partie ✕</button>
+      <button id="host-quit-btn" class="btn btn-secondary" style="display: none; padding: 0.45rem 1.15rem; font-size: 0.85rem; background: #2a1520; color: #ff5c7c; border: 2px solid #5a1d2e;">Quitter la partie</button>
     </div>
   </header>
 
@@ -89,12 +90,12 @@
 
             <div id="lobby-players-grid" class="players-grid">
               <div id="no-players-placeholder" style="grid-column: 1 / -1; color: var(--text-tertiary); text-align: center; padding: 2rem 1rem; font-size: 1rem; font-weight: 500;">
-                En attente des joueurs... Rejoignez sur mobile ! 📱
+                En attente des joueurs... Rejoignez sur mobile !
               </div>
             </div>
 
             <button id="start-game-btn" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%; font-size: 1.25rem; padding: 1.1rem;" disabled>
-              Lancer la Partie ▶
+              Lancer la Partie
             </button>
           </div>
         </div>
@@ -130,10 +131,14 @@
         <div id="timer-seconds" class="timer-seconds-number">25</div>
 
         <div id="answers-counter" class="answers-counter-pill">
-          <span>⚡</span> <span id="answers-counter-text">0 / 0 ont répondu</span>
+          <span id="answers-counter-icon"></span> <span id="answers-counter-text">0 / 0 ont répondu</span>
         </div>
 
-        <div id="round-players-list" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 2rem;"></div>
+        <button id="skip-round-btn" class="btn btn-primary" style="display: none; margin: 1.15rem auto 0; padding: 0.8rem 1.75rem; font-size: 1.05rem; border-radius: 16px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-color: #60a5fa; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.45); cursor: pointer; align-items: center; justify-content: center; gap: 0.5rem;">
+          <span>Tous ont répondu ! Révéler la réponse</span> <span id="skip-round-icon" style="display: inline-flex;"></span>
+        </button>
+
+        <div id="round-players-list" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 1.75rem;"></div>
       </div>
     </section>
 
@@ -166,32 +171,39 @@
 
         <div id="podium-display" style="display: flex; justify-content: center; align-items: flex-end; gap: 1.5rem; margin: 3rem 0 2.5rem 0; width: 100%; max-width: 840px;">
           <div id="podium-2" class="podium-box" style="flex: 1; padding: 2rem 1.5rem; text-align: center; height: 270px; border-top: 4px solid #cbd5e1;">
-            <div style="font-size: 1.1rem; font-weight: 800; color: #cbd5e1; letter-spacing: 0.02em;">🥈 2ème Place</div>
-            <div class="podium-avatar" style="font-size: 3rem; margin: 0.75rem 0;">-</div>
+            <div style="font-size: 1.1rem; font-weight: 800; color: #cbd5e1; letter-spacing: 0.02em; display: flex; align-items: center; justify-content: center; gap: 0.4rem;"><span id="podium-icon-2"></span><span>2ème Place</span></div>
+            <div class="podium-avatar" style="margin: 0.75rem 0;">-</div>
             <div class="podium-name" style="font-size: 1.45rem; font-weight: 800;">-</div>
             <div class="podium-level" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-top: 0.15rem;"></div>
             <div class="podium-score" style="color: var(--party-cyan); font-size: 1.35rem; font-weight: 800; margin-top: 0.4rem;">0 pts</div>
           </div>
 
           <div id="podium-1" class="podium-box rank-1" style="flex: 1.25; padding: 2.5rem 1.75rem; text-align: center; height: 350px; border-top: 5px solid var(--party-gold);">
-            <div style="font-size: 1.3rem; font-weight: 900; color: var(--party-gold); letter-spacing: 0.02em;">👑 Vainqueur</div>
-            <div class="podium-avatar" style="font-size: 3.8rem; margin: 0.75rem 0;">-</div>
+            <div style="font-size: 1.3rem; font-weight: 900; color: var(--party-gold); letter-spacing: 0.02em; display: flex; align-items: center; justify-content: center; gap: 0.4rem;"><span id="podium-icon-1"></span><span>Vainqueur</span></div>
+            <div class="podium-avatar" style="margin: 0.75rem 0;">-</div>
             <div class="podium-name" style="font-size: 1.85rem; font-weight: 900; color: #ffffff;">-</div>
             <div class="podium-level" style="font-size: 0.95rem; font-weight: 700; color: var(--party-cyan); margin-top: 0.2rem;"></div>
             <div class="podium-score" style="color: var(--party-gold); font-size: 1.7rem; font-weight: 900; margin-top: 0.4rem;">0 pts</div>
           </div>
 
           <div id="podium-3" class="podium-box" style="flex: 1; padding: 1.75rem 1.5rem; text-align: center; height: 240px; border-top: 4px solid #f97316;">
-            <div style="font-size: 1.05rem; font-weight: 800; color: #f97316; letter-spacing: 0.02em;">🥉 3ème Place</div>
-            <div class="podium-avatar" style="font-size: 2.6rem; margin: 0.5rem 0;">-</div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: #f97316; letter-spacing: 0.02em; display: flex; align-items: center; justify-content: center; gap: 0.4rem;"><span id="podium-icon-3"></span><span>3ème Place</span></div>
+            <div class="podium-avatar" style="margin: 0.5rem 0;">-</div>
             <div class="podium-name" style="font-size: 1.35rem; font-weight: 800;">-</div>
             <div class="podium-level" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-top: 0.15rem;"></div>
             <div class="podium-score" style="color: var(--party-cyan); font-size: 1.25rem; font-weight: 800; margin-top: 0.4rem;">0 pts</div>
           </div>
         </div>
 
+        <div id="gameover-awards-section" style="display: none; width: 100%; max-width: 860px; margin-bottom: 2.5rem;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--party-cyan); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <span id="awards-title-icon"></span> <span>Titres Décalés de la Partie</span>
+          </h3>
+          <div id="gameover-awards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;"></div>
+        </div>
+
         <button id="replay-btn" class="btn btn-primary" style="font-size: 1.2rem; padding: 1.1rem 3.5rem;">
-          Retourner au Salon ▶
+          Retourner au Salon
         </button>
       </div>
     </section>

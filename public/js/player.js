@@ -1,6 +1,6 @@
 const socket = io();
 
-let selectedAvatar = '🦊';
+let selectedAvatar = 'fox';
 let myPlayerInfo = null;
 let currentOptions = [];
 let playerTimerInterval = null;
@@ -10,7 +10,44 @@ let currentUser = null;
 let authToken = localStorage.getItem('blindtest_token') || null;
 let currentAuthTab = 'guest';
 let authFormMode = 'login';
-let authSelectedAvatar = '🦊';
+let authSelectedAvatar = 'fox';
+
+function initPlayerStaticIcons() {
+  const openProf = document.getElementById('btn-open-profile-header');
+  if (openProf && typeof renderIcon === 'function') openProf.innerHTML = renderIcon('trophy', { size: 20 });
+  const logProf = document.getElementById('logged-profile-icon');
+  if (logProf && typeof renderIcon === 'function') logProf.innerHTML = renderIcon('trophy', { size: 14 });
+  const tGuest = document.getElementById('tab-guest-icon');
+  if (tGuest && typeof renderIcon === 'function') tGuest.innerHTML = renderIcon('gamepad', { size: 16 });
+  const tAcc = document.getElementById('tab-account-icon');
+  if (tAcc && typeof renderIcon === 'function') tAcc.innerHTML = renderIcon('user', { size: 16 });
+  const waitIcon = document.getElementById('waiting-icon');
+  if (waitIcon && typeof renderIcon === 'function') waitIcon.innerHTML = renderIcon('gamepad', { size: 54 });
+  const lockIcon = document.getElementById('answer-locked-icon');
+  if (lockIcon && typeof renderIcon === 'function') lockIcon.innerHTML = renderIcon('lock', { size: 18 });
+  const streakIcon = document.getElementById('streak-badge-icon');
+  if (streakIcon && typeof renderIcon === 'function') streakIcon.innerHTML = renderIcon('flame', { size: 14 });
+  const statStreakIcon = document.getElementById('stat-streak-icon');
+  if (statStreakIcon && typeof renderIcon === 'function') statStreakIcon.innerHTML = renderIcon('flame', { size: 18 });
+  const profTitleIcon = document.getElementById('profile-modal-title-icon');
+  if (profTitleIcon && typeof renderIcon === 'function') profTitleIcon.innerHTML = renderIcon('trophy', { size: 22 });
+
+  document.querySelectorAll('#avatar-picker .avatar-option').forEach(el => {
+    const av = el.dataset.avatar;
+    if (typeof renderAvatar === 'function') el.innerHTML = renderAvatar(av, 34);
+  });
+  document.querySelectorAll('#auth-avatar-picker .avatar-option').forEach(el => {
+    const av = el.dataset.avatar;
+    if (typeof renderAvatar === 'function') el.innerHTML = renderAvatar(av, 34);
+  });
+
+  const playerAvEl = document.getElementById('player-avatar-badge');
+  if (playerAvEl && typeof renderAvatar === 'function') {
+    playerAvEl.innerHTML = renderAvatar(selectedAvatar, 32);
+  }
+}
+document.addEventListener('DOMContentLoaded', initPlayerStaticIcons);
+initPlayerStaticIcons();
 
 const MobileAudioCtxClass = window.AudioContext || window.webkitAudioContext;
 let mobileAudioCtx = null;
@@ -119,13 +156,13 @@ if (roomParam) {
 function applyUserState(user) {
   currentUser = user;
   if (user) {
-    document.getElementById('player-avatar-badge').textContent = user.avatar || '🦊';
+    document.getElementById('player-avatar-badge').innerHTML = renderAvatar(user.avatar || 'fox', 32);
     document.getElementById('player-name-badge').textContent = user.username;
     document.getElementById('player-level-badge').textContent = `Nv. ${user.progression?.level || 1}`;
     document.getElementById('player-title-badge').textContent = user.progression?.title || 'Novice';
 
     document.getElementById('logged-user-section').style.display = 'flex';
-    document.getElementById('logged-avatar').textContent = user.avatar || '🦊';
+    document.getElementById('logged-avatar').innerHTML = renderAvatar(user.avatar || 'fox', 36);
     document.getElementById('logged-username').textContent = user.username;
     document.getElementById('logged-level').textContent = `Nv. ${user.progression?.level || 1}`;
     document.getElementById('logged-title').textContent = user.progression?.title || 'Novice';
@@ -136,9 +173,9 @@ function applyUserState(user) {
     document.getElementById('guest-nickname-section').style.display = 'none';
 
     document.getElementById('input-nickname').value = user.username;
-    selectedAvatar = user.avatar || '🦊';
+    selectedAvatar = user.avatar || 'fox';
   } else {
-    document.getElementById('player-avatar-badge').textContent = selectedAvatar;
+    document.getElementById('player-avatar-badge').innerHTML = renderAvatar(selectedAvatar, 32);
     document.getElementById('player-name-badge').textContent = 'Joueur';
     document.getElementById('player-level-badge').textContent = 'Nv. 1';
     document.getElementById('player-title-badge').textContent = 'Invité';
@@ -197,13 +234,13 @@ if (authSwitchMode) {
       authFormMode = 'register';
       document.getElementById('auth-form-title').textContent = 'Créer un compte';
       authSwitchMode.textContent = 'Déjà un compte ? Se connecter';
-      document.getElementById('btn-auth-submit').textContent = 'Créer mon compte ➔';
+      document.getElementById('btn-auth-submit').textContent = 'Créer mon compte';
       document.getElementById('auth-avatar-picker-group').style.display = 'block';
     } else {
       authFormMode = 'login';
       document.getElementById('auth-form-title').textContent = 'Connexion';
       authSwitchMode.textContent = 'Créer un compte';
-      document.getElementById('btn-auth-submit').textContent = 'Se connecter ➔';
+      document.getElementById('btn-auth-submit').textContent = 'Se connecter';
       document.getElementById('auth-avatar-picker-group').style.display = 'none';
     }
   });
@@ -244,7 +281,7 @@ async function handleAuthSubmit() {
 
   if (btnAuthSubmit) {
     btnAuthSubmit.disabled = true;
-    btnAuthSubmit.textContent = 'Chargement... ⏳';
+    btnAuthSubmit.textContent = 'Chargement...';
   }
 
   try {
@@ -272,7 +309,7 @@ async function handleAuthSubmit() {
     localStorage.setItem('blindtest_token', data.token);
     authToken = data.token;
     applyUserState(data.user);
-    showToast('🎉', 'Connexion réussie', `Bienvenue ${data.user.username} !`);
+    showToast('party', 'Connexion réussie', `Bienvenue ${data.user.username} !`);
     vibrate(60);
   } catch (err) {
     if (socket && socket.connected) {
@@ -296,7 +333,7 @@ async function handleAuthSubmit() {
   } finally {
     if (btnAuthSubmit) {
       btnAuthSubmit.disabled = false;
-      btnAuthSubmit.textContent = authFormMode === 'register' ? 'Créer mon compte ➔' : 'Se connecter ➔';
+      btnAuthSubmit.textContent = authFormMode === 'register' ? 'Créer mon compte' : 'Se connecter';
     }
   }
 }
@@ -316,19 +353,19 @@ document.getElementById('auth-input-password')?.addEventListener('keydown', (e) 
 socket.on('auth_success', (data) => {
   if (btnAuthSubmit) {
     btnAuthSubmit.disabled = false;
-    btnAuthSubmit.textContent = authFormMode === 'register' ? 'Créer mon compte ➔' : 'Se connecter ➔';
+    btnAuthSubmit.textContent = authFormMode === 'register' ? 'Créer mon compte' : 'Se connecter';
   }
   localStorage.setItem('blindtest_token', data.token);
   authToken = data.token;
   applyUserState(data.user);
-  showToast('🎉', 'Connexion réussie', `Bienvenue ${data.user.username} !`);
+  showToast('party', 'Connexion réussie', `Bienvenue ${data.user.username} !`);
   vibrate(60);
 });
 
 socket.on('auth_error', (data) => {
   if (btnAuthSubmit) {
     btnAuthSubmit.disabled = false;
-    btnAuthSubmit.textContent = authFormMode === 'register' ? 'Créer mon compte ➔' : 'Se connecter ➔';
+    btnAuthSubmit.textContent = authFormMode === 'register' ? 'Créer mon compte' : 'Se connecter';
   }
   const errEl = document.getElementById('auth-error-msg');
   const msg = data.message || 'Erreur d\'authentification';
@@ -345,7 +382,7 @@ function logoutUser() {
   authToken = null;
   applyUserState(null);
   closeProfileModal();
-  showToast('👋', 'Déconnecté', 'Session fermée');
+  showToast('wave', 'Déconnecté', 'Session fermée');
 }
 
 const btnLoggedLogout = document.getElementById('btn-logged-logout');
@@ -362,7 +399,7 @@ function openProfileModal() {
   if (currentUser) {
     socket.emit('get_profile', { userId: currentUser.id });
   } else {
-    document.getElementById('profile-avatar').textContent = selectedAvatar;
+    document.getElementById('profile-avatar').innerHTML = renderAvatar(selectedAvatar, 48);
     document.getElementById('profile-username').textContent = document.getElementById('input-nickname').value || 'Invité';
     document.getElementById('profile-level-badge').textContent = 'Nv. 1';
     document.getElementById('profile-title').textContent = 'Invité sans compte';
@@ -373,7 +410,8 @@ function openProfileModal() {
     document.getElementById('stat-wins').textContent = '0';
     document.getElementById('stat-podiums').textContent = '0';
     document.getElementById('stat-accuracy').textContent = '0%';
-    document.getElementById('stat-streak').textContent = '🔥 0';
+    const streakValue = document.getElementById('stat-streak-value');
+    if (streakValue) streakValue.textContent = '0';
 
     fetch('/api/achievements')
       .then(r => r.json())
@@ -403,7 +441,7 @@ socket.on('profile_data', (data) => {
   const user = data.user;
   const achievements = data.achievements || [];
 
-  document.getElementById('profile-avatar').textContent = user.avatar || '🦊';
+  document.getElementById('profile-avatar').innerHTML = renderAvatar(user.avatar || 'fox', 48);
   document.getElementById('profile-username').textContent = user.username;
   document.getElementById('profile-level-badge').textContent = `Nv. ${user.progression.level}`;
   document.getElementById('profile-title').textContent = user.progression.title;
@@ -422,7 +460,8 @@ socket.on('profile_data', (data) => {
     ? Math.round(((user.stats.totalCorrectAnswers || 0) / user.stats.totalAnswers) * 100)
     : 0;
   document.getElementById('stat-accuracy').textContent = `${acc}%`;
-  document.getElementById('stat-streak').textContent = `🔥 ${user.stats.bestStreak || 0}`;
+  const streakValue = document.getElementById('stat-streak-value');
+  if (streakValue) streakValue.textContent = user.stats.bestStreak || 0;
 
   renderAchievementsList(achievements, user.achievements || {});
 });
@@ -436,9 +475,9 @@ function renderAchievementsList(achievements) {
 
   listEl.innerHTML = achievements.map(ach => `
     <div class="achievement-card ${ach.isUnlocked ? 'unlocked' : 'locked'}">
-      <div class="achievement-icon">${ach.isUnlocked ? ach.icon : '🔒'}</div>
+      <div class="achievement-icon" style="display: flex; align-items: center; justify-content: center;">${ach.isUnlocked ? renderIcon(ach.icon, { size: 30 }) : renderIcon('lock', { size: 26 })}</div>
       <div class="achievement-info">
-        <div class="achievement-title">${escapeHtml(ach.name)} ${ach.isUnlocked ? '✓' : ''}</div>
+        <div class="achievement-title" style="display: flex; align-items: center; gap: 0.35rem;"><span>${escapeHtml(ach.name)}</span> ${ach.isUnlocked ? renderIcon('check', { size: 14 }) : ''}</div>
         <div class="achievement-desc">${escapeHtml(ach.description)}</div>
       </div>
       <div class="achievement-reward">+${ach.xpReward} XP</div>
@@ -453,7 +492,7 @@ function showToast(icon, title, subtitle, isLevelUp = false) {
   const toast = document.createElement('div');
   toast.className = `toast-item ${isLevelUp ? 'levelup' : ''}`;
   toast.innerHTML = `
-    <span style="font-size: 1.8rem;">${icon}</span>
+    <span style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">${renderIcon(icon, { size: 28 })}</span>
     <div style="display: flex; flex-direction: column; text-align: left; min-width: 0;">
       <span style="font-size: 0.76rem; font-weight: 800; color: ${isLevelUp ? 'var(--party-cyan)' : 'var(--party-gold)'}; text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(title)}</span>
       <span style="font-size: 0.95rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(subtitle)}</span>
@@ -497,7 +536,7 @@ btnJoin.addEventListener('click', () => {
   }
 
   btnJoin.disabled = true;
-  btnJoin.textContent = 'CONNEXION...';
+  btnJoin.textContent = 'Connexion...';
 
   socket.emit('join_room', {
     roomCode,
@@ -510,7 +549,7 @@ btnJoin.addEventListener('click', () => {
 socket.on('join_success', (data) => {
   myPlayerInfo = data.player;
   
-  document.getElementById('player-avatar-badge').textContent = data.player.avatar;
+  document.getElementById('player-avatar-badge').innerHTML = renderAvatar(data.player.avatar, 32);
   document.getElementById('player-name-badge').textContent = data.player.nickname;
   document.getElementById('player-level-badge').textContent = `Nv. ${data.player.level || 1}`;
   document.getElementById('player-title-badge').textContent = data.player.title || 'Novice';
@@ -523,7 +562,7 @@ socket.on('join_success', (data) => {
 socket.on('join_error', (data) => {
   alert(data.message || 'Erreur lors de la connexion');
   btnJoin.disabled = false;
-  btnJoin.textContent = 'REJOINDRE 🎮';
+  btnJoin.textContent = 'Rejoindre';
 });
 
 socket.on('round_start_player', (data) => {
@@ -625,7 +664,7 @@ socket.on('round_progression_update', (progression) => {
   }
 
   if (progression.wasLevelUp && progression.levelInfo) {
-    showToast('⭐', 'Niveau Supérieur !', `Tu passes Niveau ${progression.levelInfo.level} · ${progression.levelInfo.title}`, true);
+    showToast('star', 'Niveau Supérieur !', `Tu passes Niveau ${progression.levelInfo.level} · ${progression.levelInfo.title}`, true);
     document.getElementById('player-level-badge').textContent = `Nv. ${progression.levelInfo.level}`;
     document.getElementById('player-title-badge').textContent = progression.levelInfo.title;
     vibrate([100, 50, 100, 50, 200]);
@@ -661,9 +700,10 @@ socket.on('round_ended_player', (data) => {
 
   document.getElementById('player-score-badge').textContent = `${data.totalScore.toLocaleString('fr-FR')} pts`;
   const streakBadge = document.getElementById('player-streak-badge');
+  const streakText = document.getElementById('streak-badge-text');
   if (data.streak > 1) {
     streakBadge.style.display = 'inline-flex';
-    streakBadge.textContent = `🔥 ${data.streak}`;
+    if (streakText) streakText.textContent = data.streak;
   } else {
     streakBadge.style.display = 'none';
   }
@@ -678,7 +718,7 @@ socket.on('round_ended_player', (data) => {
   if (data.isCorrect) {
     vibrate([70, 40, 70]);
     playMobileResultSfx(true);
-    resultIcon.textContent = '✓';
+    resultIcon.innerHTML = renderIcon('check', { size: 54 });
     resultTitle.textContent = 'Excellent !';
     resultTitle.style.color = 'var(--party-emerald)';
     resultPoints.textContent = `+${data.pointsEarned.toLocaleString('fr-FR')} pts`;
@@ -686,7 +726,7 @@ socket.on('round_ended_player', (data) => {
   } else {
     vibrate(180);
     playMobileResultSfx(false);
-    resultIcon.textContent = '✕';
+    resultIcon.innerHTML = renderIcon('cross', { size: 54 });
     resultTitle.textContent = 'Manqué';
     resultTitle.style.color = 'var(--party-coral)';
     resultPoints.textContent = '+0 pt';
@@ -728,24 +768,37 @@ socket.on('game_over_player', (data) => {
 
   if (data.rank === 1) {
     vibrate([100, 50, 100, 50, 200]);
-    finalMedal.textContent = '🥇';
+    finalMedal.innerHTML = renderIcon('medal-gold', { size: 68 });
     finalRankTitle.textContent = '1ère Place · Vainqueur !';
     finalRankTitle.style.color = 'var(--party-gold)';
   } else if (data.rank === 2) {
-    finalMedal.textContent = '🥈';
+    finalMedal.innerHTML = renderIcon('medal-silver', { size: 68 });
     finalRankTitle.textContent = '2ème Place';
     finalRankTitle.style.color = '#cbd5e1';
   } else if (data.rank === 3) {
-    finalMedal.textContent = '🥉';
+    finalMedal.innerHTML = renderIcon('medal-bronze', { size: 68 });
     finalRankTitle.textContent = '3ème Place';
     finalRankTitle.style.color = '#f97316';
   } else {
-    finalMedal.textContent = '🎮';
+    finalMedal.innerHTML = renderIcon('gamepad', { size: 68 });
     finalRankTitle.textContent = `${data.rank}ème Place sur ${data.totalPlayers}`;
     finalRankTitle.style.color = 'var(--text-secondary)';
   }
 
   finalScoreDisplay.textContent = `${data.score.toLocaleString('fr-FR')} pts`;
+
+  const awardCard = document.getElementById('player-award-card');
+  if (awardCard) {
+    if (data.award) {
+      awardCard.style.display = 'block';
+      document.getElementById('player-award-icon').innerHTML = renderIcon(data.award.id || data.award.icon, { size: 36 });
+      document.getElementById('player-award-title').textContent = data.award.title;
+      document.getElementById('player-award-desc').textContent = data.award.desc;
+      document.getElementById('player-award-value').textContent = data.award.value;
+    } else {
+      awardCard.style.display = 'none';
+    }
+  }
 
   if (data.progression) {
     const prog = data.progression;
@@ -759,7 +812,7 @@ socket.on('game_over_player', (data) => {
 
     if (prog.wasLevelUp && prog.levelInfo) {
       setTimeout(() => {
-        showToast('⭐', 'Niveau Supérieur !', `Tu passes Niveau ${prog.levelInfo.level} · ${prog.levelInfo.title}`, true);
+        showToast('star', 'Niveau Supérieur !', `Tu passes Niveau ${prog.levelInfo.level} · ${prog.levelInfo.title}`, true);
         document.getElementById('player-level-badge').textContent = `Nv. ${prog.levelInfo.level}`;
         document.getElementById('player-title-badge').textContent = prog.levelInfo.title;
       }, 1600);

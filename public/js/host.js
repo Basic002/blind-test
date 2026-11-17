@@ -9,6 +9,43 @@ let audioPlayer = document.getElementById('audio-player');
 let currentPlayers = [];
 let currentAudioFallback = null;
 
+function initStaticIcons() {
+  const brandBadge = document.getElementById('host-brand-badge');
+  if (brandBadge && typeof renderIcon === 'function') {
+    brandBadge.innerHTML = renderIcon('bolt', { size: 22 });
+  }
+  const sfxBtnIcon = document.getElementById('sfx-btn-icon');
+  if (sfxBtnIcon && typeof renderIcon === 'function') {
+    sfxBtnIcon.innerHTML = renderIcon('bell-on', { size: 18 });
+  }
+  const ansIcon = document.getElementById('answers-counter-icon');
+  if (ansIcon && typeof renderIcon === 'function') {
+    ansIcon.innerHTML = renderIcon('bolt', { size: 18 });
+  }
+  const skipIcon = document.getElementById('skip-round-icon');
+  if (skipIcon && typeof renderIcon === 'function') {
+    skipIcon.innerHTML = renderIcon('skip', { size: 18 });
+  }
+  const p1 = document.getElementById('podium-icon-1');
+  if (p1 && typeof renderIcon === 'function') {
+    p1.innerHTML = renderIcon('trophy', { size: 28 });
+  }
+  const p2 = document.getElementById('podium-icon-2');
+  if (p2 && typeof renderIcon === 'function') {
+    p2.innerHTML = renderIcon('medal-silver', { size: 24 });
+  }
+  const p3 = document.getElementById('podium-icon-3');
+  if (p3 && typeof renderIcon === 'function') {
+    p3.innerHTML = renderIcon('medal-bronze', { size: 24 });
+  }
+  const awTitle = document.getElementById('awards-title-icon');
+  if (awTitle && typeof renderIcon === 'function') {
+    awTitle.innerHTML = renderIcon('award', { size: 22 });
+  }
+}
+document.addEventListener('DOMContentLoaded', initStaticIcons);
+initStaticIcons();
+
 const SILENT_AUDIO = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
 
 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -174,7 +211,10 @@ function showAudioPrompt() {
     prompt = document.createElement('div');
     prompt.id = 'audio-unmute-prompt';
     prompt.className = 'audio-unmute-pill';
-    prompt.innerHTML = `<span>🔊</span> Cliquer pour activer le son`;
+    prompt.style.display = 'flex';
+    prompt.style.alignItems = 'center';
+    prompt.style.gap = '0.45rem';
+    prompt.innerHTML = `${renderIcon('volume-up', { size: 20 })} <span>Cliquer pour activer le son</span>`;
     document.body.appendChild(prompt);
     prompt.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -264,7 +304,14 @@ const sfxToggleBtn = document.getElementById('sfx-toggle-btn');
 if (sfxToggleBtn) {
   sfxToggleBtn.addEventListener('click', () => {
     sfxEnabled = !sfxEnabled;
-    sfxToggleBtn.textContent = sfxEnabled ? '🔔 Bruitages ON' : '🔕 Bruitages OFF';
+    const sfxBtnIcon = document.getElementById('sfx-btn-icon');
+    const sfxBtnText = document.getElementById('sfx-btn-text');
+    if (sfxBtnIcon && typeof renderIcon === 'function') {
+      sfxBtnIcon.innerHTML = renderIcon(sfxEnabled ? 'bell-on' : 'bell-off', { size: 18 });
+    }
+    if (sfxBtnText) {
+      sfxBtnText.textContent = sfxEnabled ? 'Bruitages ON' : 'Bruitages OFF';
+    }
     sfxToggleBtn.style.opacity = sfxEnabled ? '1' : '0.6';
     getAudioContext();
   });
@@ -277,6 +324,14 @@ document.getElementById('fullscreen-btn').addEventListener('click', () => {
     document.exitFullscreen().catch(() => {});
   }
 });
+
+const skipRoundBtn = document.getElementById('skip-round-btn');
+if (skipRoundBtn) {
+  skipRoundBtn.addEventListener('click', () => {
+    socket.emit('skip_round');
+    skipRoundBtn.style.display = 'none';
+  });
+}
 
 socket.emit('create_room');
 
@@ -307,7 +362,7 @@ function renderThemes(themes, activeThemeId) {
       ${theme.id === 'cinema' ? '<span class="theme-badge-anime" style="background: #dc2626;">CINÉMA</span>' : ''}
       ${theme.id === 'series' ? '<span class="theme-badge-anime" style="background: #9333ea;">SÉRIES</span>' : ''}
       ${theme.id === 'gaming' ? '<span class="theme-badge-anime" style="background: #059669;">GAMING</span>' : ''}
-      <div class="theme-icon">${theme.icon}</div>
+      <div class="theme-icon" style="display: flex; align-items: center; justify-content: center;">${renderThemeIcon(theme.id || theme.icon, 36)}</div>
       <div class="theme-title">${theme.name}</div>
     `;
 
@@ -373,17 +428,17 @@ function updateLobbyPlayers(players) {
       </div>
     `;
     startBtn.disabled = true;
-    startBtn.textContent = 'LANCER LA PARTIE ➔';
+    startBtn.textContent = 'Lancer la Partie';
   } else {
     grid.innerHTML = players.map(p => `
       <div class="player-chip">
-        <span class="player-avatar">${p.avatar}</span>
+        <span class="player-avatar" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(p.avatar, 28)}</span>
         <span class="player-name">${escapeHtml(p.nickname)}</span>
         <span class="player-level-badge">Nv.${p.level || 1}</span>
       </div>
     `).join('');
     startBtn.disabled = false;
-    startBtn.textContent = `LANCER LA PARTIE ➔ (${count})`;
+    startBtn.textContent = `Lancer la Partie (${count})`;
   }
 }
 
@@ -407,7 +462,7 @@ socket.on('game_loading', (data) => {
 socket.on('game_start_error', (data) => {
   alert('Erreur: ' + data.message);
   startBtn.disabled = false;
-  startBtn.textContent = 'Lancer la Partie 🚀';
+  startBtn.textContent = 'Lancer la Partie';
 });
 
 socket.on('round_start_host', (data) => {
@@ -418,6 +473,9 @@ socket.on('round_start_host', (data) => {
 
   playRoundStartSfx();
   switchView('round');
+
+  const skipBtn = document.getElementById('skip-round-btn');
+  if (skipBtn) skipBtn.style.display = 'none';
 
   document.getElementById('round-number-display').textContent = `Manche 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
   
@@ -474,10 +532,10 @@ function renderRoundPlayersList(players) {
   const container = document.getElementById('round-players-list');
   container.innerHTML = players.map(p => `
     <div id="round-player-${p.id}" class="player-chip" style="opacity: 0.55; transition: all 0.25s ease;">
-      <span class="player-avatar">${p.avatar}</span>
+      <span class="player-avatar" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(p.avatar, 24)}</span>
       <span class="player-name">${escapeHtml(p.nickname)}</span>
       <span class="player-level-badge">Nv.${p.level || 1}</span>
-      <span class="answer-check" style="display: none; margin-left: 0.3rem;">⚡</span>
+      <span class="answer-check" style="display: none; margin-left: 0.3rem; vertical-align: middle;">${renderIcon('check', { size: 16 })}</span>
     </div>
   `).join('');
 }
@@ -494,6 +552,11 @@ socket.on('player_answered', (data) => {
     playerChip.style.boxShadow = '0 0 16px rgba(48, 209, 88, 0.25)';
     const check = playerChip.querySelector('.answer-check');
     if (check) check.style.display = 'inline';
+  }
+
+  if (data.allAnswered) {
+    const skipBtn = document.getElementById('skip-round-btn');
+    if (skipBtn) skipBtn.style.display = 'inline-flex';
   }
 });
 
@@ -540,6 +603,8 @@ socket.on('round_ended_host', (data) => {
   if (roundTimerInterval) clearInterval(roundTimerInterval);
   hideAudioPrompt();
   playRevealSfx();
+  const skipBtn = document.getElementById('skip-round-btn');
+  if (skipBtn) skipBtn.style.display = 'none';
   
   if (audioFadeInterval) clearInterval(audioFadeInterval);
   let fadeVolume = audioPlayer.volume;
@@ -621,13 +686,19 @@ function renderLeaderboard(leaderboard) {
   const container = document.getElementById('reveal-leaderboard');
   container.innerHTML = leaderboard.slice(0, 6).map((player, index) => {
     const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
-    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`;
+    const medalHtml = index === 0
+      ? renderIcon('medal-gold', { size: 24 })
+      : index === 1
+      ? renderIcon('medal-silver', { size: 24 })
+      : index === 2
+      ? renderIcon('medal-bronze', { size: 24 })
+      : `<span style="font-size: 1rem; font-weight: 800; color: var(--text-secondary);">${index + 1}</span>`;
 
     return `
       <div class="leaderboard-row ${rankClass}">
         <div class="leaderboard-player-info">
-          <span style="font-size: 1.15rem; width: 28px; text-align: center; color: var(--text-secondary);">${medal}</span>
-          <span class="player-avatar">${player.avatar}</span>
+          <span style="width: 28px; display: inline-flex; align-items: center; justify-content: center;">${medalHtml}</span>
+          <span class="player-avatar" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(player.avatar, 30)}</span>
           <div style="display: flex; flex-direction: column; text-align: left;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <span style="font-weight: 700;">${escapeHtml(player.nickname)}</span>
@@ -635,7 +706,7 @@ function renderLeaderboard(leaderboard) {
             </div>
             <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">${escapeHtml(player.title || 'Novice')}</span>
           </div>
-          ${player.streak > 1 ? `<span class="streak-badge">🔥 ${player.streak}</span>` : ''}
+          ${player.streak > 1 ? `<span class="streak-badge" style="display: inline-flex; align-items: center; gap: 0.3rem;">${renderIcon('flame', { size: 14 })} ${player.streak}</span>` : ''}
         </div>
         <div class="leaderboard-score">${player.score.toLocaleString('fr-FR')} <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-tertiary);">pts</span></div>
       </div>
@@ -656,11 +727,20 @@ socket.on('game_over_host', (data) => {
   playPodiumFanfareSfx();
   launchConfetti();
 
+  const p1icon = document.getElementById('podium-icon-1');
+  if (p1icon && typeof renderIcon === 'function') p1icon.innerHTML = renderIcon('trophy', { size: 28 });
+  const p2icon = document.getElementById('podium-icon-2');
+  if (p2icon && typeof renderIcon === 'function') p2icon.innerHTML = renderIcon('medal-silver', { size: 24 });
+  const p3icon = document.getElementById('podium-icon-3');
+  if (p3icon && typeof renderIcon === 'function') p3icon.innerHTML = renderIcon('medal-bronze', { size: 24 });
+  const awTitle = document.getElementById('awards-title-icon');
+  if (awTitle && typeof renderIcon === 'function') awTitle.innerHTML = renderIcon('award', { size: 22 });
+
   const podium = data.podium || [];
   
   if (podium[0]) {
     const p1 = document.getElementById('podium-1');
-    p1.querySelector('.podium-avatar').textContent = podium[0].avatar;
+    p1.querySelector('.podium-avatar').innerHTML = renderAvatar(podium[0].avatar, 64);
     p1.querySelector('.podium-name').textContent = podium[0].nickname;
     p1.querySelector('.podium-score').textContent = `${podium[0].score.toLocaleString('fr-FR')} pts`;
     const lvl1 = p1.querySelector('.podium-level');
@@ -669,7 +749,7 @@ socket.on('game_over_host', (data) => {
 
   if (podium[1]) {
     const p2 = document.getElementById('podium-2');
-    p2.querySelector('.podium-avatar').textContent = podium[1].avatar;
+    p2.querySelector('.podium-avatar').innerHTML = renderAvatar(podium[1].avatar, 52);
     p2.querySelector('.podium-name').textContent = podium[1].nickname;
     p2.querySelector('.podium-score').textContent = `${podium[1].score.toLocaleString('fr-FR')} pts`;
     const lvl2 = p2.querySelector('.podium-level');
@@ -678,11 +758,38 @@ socket.on('game_over_host', (data) => {
 
   if (podium[2]) {
     const p3 = document.getElementById('podium-3');
-    p3.querySelector('.podium-avatar').textContent = podium[2].avatar;
+    p3.querySelector('.podium-avatar').innerHTML = renderAvatar(podium[2].avatar, 46);
     p3.querySelector('.podium-name').textContent = podium[2].nickname;
     p3.querySelector('.podium-score').textContent = `${podium[2].score.toLocaleString('fr-FR')} pts`;
     const lvl3 = p3.querySelector('.podium-level');
     if (lvl3) lvl3.textContent = `Nv.${podium[2].level || 1} · ${podium[2].title || 'Novice'}`;
+  }
+
+  const awardsSection = document.getElementById('gameover-awards-section');
+  const awardsGrid = document.getElementById('gameover-awards-grid');
+  if (awardsSection && awardsGrid) {
+    if (data.awards && data.awards.length > 0) {
+      awardsSection.style.display = 'block';
+      awardsGrid.innerHTML = data.awards.map(a => `
+        <div style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 1.1rem 1.25rem; display: flex; align-items: center; gap: 1rem; text-align: left; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);">
+          <span style="width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;">${renderIcon(a.id || a.icon, { size: 38 })}</span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+              <span style="font-weight: 800; font-size: 1.05rem; color: #ffffff;">${escapeHtml(a.title)}</span>
+              <span style="font-size: 0.8rem; font-weight: 700; color: var(--party-cyan);">${escapeHtml(a.value)}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.25rem;">
+              <span style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(a.player.avatar, 20)}</span>
+              <span style="font-weight: 800; font-size: 0.95rem; color: var(--party-gold);">${escapeHtml(a.player.nickname)}</span>
+            </div>
+            <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.15rem;">${escapeHtml(a.desc)}</div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      awardsSection.style.display = 'none';
+      awardsGrid.innerHTML = '';
+    }
   }
 });
 

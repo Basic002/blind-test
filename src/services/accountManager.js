@@ -86,7 +86,7 @@ class AccountManager {
     };
   }
 
-  register(username, password, avatar = '🦊') {
+  register(username, password, avatar = 'fox') {
     if (typeof username !== 'string') {
       throw new Error('Le pseudo est invalide.');
     }
@@ -105,9 +105,9 @@ class AccountManager {
       throw new Error('Le mot de passe ne peut pas dépasser 128 caractères.');
     }
 
-    const cleanAvatar = typeof avatar === 'string' && avatar.trim().length > 0 && avatar.trim().length <= 10
+    const cleanAvatar = typeof avatar === 'string' && avatar.trim().length > 0 && avatar.trim().length <= 30
       ? avatar.trim()
-      : '🦊';
+      : 'fox';
 
     const lower = cleanUsername.toLowerCase();
     if (this.usernameIndex.has(lower)) {

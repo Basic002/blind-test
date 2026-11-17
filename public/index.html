@@ -6,12 +6,13 @@
   <title>Blind-Test — Manette Joueur</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/icons.js"></script>
 </head>
 <body>
   <div class="mobile-view">
     <header class="player-header">
       <div id="player-profile-header-trigger" style="display: flex; align-items: center; gap: 0.65rem; cursor: pointer; min-width: 0;">
-        <span id="player-avatar-badge" class="player-avatar" style="width: 36px; height: 36px; font-size: 1.25rem;">🦊</span>
+        <span id="player-avatar-badge" class="player-avatar" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;"></span>
         <div style="display: flex; flex-direction: column; text-align: left; min-width: 0;">
           <div style="display: flex; align-items: center; gap: 0.35rem;">
             <span id="player-name-badge" style="font-weight: 800; font-size: 0.95rem; letter-spacing: -0.015em; max-width: 95px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Joueur</span>
@@ -21,8 +22,8 @@
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <button id="btn-open-profile-header" class="btn-profile-icon" title="Profil & Succès">🏆</button>
-        <div id="player-streak-badge" class="streak-badge" style="display: none;">Streak 0</div>
+        <button id="btn-open-profile-header" class="btn-profile-icon" title="Profil & Succès" style="display: inline-flex; align-items: center; justify-content: center;"></button>
+        <div id="player-streak-badge" class="streak-badge" style="display: none; align-items: center; gap: 0.3rem;"><span id="streak-badge-icon"></span> <span id="streak-badge-text">0</span></div>
         <div id="player-score-badge" class="player-score-pill">0 pts</div>
       </div>
     </header>
@@ -35,7 +36,7 @@
 
       <div id="logged-user-section" class="logged-user-banner" style="display: none;">
         <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
-          <span id="logged-avatar" style="font-size: 1.6rem;">🦊</span>
+          <span id="logged-avatar" class="player-avatar" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;"></span>
           <div style="display: flex; flex-direction: column; text-align: left; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 0.35rem;">
               <span id="logged-username" style="font-weight: 800; font-size: 1rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Alex</span>
@@ -45,14 +46,14 @@
           </div>
         </div>
         <div style="display: flex; gap: 0.4rem;">
-          <button id="btn-logged-profile" class="btn btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.78rem;">Profil 🏆</button>
-          <button id="btn-logged-logout" class="btn btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.78rem; color: var(--party-coral);">✕</button>
+          <button id="btn-logged-profile" class="btn btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.35rem;"><span>Profil</span> <span id="logged-profile-icon"></span></button>
+          <button id="btn-logged-logout" class="btn btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.78rem; color: var(--party-coral);" title="Déconnexion"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
       </div>
 
       <div id="auth-tabs" class="auth-tabs">
-        <button id="tab-btn-guest" class="auth-tab-btn active" type="button">🎮 Invité Rapide</button>
-        <button id="tab-btn-account" class="auth-tab-btn" type="button">👤 Mon Compte</button>
+        <button id="tab-btn-guest" class="auth-tab-btn active" type="button" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;"><span id="tab-guest-icon"></span> <span>Invité Rapide</span></button>
+        <button id="tab-btn-account" class="auth-tab-btn" type="button" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;"><span id="tab-account-icon"></span> <span>Mon Compte</span></button>
       </div>
 
       <div id="account-auth-section" style="display: none; margin-bottom: 1.25rem; background: #0d1330; padding: 1.15rem; border-radius: 16px; border: 2px solid var(--border-card);">
@@ -74,18 +75,18 @@
           <div id="auth-avatar-picker-group" style="display: none;">
             <label style="font-weight: 600; font-size: 0.76rem; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 0.3rem;">Choix de l'avatar</label>
             <div id="auth-avatar-picker" class="avatar-grid" style="margin: 0.5rem 0;">
-              <div class="avatar-option selected" data-avatar="🦊">🦊</div>
-              <div class="avatar-option" data-avatar="🐯">🐯</div>
-              <div class="avatar-option" data-avatar="🚀">🚀</div>
-              <div class="avatar-option" data-avatar="🎧">🎧</div>
-              <div class="avatar-option" data-avatar="⚡">⚡</div>
+              <div class="avatar-option selected" data-avatar="fox" title="Renard"></div>
+              <div class="avatar-option" data-avatar="tiger" title="Tigre"></div>
+              <div class="avatar-option" data-avatar="rocket" title="Fusée"></div>
+              <div class="avatar-option" data-avatar="headphones" title="Casque"></div>
+              <div class="avatar-option" data-avatar="bolt" title="Éclair"></div>
             </div>
           </div>
 
           <div id="auth-error-msg" style="color: var(--party-coral); font-size: 0.85rem; font-weight: 700; display: none; text-align: center; padding: 0.35rem 0.5rem; background: rgba(255, 71, 102, 0.12); border-radius: 8px; border: 1px solid rgba(255, 71, 102, 0.3);"></div>
 
           <button id="btn-auth-submit" class="btn btn-secondary" style="padding: 0.8rem; font-size: 1rem; width: 100%; border-color: var(--party-cyan); color: #fff;">
-            Se connecter ➔
+            Se connecter
           </button>
         </div>
       </div>
@@ -99,16 +100,16 @@
         <div id="guest-avatar-section">
           <label style="font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.4rem;">Choix de l'avatar</label>
           <div id="avatar-picker" class="avatar-grid">
-            <div class="avatar-option selected" data-avatar="🦊">🦊</div>
-            <div class="avatar-option" data-avatar="🐯">🐯</div>
-            <div class="avatar-option" data-avatar="🚀">🚀</div>
-            <div class="avatar-option" data-avatar="🎧">🎧</div>
-            <div class="avatar-option" data-avatar="⚡">⚡</div>
-            <div class="avatar-option" data-avatar="🍕">🍕</div>
-            <div class="avatar-option" data-avatar="👑">👑</div>
-            <div class="avatar-option" data-avatar="🦄">🦄</div>
-            <div class="avatar-option" data-avatar="🎸">🎸</div>
-            <div class="avatar-option" data-avatar="👾">👾</div>
+            <div class="avatar-option selected" data-avatar="fox" title="Renard"></div>
+            <div class="avatar-option" data-avatar="tiger" title="Tigre"></div>
+            <div class="avatar-option" data-avatar="rocket" title="Fusée"></div>
+            <div class="avatar-option" data-avatar="headphones" title="Casque"></div>
+            <div class="avatar-option" data-avatar="bolt" title="Éclair"></div>
+            <div class="avatar-option" data-avatar="pizza" title="Pizza"></div>
+            <div class="avatar-option" data-avatar="crown" title="Couronne"></div>
+            <div class="avatar-option" data-avatar="unicorn" title="Licorne"></div>
+            <div class="avatar-option" data-avatar="guitar" title="Guitare"></div>
+            <div class="avatar-option" data-avatar="invader" title="Alien"></div>
           </div>
         </div>
 
@@ -118,15 +119,13 @@
         </div>
 
         <button id="btn-join" class="btn btn-primary" style="margin-top: 0.35rem; padding: 1.1rem; font-size: 1.15rem; width: 100%;">
-          Rejoindre la partie ▶
+          Rejoindre la partie
         </button>
       </div>
     </div>
 
     <div id="view-waiting" class="game-panel" style="display: none; padding: 3.5rem 1.75rem; margin: auto 0; text-align: center;">
-      <div style="font-size: 3.5rem; margin-bottom: 1rem;">
-        🎮
-      </div>
+      <div id="waiting-icon" style="margin-bottom: 1rem; display: flex; justify-content: center;"></div>
       <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.025em;">Prêt à jouer !</h2>
       <p style="color: var(--text-secondary); font-size: 1.1rem; font-weight: 500; line-height: 1.5;">
         Regardez le grand écran<br>
@@ -175,13 +174,13 @@
         </button>
       </div>
 
-      <div id="answer-locked-banner" style="display: none; text-align: center; margin-top: 1rem; font-weight: 800; color: var(--party-gold); font-size: 1.05rem; letter-spacing: 0.02em;">
-        ⚡ Réponse verrouillée ! Patientez...
+      <div id="answer-locked-banner" style="display: none; text-align: center; margin-top: 1rem; font-weight: 800; color: var(--party-gold); font-size: 1.05rem; letter-spacing: 0.02em; align-items: center; justify-content: center; gap: 0.4rem;">
+        <span id="answer-locked-icon"></span> <span>Réponse enregistrée ! Patientez...</span>
       </div>
     </div>
 
     <div id="view-result" class="game-panel" style="display: none; padding: 2.75rem 1.6rem; margin: auto 0; text-align: center;">
-      <div id="result-icon" style="font-size: 3.5rem; margin-bottom: 0.5rem;">⚡</div>
+      <div id="result-icon" style="margin-bottom: 0.5rem; display: flex; justify-content: center;"></div>
       <h2 id="result-title" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.25rem; letter-spacing: -0.01em;">Excellent !</h2>
       <div id="result-points" style="font-size: 2.4rem; font-weight: 900; color: var(--party-emerald); margin-bottom: 1.5rem; text-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);">+850 pts</div>
       
@@ -195,11 +194,26 @@
       </div>
     </div>
 
-    <div id="view-gameover-player" class="game-panel" style="display: none; padding: 3rem 1.75rem; margin: auto 0; text-align: center;">
-      <div id="final-medal" style="font-size: 4.8rem; margin-bottom: 0.75rem;">🏆</div>
-      <h2 id="final-rank-title" style="font-size: 2.4rem; font-weight: 900; margin-bottom: 0.5rem;">Fin de partie</h2>
-      <div id="final-score-display" style="font-size: 3rem; font-weight: 900; color: var(--party-gold); margin: 0.8rem 0; text-shadow: 0 3px 0 var(--party-gold-dark);">0 pts</div>
-      <p style="color: var(--text-muted); font-size: 1.1rem; font-weight: 600;">Regardez le podium sur le grand écran !</p>
+    <div id="view-gameover-player" class="game-panel" style="display: none; padding: 2.25rem 1.5rem; margin: auto 0; text-align: center;">
+      <div id="final-medal" style="margin-bottom: 0.5rem; display: flex; justify-content: center;"></div>
+      <h2 id="final-rank-title" style="font-size: 2.2rem; font-weight: 900; margin-bottom: 0.35rem;">Fin de partie</h2>
+      <div id="final-score-display" style="font-size: 2.6rem; font-weight: 900; color: var(--party-gold); margin: 0.5rem 0; text-shadow: 0 3px 0 var(--party-gold-dark);">0 pts</div>
+      
+      <div id="player-award-card" style="display: none; margin: 1.25rem 0; padding: 1rem 1.15rem; border-radius: 16px; background: rgba(59, 130, 246, 0.12); border: 2px solid #3b82f6; text-align: left;">
+        <div style="font-size: 0.74rem; font-weight: 800; color: var(--party-cyan); text-transform: uppercase; letter-spacing: 0.05em;">Distinction de la partie</div>
+        <div style="display: flex; align-items: center; gap: 0.85rem; margin-top: 0.4rem;">
+          <span id="player-award-icon" style="display: inline-flex; align-items: center; justify-content: center;"></span>
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.35rem;">
+              <span id="player-award-title" style="font-weight: 800; font-size: 1.1rem; color: #fff;">La Fusée</span>
+              <span id="player-award-value" style="font-size: 0.82rem; font-weight: 700; color: var(--party-gold);"></span>
+            </div>
+            <div id="player-award-desc" style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.15rem;">Vitesse record</div>
+          </div>
+        </div>
+      </div>
+
+      <p style="color: var(--text-muted); font-size: 1.05rem; font-weight: 600;">Regardez le podium sur le grand écran !</p>
     </div>
   </div>
 
@@ -207,16 +221,16 @@
     <div class="modal-card game-panel">
       <div class="modal-header">
         <div style="display: flex; align-items: center; gap: 0.6rem;">
-          <span style="font-size: 1.4rem;">🏆</span>
+          <span id="profile-modal-title-icon" style="display: inline-flex;"></span>
           <h2 style="font-size: 1.35rem; font-weight: 800;">Profil & Succès</h2>
         </div>
-        <button id="btn-close-profile" class="modal-close-btn" type="button">✕</button>
+        <button id="btn-close-profile" class="modal-close-btn" type="button" title="Fermer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
 
       <div class="modal-content">
         <div class="profile-hero-card">
           <div style="display: flex; align-items: center; gap: 0.85rem;">
-            <span id="profile-avatar" class="player-avatar" style="width: 52px; height: 52px; font-size: 1.9rem;">🦊</span>
+            <span id="profile-avatar" class="player-avatar" style="width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center;"></span>
             <div style="display: flex; flex-direction: column; text-align: left; min-width: 0;">
               <div style="display: flex; align-items: center; gap: 0.45rem;">
                 <span id="profile-username" style="font-size: 1.25rem; font-weight: 800; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Joueur</span>
@@ -255,7 +269,7 @@
             <span class="stat-label">Précision</span>
           </div>
           <div class="stat-box" style="grid-column: span 2;">
-            <span class="stat-value" id="stat-streak">🔥 0</span>
+            <span class="stat-value" id="stat-streak" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;"><span id="stat-streak-icon"></span> <span id="stat-streak-value">0</span></span>
             <span class="stat-label">Meilleure Série</span>
           </div>
         </div>

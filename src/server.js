@@ -281,6 +281,13 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('skip_round', () => {
+    const room = roomManager.getRoomBySocket(socket.id);
+    if (room && room.hostSocketId === socket.id) {
+      roomManager.skipRound(room.code, socket.id);
+    }
+  });
+
   socket.on('host_quit_game', () => {
     const room = roomManager.getRoomBySocket(socket.id);
     if (room && room.hostSocketId === socket.id) {
@@ -295,9 +302,9 @@ io.on('connection', (socket) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n======================================================`);
-  console.log(`🎶 BLIND TEST MULTIJOUEUR EN TEMPS RÉEL`);
+  console.log(`[BLIND TEST MULTIJOUEUR EN TEMPS RÉEL]`);
   console.log(`======================================================`);
-  console.log(`🖥️  Écran Hôte (TV/PC)    : http://localhost:${PORT}/host`);
-  console.log(`📱 Manette Joueur (Mobile): http://${localIp}:${PORT}`);
+  console.log(`  Écran Hôte (TV/PC)    : http://localhost:${PORT}/host`);
+  console.log(`  Manette Joueur (Mobile): http://${localIp}:${PORT}`);
   console.log(`======================================================\n`);
 });
