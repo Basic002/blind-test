@@ -6,6 +6,120 @@ let currentOptions = [];
 let playerTimerInterval = null;
 let hasAnsweredCurrentRound = false;
 
+let currentGameMode = 'classic';
+let currentSurvivalLives = 3;
+let currentTeamId = 'red';
+let currentTeamCount = 2;
+let currentLives = 3;
+let isPlayerEliminated = false;
+let currentTeamScores = [];
+
+const TEAM_META = {
+  red: { id: 'red', name: 'Rouge', color: '#ef4444', border: '#b91c1c' },
+  blue: { id: 'blue', name: 'Bleue', color: '#3b82f6', border: '#1d4ed8' },
+  green: { id: 'green', name: 'Verte', color: '#10b981', border: '#047857' },
+  yellow: { id: 'yellow', name: 'Jaune', color: '#f59e0b', border: '#b45309' }
+};
+
+function renderHeartIcons(lives, maxLives) {
+  const max = maxLives || currentSurvivalLives || 3;
+  let html = '';
+  for (let i = 0; i < max; i++) {
+    if (i < lives) {
+      html += `<span style="display: inline-flex; align-items: center; justify-content: center; color: #ef4444;">${renderIcon('heart', { size: 16 })}</span>`;
+    } else {
+      html += `<span style="display: inline-flex; align-items: center; justify-content: center; opacity: 0.35; color: #64748b;">${renderIcon('heart-broken', { size: 16 })}</span>`;
+    }
+  }
+  return html;
+}
+
+function updateHeaderModeBadge() {
+  const badge = document.getElementById('player-header-mode-badge');
+  if (!badge) return;
+  if (currentGameMode === 'survival') {
+    badge.style.display = 'inline-flex';
+    if (isPlayerEliminated) {
+      badge.innerHTML = `<span style="padding: 0.2rem 0.5rem; border-radius: 9999px; background: rgba(239, 68, 68, 0.2); border: 1.5px solid #ef4444; color: #ef4444; font-size: 0.72rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.25rem;">${renderIcon('skull', { size: 12 })} RIP</span>`;
+    } else {
+      badge.innerHTML = `<span style="padding: 0.2rem 0.5rem; border-radius: 9999px; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #ef4444; font-size: 0.76rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.25rem;">${renderIcon('heart', { size: 13 })} ${currentLives}</span>`;
+    }
+  } else if (currentGameMode === 'teams') {
+    badge.style.display = 'inline-flex';
+    const team = TEAM_META[currentTeamId] || TEAM_META.red;
+    badge.innerHTML = `<span style="padding: 0.2rem 0.55rem; border-radius: 9999px; background: ${team.color}22; border: 1.5px solid ${team.color}; color: ${team.color}; font-size: 0.74rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.25rem;">${renderIcon('users', { size: 12 })} ${escapeHtml(team.name)}</span>`;
+  } else {
+    badge.style.display = 'none';
+    badge.innerHTML = '';
+  }
+}
+
+function renderLobbyTeamButtons() {
+  const container = document.getElementById('player-team-selector');
+  if (!container) return;
+  const count = currentTeamCount === 4 ? 4 : 2;
+  const activeIds = ['red', 'blue', 'green', 'yellow'].slice(0, count);
+  container.innerHTML = activeIds.map(tid => {
+    const meta = TEAM_META[tid];
+    const isSelected = currentTeamId === tid;
+    return `<button type="button" class="player-team-btn ${isSelected ? 'selected' : ''}" data-team-id="${tid}" style="padding: 0.65rem 1.1rem; border-radius: 12px; font-weight: 800; font-size: 0.92rem; border: 2px solid ${meta.border}; background: ${isSelected ? meta.color : meta.color + '22'}; color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; transition: transform 0.15s ease, background 0.15s ease;">
+      <span style="display: inline-flex; align-items: center;">${renderIcon('users', { size: 16 })}</span>
+      <span>${escapeHtml(meta.name)}</span>
+    </button>`;
+  }).join('');
+
+  container.querySelectorAll('.player-team-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tid = btn.dataset.teamId;
+      if (tid && tid !== currentTeamId) {
+        currentTeamId = tid;
+        vibrate(30);
+        playMobileTapSfx();
+        socket.emit('select_team', { teamId: tid });
+        renderLobbyTeamButtons();
+        updateHeaderModeBadge();
+      }
+    });
+  });
+}
+
+function applyLobbyGameModeUI(settings, player, teamScores) {
+  if (settings) {
+    if (settings.gameMode) currentGameMode = settings.gameMode;
+    if (settings.survivalLives) currentSurvivalLives = Number(settings.survivalLives);
+    if (settings.teamCount) currentTeamCount = Number(settings.teamCount);
+  }
+  if (player) {
+    if (player.lives !== undefined) currentLives = player.lives;
+    if (player.isEliminated !== undefined) isPlayerEliminated = Boolean(player.isEliminated);
+    if (player.teamId) currentTeamId = player.teamId;
+  }
+  if (teamScores) {
+    currentTeamScores = teamScores;
+  }
+
+  const teamPicker = document.getElementById('player-team-picker-section');
+  const survInfo = document.getElementById('player-survival-info');
+  const survInitial = document.getElementById('player-survival-initial-lives');
+
+  if (teamPicker && survInfo) {
+    if (currentGameMode === 'teams') {
+      teamPicker.style.display = 'block';
+      survInfo.style.display = 'none';
+      renderLobbyTeamButtons();
+    } else if (currentGameMode === 'survival') {
+      teamPicker.style.display = 'none';
+      survInfo.style.display = 'block';
+      if (survInitial) survInitial.textContent = currentSurvivalLives;
+    } else {
+      teamPicker.style.display = 'none';
+      survInfo.style.display = 'none';
+    }
+  }
+
+  updateHeaderModeBadge();
+}
+
 let currentUser = null;
 let authToken = localStorage.getItem('blindtest_token') || null;
 let currentAuthTab = 'guest';
@@ -31,6 +145,8 @@ function initPlayerStaticIcons() {
   if (statStreakIcon && typeof renderIcon === 'function') statStreakIcon.innerHTML = renderIcon('flame', { size: 18 });
   const profTitleIcon = document.getElementById('profile-modal-title-icon');
   if (profTitleIcon && typeof renderIcon === 'function') profTitleIcon.innerHTML = renderIcon('trophy', { size: 22 });
+  const survInfIcon = document.getElementById('player-surv-info-icon');
+  if (survInfIcon && typeof renderIcon === 'function') survInfIcon.innerHTML = renderIcon('skull', { size: 16 });
 
   document.querySelectorAll('#avatar-picker .avatar-option').forEach(el => {
     const av = el.dataset.avatar;
@@ -564,8 +680,27 @@ socket.on('join_success', (data) => {
   document.getElementById('player-title-badge').textContent = data.player.title || 'Novice';
   document.getElementById('player-score-badge').textContent = `${data.player.score} pts`;
 
+  applyLobbyGameModeUI(data.settings, data.player, data.teamScores);
+
   vibrate(50);
   switchView('waiting');
+});
+
+socket.on('settings_updated', (data) => {
+  applyLobbyGameModeUI(data.settings, null, data.teamScores);
+});
+
+socket.on('lobby_update', (data) => {
+  if (data.teamScores) currentTeamScores = data.teamScores;
+  if (data.players && socket) {
+    const me = data.players.find(p => p.id === socket.id);
+    if (me) {
+      if (me.teamId) currentTeamId = me.teamId;
+      if (me.lives !== undefined) currentLives = me.lives;
+      if (me.isEliminated !== undefined) isPlayerEliminated = Boolean(me.isEliminated);
+    }
+  }
+  applyLobbyGameModeUI(data.settings, null, data.teamScores);
 });
 
 socket.on('join_error', (data) => {
@@ -577,9 +712,46 @@ socket.on('join_error', (data) => {
 socket.on('round_start_player', (data) => {
   hasAnsweredCurrentRound = false;
   currentOptions = data.options;
+  if (data.gameMode) currentGameMode = data.gameMode;
+  if (data.lives !== undefined) currentLives = data.lives;
+  if (data.isEliminated !== undefined) isPlayerEliminated = Boolean(data.isEliminated);
+  if (data.teamId) currentTeamId = data.teamId;
+  if (data.teamScores) currentTeamScores = data.teamScores;
 
   vibrate(60);
   switchView('play');
+
+  const statusBar = document.getElementById('player-mode-status-bar');
+  const teamPill = document.getElementById('player-status-team-pill');
+  const survHearts = document.getElementById('player-status-survival-hearts');
+  const spectatorBanner = document.getElementById('player-spectator-banner');
+
+  if (statusBar && teamPill && survHearts) {
+    if (currentGameMode === 'teams') {
+      statusBar.style.display = 'flex';
+      const team = TEAM_META[currentTeamId] || TEAM_META.red;
+      teamPill.style.display = 'inline-flex';
+      teamPill.style.alignItems = 'center';
+      teamPill.style.gap = '0.35rem';
+      teamPill.style.color = team.color;
+      teamPill.innerHTML = `${renderIcon('users', { size: 14 })} Équipe ${escapeHtml(team.name)}`;
+      survHearts.style.display = 'none';
+      if (spectatorBanner) spectatorBanner.style.display = 'none';
+    } else if (currentGameMode === 'survival') {
+      statusBar.style.display = 'flex';
+      teamPill.style.display = 'none';
+      survHearts.style.display = 'flex';
+      survHearts.innerHTML = renderHeartIcons(currentLives, currentSurvivalLives);
+      if (spectatorBanner) {
+        spectatorBanner.style.display = isPlayerEliminated ? 'block' : 'none';
+      }
+    } else {
+      statusBar.style.display = 'none';
+      if (spectatorBanner) spectatorBanner.style.display = 'none';
+    }
+  }
+
+  updateHeaderModeBadge();
 
   document.getElementById('player-round-badge').textContent = `Manche 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
   const modeText = document.getElementById('player-question-mode');
@@ -633,6 +805,16 @@ socket.on('round_start_player', (data) => {
   });
 
   startMobileTimer(data.duration);
+});
+
+socket.on('answer_received', (data) => {
+  if (data.lives !== undefined) currentLives = data.lives;
+  if (data.isEliminated !== undefined) isPlayerEliminated = Boolean(data.isEliminated);
+  updateHeaderModeBadge();
+  const survHearts = document.getElementById('player-status-survival-hearts');
+  if (survHearts && currentGameMode === 'survival') {
+    survHearts.innerHTML = renderHeartIcons(currentLives, currentSurvivalLives);
+  }
 });
 
 document.querySelectorAll('.choice-btn').forEach(btn => {
@@ -707,6 +889,43 @@ socket.on('round_ended_player', (data) => {
 
   switchView('result');
 
+  if (data.gameMode) currentGameMode = data.gameMode;
+  if (data.lives !== undefined) currentLives = data.lives;
+  if (data.isEliminated !== undefined) isPlayerEliminated = Boolean(data.isEliminated);
+  if (data.teamId) currentTeamId = data.teamId;
+  if (data.teamScores) currentTeamScores = data.teamScores;
+  updateHeaderModeBadge();
+
+  const survBanner = document.getElementById('result-survival-hearts-banner');
+  const teamBanner = document.getElementById('result-team-points-banner');
+
+  if (survBanner) {
+    if (currentGameMode === 'survival') {
+      survBanner.style.display = 'block';
+      if (isPlayerEliminated) {
+        survBanner.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem;">${renderIcon('skull', { size: 18 })} Éliminé (0 vie restante)</span>`;
+        survBanner.style.background = 'rgba(239, 68, 68, 0.25)';
+      } else {
+        survBanner.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.4rem;">${renderHeartIcons(currentLives, currentSurvivalLives)} <span style="margin-left: 0.3rem;">${currentLives} vie${currentLives > 1 ? 's' : ''} restante${currentLives > 1 ? 's' : ''}</span></span>`;
+        survBanner.style.background = 'rgba(239, 68, 68, 0.15)';
+      }
+    } else {
+      survBanner.style.display = 'none';
+    }
+  }
+
+  if (teamBanner) {
+    if (currentGameMode === 'teams') {
+      teamBanner.style.display = 'block';
+      const myTeam = (currentTeamScores || []).find(t => t.id === currentTeamId);
+      const team = TEAM_META[currentTeamId] || TEAM_META.red;
+      const teamTotal = myTeam ? myTeam.score.toLocaleString('fr-FR') : '0';
+      teamBanner.innerHTML = `<span style="color: ${team.color}; display: inline-flex; align-items: center; gap: 0.35rem;">${renderIcon('users', { size: 16 })} Équipe ${escapeHtml(team.name)} : <strong>${teamTotal} pts au total</strong></span>`;
+    } else {
+      teamBanner.style.display = 'none';
+    }
+  }
+
   document.getElementById('player-score-badge').textContent = `${data.totalScore.toLocaleString('fr-FR')} pts`;
   const streakBadge = document.getElementById('player-streak-badge');
   const streakText = document.getElementById('streak-badge-text');
@@ -771,9 +990,52 @@ socket.on('game_over_player', (data) => {
 
   switchView('gameover');
 
+  if (data.gameMode) currentGameMode = data.gameMode;
+  if (data.lives !== undefined) currentLives = data.lives;
+  if (data.isEliminated !== undefined) isPlayerEliminated = Boolean(data.isEliminated);
+  if (data.teamId) currentTeamId = data.teamId;
+
   const finalMedal = document.getElementById('final-medal');
   const finalRankTitle = document.getElementById('final-rank-title');
   const finalScoreDisplay = document.getElementById('final-score-display');
+  const teamResult = document.getElementById('gameover-team-result');
+  const survResult = document.getElementById('gameover-survival-result');
+
+  if (teamResult) {
+    if (currentGameMode === 'teams' && data.winningTeam) {
+      teamResult.style.display = 'inline-block';
+      const isWinner = data.isWinnerTeam;
+      const team = TEAM_META[data.winningTeam.id] || TEAM_META.red;
+      if (isWinner) {
+        teamResult.style.background = 'rgba(16, 185, 129, 0.2)';
+        teamResult.style.border = '2px solid #10b981';
+        teamResult.style.color = '#10b981';
+        teamResult.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.4rem;">${renderIcon('trophy', { size: 20 })} Ton équipe l'emporte ! (${data.winningTeam.score.toLocaleString('fr-FR')} pts)</span>`;
+      } else {
+        teamResult.style.background = 'rgba(239, 68, 68, 0.15)';
+        teamResult.style.border = '2px solid #ef4444';
+        teamResult.style.color = '#ff6b81';
+        teamResult.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.4rem;">${renderIcon('shield', { size: 18 })} Équipe ${escapeHtml(team.name)} gagnante (${data.winningTeam.score.toLocaleString('fr-FR')} pts)</span>`;
+      }
+    } else {
+      teamResult.style.display = 'none';
+    }
+  }
+
+  if (survResult) {
+    if (currentGameMode === 'survival') {
+      survResult.style.display = 'block';
+      if (!isPlayerEliminated && data.rank === 1) {
+        survResult.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.45rem; color: var(--party-gold); font-size: 1.3rem;">${renderIcon('crown', { size: 28 })} VICTOIRE ROYALE · TOP 1 !</span>`;
+      } else if (!isPlayerEliminated) {
+        survResult.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #10b981;">${renderIcon('shield', { size: 20 })} Survivant final (${currentLives} ❤️ restantes)</span>`;
+      } else {
+        survResult.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; color: #ef4444;">${renderIcon('skull', { size: 20 })} Éliminé avant la fin</span>`;
+      }
+    } else {
+      survResult.style.display = 'none';
+    }
+  }
 
   if (data.rank === 1) {
     vibrate([100, 50, 100, 50, 200]);
@@ -829,15 +1091,20 @@ socket.on('game_over_player', (data) => {
   }
 });
 
-socket.on('back_to_lobby', () => {
+socket.on('back_to_lobby', (data) => {
   if (playerTimerInterval) {
     clearInterval(playerTimerInterval);
     playerTimerInterval = null;
   }
   hasAnsweredCurrentRound = false;
+  isPlayerEliminated = false;
+  if (data && data.settings) {
+    applyLobbyGameModeUI(data.settings, null, data.teamScores);
+  }
   switchView('waiting');
   document.getElementById('player-score-badge').textContent = '0 pts';
   document.getElementById('player-streak-badge').style.display = 'none';
+  updateHeaderModeBadge();
 });
 
 function vibrate(pattern) {

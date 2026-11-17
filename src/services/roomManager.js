@@ -1,6 +1,13 @@
 const { getTracksForTheme } = require('./deezerService');
 const accountManager = require('./accountManager');
 
+const TEAM_CONFIG = {
+  red: { id: 'red', name: 'Équipe Rouge', color: '#ef4444', icon: 'flame' },
+  blue: { id: 'blue', name: 'Équipe Bleue', color: '#3b82f6', icon: 'bolt' },
+  green: { id: 'green', name: 'Équipe Verte', color: '#10b981', icon: 'sprout' },
+  yellow: { id: 'yellow', name: 'Équipe Jaune', color: '#f59e0b', icon: 'star' }
+};
+
 const USERNAME_REGEX = /^[\p{L}\p{N}_\- ]{2,16}$/u;
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -209,6 +216,9 @@ class RoomManager {
       themeId: 'disney',
       customPlaylistId: null,
       settings: {
+        gameMode: 'classic',
+        survivalLives: 3,
+        teamCount: 2,
         totalRounds: 10,
         roundDuration: 25,
         revealDuration: 6
@@ -281,6 +291,8 @@ class RoomManager {
       }
     }
 
+    const assignedTeam = this.getNextBalancedTeam(room);
+
     const player = {
       id: socketId,
       userId: registeredUserId,
@@ -293,7 +305,12 @@ class RoomManager {
       badge: userBadge,
       correctAnswersCount: 0,
       hasAnswered: false,
-      lastAnswer: null
+      lastAnswer: null,
+      lives: room.settings.survivalLives || 3,
+      isEliminated: false,
+      eliminatedAtRound: null,
+      teamId: assignedTeam,
+      teamScoreContributed: 0
     };
 
     room.players.set(socketId, player);
@@ -340,6 +357,92 @@ class RoomManager {
     return null;
   }
 
+  getActiveTeamIds(room) {
+    const count = room.settings.teamCount === 4 ? 4 : 2;
+    return ['red', 'blue', 'green', 'yellow'].slice(0, count);
+  }
+
+  getNextBalancedTeam(room) {
+    const activeIds = this.getActiveTeamIds(room);
+    const counts = {};
+    activeIds.forEach(id => { counts[id] = 0; });
+    for (const player of room.players.values()) {
+      if (player.teamId && counts[player.teamId] !== undefined) {
+        counts[player.teamId] += 1;
+      }
+    }
+    let minId = activeIds[0];
+    let minCount = Infinity;
+    for (const id of activeIds) {
+      if (counts[id] < minCount) {
+        minCount = counts[id];
+        minId = id;
+      }
+    }
+    return minId;
+  }
+
+  getTeamScores(room) {
+    const activeIds = this.getActiveTeamIds(room);
+    return activeIds.map(tid => {
+      const members = Array.from(room.players.values()).filter(p => p.teamId === tid);
+      const totalScore = members.reduce((sum, p) => sum + (p.score || 0), 0);
+      const answeredCount = members.filter(p => p.hasAnswered).length;
+      return {
+        ...TEAM_CONFIG[tid],
+        score: totalScore,
+        playerCount: members.length,
+        answeredCount,
+        players: members.map(m => ({
+          id: m.id,
+          nickname: m.nickname,
+          avatar: m.avatar,
+          score: m.score,
+          streak: m.streak,
+          hasAnswered: m.hasAnswered
+        }))
+      };
+    }).sort((a, b) => b.score - a.score);
+  }
+
+  setPlayerTeam(roomCode, socketId, teamId) {
+    const room = this.getRoom(roomCode);
+    if (!room || room.status !== 'lobby') return;
+    const player = room.players.get(socketId);
+    if (!player) return;
+    const activeIds = this.getActiveTeamIds(room);
+    if (!activeIds.includes(teamId)) return;
+    player.teamId = teamId;
+    this.io.to(room.code).emit('lobby_update', {
+      players: this.getPlayersList(room),
+      teamScores: this.getTeamScores(room),
+      settings: room.settings
+    });
+    this.io.to(room.hostSocketId).emit('player_joined', {
+      players: this.getPlayersList(room),
+      teamScores: this.getTeamScores(room)
+    });
+  }
+
+  balanceTeams(roomCode) {
+    const room = this.getRoom(roomCode);
+    if (!room || room.status !== 'lobby') return;
+    const activeIds = this.getActiveTeamIds(room);
+    const playersList = Array.from(room.players.values());
+    playersList.forEach((p, idx) => {
+      p.teamId = activeIds[idx % activeIds.length];
+    });
+    this.io.to(room.code).emit('lobby_update', {
+      players: this.getPlayersList(room),
+      teamScores: this.getTeamScores(room),
+      settings: room.settings
+    });
+    this.io.to(room.hostSocketId).emit('player_joined', {
+      players: this.getPlayersList(room),
+      teamScores: this.getTeamScores(room)
+    });
+  }
+
   getPlayersList(room) {
     return Array.from(room.players.values()).map(p => ({
       id: p.id,
@@ -351,19 +454,68 @@ class RoomManager {
       level: p.level || 1,
       title: p.title || 'Novice',
       badge: p.badge || 'music',
-      hasAnswered: p.hasAnswered
-    })).sort((a, b) => b.score - a.score);
+      hasAnswered: p.hasAnswered,
+      lives: p.lives !== undefined ? p.lives : (room.settings.survivalLives || 3),
+      isEliminated: Boolean(p.isEliminated),
+      teamId: p.teamId || 'red'
+    })).sort((a, b) => {
+      if (room.settings.gameMode === 'survival') {
+        if (a.isEliminated !== b.isEliminated) {
+          return a.isEliminated ? 1 : -1;
+        }
+        if (b.lives !== a.lives) {
+          return b.lives - a.lives;
+        }
+      }
+      return b.score - a.score;
+    });
   }
 
   updateSettings(roomCode, settings) {
     const room = this.getRoom(roomCode);
     if (!room || room.status !== 'lobby') return;
 
+    if (settings.gameMode && ['classic', 'survival', 'teams'].includes(settings.gameMode)) {
+      room.settings.gameMode = settings.gameMode;
+      if (settings.gameMode === 'teams') {
+        const activeIds = this.getActiveTeamIds(room);
+        const playersList = Array.from(room.players.values());
+        playersList.forEach((p, idx) => {
+          if (!p.teamId || !activeIds.includes(p.teamId)) {
+            p.teamId = activeIds[idx % activeIds.length];
+          }
+        });
+      }
+    }
+    if (settings.survivalLives) {
+      room.settings.survivalLives = [1, 3, 5].includes(Number(settings.survivalLives)) ? Number(settings.survivalLives) : 3;
+      for (const p of room.players.values()) {
+        p.lives = room.settings.survivalLives;
+      }
+    }
+    if (settings.teamCount) {
+      room.settings.teamCount = [2, 4].includes(Number(settings.teamCount)) ? Number(settings.teamCount) : 2;
+      const activeIds = this.getActiveTeamIds(room);
+      for (const p of room.players.values()) {
+        if (!activeIds.includes(p.teamId)) {
+          p.teamId = activeIds[0];
+        }
+      }
+    }
+
     if (settings.totalRounds) room.settings.totalRounds = Math.min(30, Math.max(1, Number(settings.totalRounds)));
     if (settings.roundDuration) room.settings.roundDuration = Math.min(45, Math.max(5, Number(settings.roundDuration)));
     if (settings.revealDuration) room.settings.revealDuration = Math.min(15, Math.max(1, Number(settings.revealDuration)));
     if (settings.themeId) room.themeId = settings.themeId;
     if (settings.customPlaylistId !== undefined) room.customPlaylistId = settings.customPlaylistId;
+
+    this.io.to(room.code).emit('settings_updated', {
+      settings: room.settings,
+      themeId: room.themeId,
+      customPlaylistId: room.customPlaylistId,
+      teamScores: this.getTeamScores(room),
+      players: this.getPlayersList(room)
+    });
 
     return room;
   }
@@ -402,6 +554,13 @@ class RoomManager {
       player.correctAnswersCount = 0;
       player.hasAnswered = false;
       player.lastAnswer = null;
+      player.lives = room.settings.survivalLives || 3;
+      player.isEliminated = false;
+      player.eliminatedAtRound = null;
+      player.teamScoreContributed = 0;
+      if (!player.teamId) {
+        player.teamId = this.getNextBalancedTeam(room);
+      }
       player.gameStats = {
         correctCount: 0,
         wrongCount: 0,
@@ -616,6 +775,9 @@ class RoomManager {
     this.io.to(room.hostSocketId).emit('round_start_host', {
       roundIndex: room.currentRoundIndex + 1,
       totalRounds: room.settings.totalRounds,
+      gameMode: room.settings.gameMode,
+      teamScores: this.getTeamScores(room),
+      survivorsCount: Array.from(room.players.values()).filter(p => !p.isEliminated).length,
       audioPreview: `/api/audio-preview/${currentTrack.id}`,
       fallbackPreview: currentTrack.preview,
       isAnime,
@@ -639,10 +801,15 @@ class RoomManager {
               ? 'Trouve le jeu vidéo !'
               : 'Trouve le morceau !'))));
 
-    for (const [socketId] of room.players) {
+    for (const [socketId, player] of room.players) {
       this.io.to(socketId).emit('round_start_player', {
         roundIndex: room.currentRoundIndex + 1,
         totalRounds: room.settings.totalRounds,
+        gameMode: room.settings.gameMode,
+        lives: player.lives !== undefined ? player.lives : (room.settings.survivalLives || 3),
+        isEliminated: Boolean(player.isEliminated),
+        teamId: player.teamId || 'red',
+        teamScores: this.getTeamScores(room),
         isAnime,
         isDisney,
         isCinema,
@@ -676,20 +843,36 @@ class RoomManager {
     const responseTimeMs = Math.max(100, now - round.startedAt);
     const isCorrect = String(optionId) === String(round.correctId);
 
+    const isSurvival = room.settings.gameMode === 'survival';
+    const isSpectator = isSurvival && Boolean(player.isEliminated);
+
     let pointsEarned = 0;
     if (isCorrect) {
-      const totalTimeMs = round.duration * 1000;
-      const speedFactor = Math.max(0, 1 - (responseTimeMs / totalTimeMs));
-      const basePoints = Math.round(500 + (500 * speedFactor));
-      
-      const streakBonus = Math.min(200, player.streak * 50);
-      pointsEarned = basePoints + streakBonus;
+      if (!isSpectator) {
+        const totalTimeMs = round.duration * 1000;
+        const speedFactor = Math.max(0, 1 - (responseTimeMs / totalTimeMs));
+        const basePoints = Math.round(500 + (500 * speedFactor));
+        const streakBonus = Math.min(200, player.streak * 50);
+        pointsEarned = basePoints + streakBonus;
 
-      player.score += pointsEarned;
-      player.streak += 1;
-      player.correctAnswersCount = (player.correctAnswersCount || 0) + 1;
+        player.score += pointsEarned;
+        player.streak += 1;
+        player.correctAnswersCount = (player.correctAnswersCount || 0) + 1;
+        if (room.settings.gameMode === 'teams') {
+          player.teamScoreContributed = (player.teamScoreContributed || 0) + pointsEarned;
+        }
+      }
     } else {
-      player.streak = 0;
+      if (!isSpectator) {
+        player.streak = 0;
+        if (isSurvival) {
+          player.lives = Math.max(0, (player.lives || 1) - 1);
+          if (player.lives === 0) {
+            player.isEliminated = true;
+            player.eliminatedAtRound = room.currentRoundIndex + 1;
+          }
+        }
+      }
     }
 
     if (!player.gameStats) {
@@ -734,7 +917,7 @@ class RoomManager {
     round.answers.set(socketId, player.lastAnswer);
 
     let roundProgression = null;
-    if (player.userId) {
+    if (player.userId && !isSpectator) {
       roundProgression = accountManager.recordRoundAnswer(player.userId, {
         isCorrect,
         responseTimeMs,
@@ -750,17 +933,26 @@ class RoomManager {
 
     this.io.to(socketId).emit('answer_received', {
       hasAnswered: true,
-      progression: roundProgression
+      progression: roundProgression,
+      lives: player.lives,
+      isEliminated: Boolean(player.isEliminated),
+      isSpectator
     });
 
-    const allAnswered = round.answers.size >= room.players.size && room.players.size > 0;
+    const activePlayers = isSurvival
+      ? Array.from(room.players.values()).filter(p => !p.isEliminated)
+      : Array.from(room.players.values());
+
+    const allAnswered = activePlayers.length > 0 && activePlayers.every(p => p.hasAnswered);
 
     this.io.to(room.hostSocketId).emit('player_answered', {
       playerId: socketId,
       answeredCount: round.answers.size,
       totalPlayers: room.players.size,
+      activePlayersCount: activePlayers.length,
       allAnswered,
-      players: this.getPlayersList(room)
+      players: this.getPlayersList(room),
+      teamScores: this.getTeamScores(room)
     });
 
     this.checkAllPlayersAnswered(room);
@@ -786,7 +978,22 @@ class RoomManager {
     const round = room.currentRound;
     const correctTrack = round.track;
 
+    if (room.settings.gameMode === 'survival') {
+      for (const player of room.players.values()) {
+        if (!player.isEliminated && !player.hasAnswered) {
+          player.lives = Math.max(0, (player.lives || 1) - 1);
+          if (player.lives === 0) {
+            player.isEliminated = true;
+            player.eliminatedAtRound = room.currentRoundIndex + 1;
+          }
+        }
+      }
+    }
+
     const leaderboard = this.getPlayersList(room);
+    const survivors = Array.from(room.players.values()).filter(p => !p.isEliminated);
+    const wasMultiplayer = room.players.size >= 2;
+    const isBattleRoyaleOver = room.settings.gameMode === 'survival' && wasMultiplayer && (survivors.length <= 1);
 
     this.io.to(room.hostSocketId).emit('round_ended_host', {
       track: {
@@ -807,7 +1014,12 @@ class RoomManager {
         preview: correctTrack.preview
       },
       leaderboard,
-      revealDuration: room.settings.revealDuration
+      teamScores: this.getTeamScores(room),
+      survivorsCount: survivors.length,
+      totalSurvivorsStart: room.players.size,
+      isBattleRoyaleOver,
+      revealDuration: room.settings.revealDuration,
+      gameMode: room.settings.gameMode
     });
 
     for (const [socketId, player] of room.players) {
@@ -819,7 +1031,12 @@ class RoomManager {
         pointsEarned: answer.pointsEarned,
         totalScore: player.score,
         streak: player.streak,
+        lives: player.lives,
+        isEliminated: Boolean(player.isEliminated),
         rank,
+        teamId: player.teamId,
+        teamScores: this.getTeamScores(room),
+        gameMode: room.settings.gameMode,
         correctTrack: {
           title: correctTrack.title,
           artist: correctTrack.artist,
@@ -839,7 +1056,7 @@ class RoomManager {
 
     room.roundTimer = setTimeout(() => {
       room.currentRoundIndex += 1;
-      if (room.currentRoundIndex >= room.settings.totalRounds) {
+      if (isBattleRoyaleOver || room.currentRoundIndex >= room.settings.totalRounds) {
         this.endGame(room);
       } else {
         this.startRound(room);
@@ -856,11 +1073,24 @@ class RoomManager {
     room.status = 'game_over';
     const finalLeaderboard = this.getPlayersList(room);
     const awards = calculateAwards(room, finalLeaderboard);
+    const teamScores = this.getTeamScores(room);
+    const winningTeam = teamScores.length > 0 ? teamScores[0] : null;
+    const survivors = Array.from(room.players.values()).filter(p => !p.isEliminated);
+
+    let mvpPlayer = null;
+    if (room.settings.gameMode === 'teams' && finalLeaderboard.length > 0) {
+      mvpPlayer = finalLeaderboard[0];
+    }
 
     this.io.to(room.hostSocketId).emit('game_over_host', {
       podium: finalLeaderboard.slice(0, 3),
       leaderboard: finalLeaderboard,
-      awards
+      awards,
+      gameMode: room.settings.gameMode,
+      teamScores,
+      winningTeam,
+      mvpPlayer,
+      survivorsCount: survivors.length
     });
 
     for (const [socketId, player] of room.players) {
@@ -879,13 +1109,21 @@ class RoomManager {
       }
 
       const playerAward = awards.find(a => a.player.id === socketId) || null;
+      const isWinnerTeam = Boolean(winningTeam && winningTeam.id === player.teamId);
 
       this.io.to(socketId).emit('game_over_player', {
         rank,
         score: player.score,
         totalPlayers: room.players.size,
         progression: gameProgression,
-        award: playerAward
+        award: playerAward,
+        gameMode: room.settings.gameMode,
+        lives: player.lives,
+        isEliminated: Boolean(player.isEliminated),
+        teamId: player.teamId,
+        teamScores,
+        winningTeam,
+        isWinnerTeam
       });
     }
   }
@@ -905,6 +1143,10 @@ class RoomManager {
       player.streak = 0;
       player.hasAnswered = false;
       player.lastAnswer = null;
+      player.lives = room.settings.survivalLives || 3;
+      player.isEliminated = false;
+      player.eliminatedAtRound = null;
+      player.teamScoreContributed = 0;
       player.gameStats = {
         correctCount: 0,
         wrongCount: 0,
@@ -917,7 +1159,9 @@ class RoomManager {
     }
 
     this.io.to(room.code).emit('back_to_lobby', {
-      players: this.getPlayersList(room)
+      players: this.getPlayersList(room),
+      settings: room.settings,
+      teamScores: this.getTeamScores(room)
     });
   }
 }

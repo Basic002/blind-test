@@ -153,7 +153,8 @@ io.on('connection', (socket) => {
         qrDataUrl,
         settings: room.settings,
         themeId: room.themeId,
-        themes: THEMES
+        themes: THEMES,
+        teamScores: roomManager.getTeamScores(room)
       });
     } catch (err) {
       socket.emit('error_message', { message: err.message });
@@ -239,15 +240,40 @@ io.on('connection', (socket) => {
 
       socket.emit('join_success', {
         roomCode: room.code,
-        player
+        player,
+        settings: room.settings,
+        teamScores: roomManager.getTeamScores(room)
       });
 
       io.to(room.hostSocketId).emit('player_joined', {
         player,
-        players: roomManager.getPlayersList(room)
+        players: roomManager.getPlayersList(room),
+        teamScores: roomManager.getTeamScores(room)
       });
     } catch (err) {
       socket.emit('join_error', { message: err.message });
+    }
+  });
+
+  socket.on('select_team', ({ teamId }) => {
+    try {
+      const room = roomManager.getRoomBySocket(socket.id);
+      if (room && room.status === 'lobby') {
+        roomManager.setPlayerTeam(room.code, socket.id, teamId);
+      }
+    } catch (err) {
+      console.error('Erreur select_team:', err);
+    }
+  });
+
+  socket.on('balance_teams', () => {
+    try {
+      const room = roomManager.getRoomBySocket(socket.id);
+      if (room && room.hostSocketId === socket.id && room.status === 'lobby') {
+        roomManager.balanceTeams(room.code);
+      }
+    } catch (err) {
+      console.error('Erreur balance_teams:', err);
     }
   });
 

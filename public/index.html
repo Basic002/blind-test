@@ -22,6 +22,7 @@
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div id="player-header-mode-badge" style="display: none; align-items: center; gap: 0.35rem;"></div>
         <button id="btn-open-profile-header" class="btn-profile-icon" title="Profil & Succès" style="display: inline-flex; align-items: center; justify-content: center;"></button>
         <div id="player-streak-badge" class="streak-badge" style="display: none; align-items: center; gap: 0.3rem;"><span id="streak-badge-icon"></span> <span id="streak-badge-text">0</span></div>
         <div id="player-score-badge" class="player-score-pill">0 pts</div>
@@ -131,12 +132,31 @@
         Regardez le grand écran<br>
         L'hôte va lancer la manche...
       </p>
+
+      <div id="player-team-picker-section" style="display: none; margin-top: 1.5rem; text-align: center;">
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--party-cyan); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;">Choisis ton équipe</div>
+        <div id="player-team-selector" class="player-team-selector" style="display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap;"></div>
+      </div>
+
+      <div id="player-survival-info" style="display: none; margin-top: 1.5rem; padding: 0.85rem 1rem; border-radius: 14px; background: rgba(239, 68, 68, 0.12); border: 1.5px solid #ef4444; text-align: center;">
+        <div style="font-size: 0.78rem; font-weight: 800; color: #ef4444; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: center; gap: 0.35rem;"><span id="player-surv-info-icon"></span> <span>Mode Survie Battle Royale</span></div>
+        <div style="font-size: 0.85rem; font-weight: 600; color: #fff; margin-top: 0.3rem;"><span id="player-survival-initial-lives">3</span> vies au départ. 1 erreur ou silence = -1 vie !</div>
+      </div>
     </div>
 
     <div id="view-play" style="display: none; flex-direction: column; flex: 1;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-card);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-card);">
         <span id="player-round-badge" style="font-size: 1.15rem; font-weight: 800; color: #ffffff;">Manche 01 / 10</span>
         <span id="player-question-mode" style="font-size: 0.92rem; font-weight: 800; color: var(--party-cyan); letter-spacing: 0.04em; text-transform: uppercase;">Trouve l'animé !</span>
+      </div>
+
+      <div id="player-mode-status-bar" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding: 0.4rem 0.75rem; border-radius: 12px; background: #0d1330; border: 1.5px solid var(--border-card);">
+        <div id="player-status-team-pill" style="font-size: 0.82rem; font-weight: 800;"></div>
+        <div id="player-status-survival-hearts" style="display: flex; align-items: center; gap: 3px;"></div>
+      </div>
+
+      <div id="player-spectator-banner" style="display: none; text-align: center; margin-bottom: 0.75rem; padding: 0.45rem 0.85rem; border-radius: 12px; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; font-size: 0.82rem; font-weight: 800; color: #ff5c7c;">
+        Mode Spectateur (Éliminé) · Continue à deviner !
       </div>
 
       <div class="timer-container" style="height: 10px; margin: 0 0 1.25rem 0;">
@@ -182,7 +202,9 @@
     <div id="view-result" class="game-panel" style="display: none; padding: 2.75rem 1.6rem; margin: auto 0; text-align: center;">
       <div id="result-icon" style="margin-bottom: 0.5rem; display: flex; justify-content: center;"></div>
       <h2 id="result-title" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.25rem; letter-spacing: -0.01em;">Excellent !</h2>
-      <div id="result-points" style="font-size: 2.4rem; font-weight: 900; color: var(--party-emerald); margin-bottom: 1.5rem; text-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);">+850 pts</div>
+      <div id="result-points" style="font-size: 2.4rem; font-weight: 900; color: var(--party-emerald); margin-bottom: 0.85rem; text-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);">+850 pts</div>
+      <div id="result-survival-hearts-banner" style="display: none; font-size: 0.95rem; font-weight: 800; margin-bottom: 1rem; padding: 0.45rem 0.85rem; border-radius: 12px; background: rgba(239, 68, 68, 0.15); border: 1.5px solid #ef4444; color: #ff5c7c;"></div>
+      <div id="result-team-points-banner" style="display: none; font-size: 0.88rem; font-weight: 800; color: var(--party-cyan); margin-bottom: 0.85rem;"></div>
       
       <div style="background: #0d1330; border: 2px solid var(--border-card); border-radius: var(--radius-md); padding: 1.25rem; text-align: left; margin-bottom: 1.5rem; box-shadow: 0 4px 0 var(--depth-shadow);">
         <div id="result-type-label" style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--party-cyan); margin-bottom: 0.35rem;">Bonne réponse :</div>
@@ -198,6 +220,8 @@
       <div id="final-medal" style="margin-bottom: 0.5rem; display: flex; justify-content: center;"></div>
       <h2 id="final-rank-title" style="font-size: 2.2rem; font-weight: 900; margin-bottom: 0.35rem;">Fin de partie</h2>
       <div id="final-score-display" style="font-size: 2.6rem; font-weight: 900; color: var(--party-gold); margin: 0.5rem 0; text-shadow: 0 3px 0 var(--party-gold-dark);">0 pts</div>
+      <div id="gameover-team-result" style="display: none; font-size: 1.15rem; font-weight: 900; margin: 0.5rem 0; padding: 0.55rem 1.15rem; border-radius: 9999px;"></div>
+      <div id="gameover-survival-result" style="display: none; font-size: 1.15rem; font-weight: 900; color: #f59e0b; margin: 0.5rem 0;"></div>
       
       <div id="player-award-card" style="display: none; margin: 1.25rem 0; padding: 1rem 1.15rem; border-radius: 16px; background: rgba(59, 130, 246, 0.12); border: 2px solid #3b82f6; text-align: left;">
         <div style="font-size: 0.74rem; font-weight: 800; color: var(--party-cyan); text-transform: uppercase; letter-spacing: 0.05em;">Distinction de la partie</div>

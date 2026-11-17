@@ -42,6 +42,16 @@ function initStaticIcons() {
   if (awTitle && typeof renderIcon === 'function') {
     awTitle.innerHTML = renderIcon('award', { size: 22 });
   }
+  const modeCl = document.getElementById('mode-icon-classic');
+  if (modeCl && typeof renderIcon === 'function') modeCl.innerHTML = renderIcon('trophy', { size: 28 });
+  const modeSurv = document.getElementById('mode-icon-survival');
+  if (modeSurv && typeof renderIcon === 'function') modeSurv.innerHTML = renderIcon('skull', { size: 28 });
+  const modeTms = document.getElementById('mode-icon-teams');
+  if (modeTms && typeof renderIcon === 'function') modeTms.innerHTML = renderIcon('users', { size: 28 });
+  const balIcon = document.getElementById('balance-teams-icon');
+  if (balIcon && typeof renderIcon === 'function') balIcon.innerHTML = renderIcon('users', { size: 16 });
+  const survIcon = document.getElementById('host-survival-icon');
+  if (survIcon && typeof renderIcon === 'function') survIcon.innerHTML = renderIcon('skull', { size: 20 });
 }
 document.addEventListener('DOMContentLoaded', initStaticIcons);
 initStaticIcons();
@@ -358,6 +368,75 @@ if (skipRoundBtn) {
 
 socket.emit('create_room');
 
+let selectedGameMode = 'classic';
+let selectedSurvivalLives = 3;
+let selectedTeamCount = 2;
+
+function applyGameModeUI(settings) {
+  if (!settings) return;
+  selectedGameMode = settings.gameMode || selectedGameMode;
+  selectedSurvivalLives = settings.survivalLives || selectedSurvivalLives;
+  selectedTeamCount = settings.teamCount || selectedTeamCount;
+
+  document.querySelectorAll('.mode-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.mode === selectedGameMode);
+  });
+
+  const survBox = document.getElementById('mode-options-survival');
+  const teamBox = document.getElementById('mode-options-teams');
+  const descEl = document.getElementById('mode-badge-desc');
+  const survSel = document.getElementById('survival-lives-select');
+  const teamSel = document.getElementById('teams-count-select');
+
+  if (survSel) survSel.value = selectedSurvivalLives;
+  if (teamSel) teamSel.value = selectedTeamCount;
+
+  if (selectedGameMode === 'survival') {
+    if (survBox) survBox.style.display = 'block';
+    if (teamBox) teamBox.style.display = 'none';
+    if (descEl) descEl.textContent = 'Vies éliminatoires';
+  } else if (selectedGameMode === 'teams') {
+    if (survBox) survBox.style.display = 'none';
+    if (teamBox) teamBox.style.display = 'flex';
+    if (descEl) descEl.textContent = 'Guerre des clans';
+  } else {
+    if (survBox) survBox.style.display = 'none';
+    if (teamBox) teamBox.style.display = 'none';
+    if (descEl) descEl.textContent = 'Points classiques';
+  }
+}
+
+document.querySelectorAll('.mode-card').forEach(card => {
+  card.addEventListener('click', () => {
+    selectedGameMode = card.dataset.mode;
+    applyGameModeUI({ gameMode: selectedGameMode, survivalLives: selectedSurvivalLives, teamCount: selectedTeamCount });
+    sendSettingsUpdate();
+  });
+});
+
+const survLivesSel = document.getElementById('survival-lives-select');
+if (survLivesSel) {
+  survLivesSel.addEventListener('change', () => {
+    selectedSurvivalLives = parseInt(survLivesSel.value, 10);
+    sendSettingsUpdate();
+  });
+}
+
+const teamsCountSel = document.getElementById('teams-count-select');
+if (teamsCountSel) {
+  teamsCountSel.addEventListener('change', () => {
+    selectedTeamCount = parseInt(teamsCountSel.value, 10);
+    sendSettingsUpdate();
+  });
+}
+
+const balBtn = document.getElementById('btn-balance-teams');
+if (balBtn) {
+  balBtn.addEventListener('click', () => {
+    socket.emit('balance_teams');
+  });
+}
+
 socket.on('room_created', (data) => {
   roomCode = data.roomCode;
   currentThemes = data.themes;
@@ -369,6 +448,29 @@ socket.on('room_created', (data) => {
   renderThemes(data.themes, data.themeId);
   document.getElementById('rounds-select').value = data.settings.totalRounds;
   document.getElementById('duration-select').value = data.settings.roundDuration;
+  if (data.settings) {
+    applyGameModeUI(data.settings);
+  }
+});
+
+socket.on('settings_updated', (data) => {
+  if (data.settings) {
+    applyGameModeUI(data.settings);
+  }
+  if (data.players) {
+    currentPlayers = data.players;
+    updateLobbyPlayers(data.players, data.teamScores);
+  }
+});
+
+socket.on('lobby_update', (data) => {
+  if (data.settings) {
+    applyGameModeUI(data.settings);
+  }
+  if (data.players) {
+    currentPlayers = data.players;
+    updateLobbyPlayers(data.players, data.teamScores);
+  }
 });
 
 function renderThemes(themes, activeThemeId) {
@@ -418,7 +520,10 @@ function sendSettingsUpdate() {
     themeId: selectedThemeId,
     customPlaylistId: selectedThemeId === 'custom' ? customPlaylistId : null,
     totalRounds: rounds,
-    roundDuration: duration
+    roundDuration: duration,
+    gameMode: selectedGameMode,
+    survivalLives: selectedSurvivalLives,
+    teamCount: selectedTeamCount
   });
 }
 
@@ -428,15 +533,15 @@ document.getElementById('custom-playlist-input').addEventListener('input', sendS
 
 socket.on('player_joined', (data) => {
   currentPlayers = data.players;
-  updateLobbyPlayers(data.players);
+  updateLobbyPlayers(data.players, data.teamScores);
 });
 
 socket.on('player_left', (data) => {
   currentPlayers = data.players;
-  updateLobbyPlayers(data.players);
+  updateLobbyPlayers(data.players, data.teamScores);
 });
 
-function updateLobbyPlayers(players) {
+function updateLobbyPlayers(players, teamScores) {
   const grid = document.getElementById('lobby-players-grid');
   const countBadge = document.getElementById('players-count-badge');
   const startBtn = document.getElementById('start-game-btn');
@@ -453,13 +558,39 @@ function updateLobbyPlayers(players) {
     startBtn.disabled = true;
     startBtn.textContent = 'Lancer la Partie';
   } else {
-    grid.innerHTML = players.map(p => `
-      <div class="player-chip">
-        <span class="player-avatar" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(p.avatar, 28)}</span>
-        <span class="player-name">${escapeHtml(p.nickname)}</span>
-        <span class="player-level-badge">Nv.${p.level || 1}</span>
-      </div>
-    `).join('');
+    const teamColorMap = {
+      red: { color: '#ef4444', name: 'Rouge' },
+      blue: { color: '#3b82f6', name: 'Bleue' },
+      green: { color: '#10b981', name: 'Verte' },
+      yellow: { color: '#f59e0b', name: 'Jaune' }
+    };
+
+    grid.innerHTML = players.map(p => {
+      let teamBadgeHtml = '';
+      if (selectedGameMode === 'teams' && p.teamId && teamColorMap[p.teamId]) {
+        const t = teamColorMap[p.teamId];
+        teamBadgeHtml = `<span class="player-team-pill" style="background: ${t.color}22; border: 1.5px solid ${t.color}; color: ${t.color}; font-size: 0.7rem; font-weight: 800; padding: 2px 7px; border-radius: 9999px;">${t.name}</span>`;
+      }
+
+      let survivalBadgeHtml = '';
+      if (selectedGameMode === 'survival') {
+        survivalBadgeHtml = `<span style="font-size: 0.72rem; font-weight: 800; color: #ef4444; display: inline-flex; align-items: center; gap: 3px;">${renderIcon('heart', { size: 14 })} ${p.lives || selectedSurvivalLives}</span>`;
+      }
+
+      const teamBorder = selectedGameMode === 'teams' && p.teamId && teamColorMap[p.teamId]
+        ? `border-color: ${teamColorMap[p.teamId].color}66; box-shadow: 0 0 10px ${teamColorMap[p.teamId].color}22;`
+        : '';
+
+      return `
+        <div class="player-chip" style="${teamBorder}">
+          <span class="player-avatar" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(p.avatar, 28)}</span>
+          <span class="player-name">${escapeHtml(p.nickname)}</span>
+          <span class="player-level-badge">Nv.${p.level || 1}</span>
+          ${teamBadgeHtml}
+          ${survivalBadgeHtml}
+        </div>
+      `;
+    }).join('');
     startBtn.disabled = false;
     startBtn.textContent = `Lancer la Partie (${count})`;
   }
@@ -501,6 +632,29 @@ socket.on('round_start_host', (data) => {
   if (skipBtn) skipBtn.style.display = 'none';
 
   document.getElementById('round-number-display').textContent = `Manche 0${data.roundIndex} / 0${data.totalRounds}`.replace(/0(\d\d)/g, '$1');
+
+  if (data.gameMode) selectedGameMode = data.gameMode;
+  if (selectedGameMode === 'teams') {
+    renderTeamScoreBar(data.teamScores);
+    const survBanner = document.getElementById('host-survival-banner');
+    if (survBanner) survBanner.style.display = 'none';
+  } else if (selectedGameMode === 'survival') {
+    const bar = document.getElementById('host-team-score-bar');
+    if (bar) bar.style.display = 'none';
+    const survBanner = document.getElementById('host-survival-banner');
+    if (survBanner) {
+      survBanner.style.display = 'inline-flex';
+      const survText = document.getElementById('host-survival-text');
+      if (survText) {
+        survText.textContent = `${data.survivorsCount} Survivant${data.survivorsCount > 1 ? 's' : ''} en lice`;
+      }
+    }
+  } else {
+    const bar = document.getElementById('host-team-score-bar');
+    if (bar) bar.style.display = 'none';
+    const survBanner = document.getElementById('host-survival-banner');
+    if (survBanner) survBanner.style.display = 'none';
+  }
   
   if (data.isDisney) {
     document.getElementById('round-mode-display').textContent = 'Mode Disney';
@@ -553,19 +707,67 @@ socket.on('round_start_host', (data) => {
 
 function renderRoundPlayersList(players) {
   const container = document.getElementById('round-players-list');
-  container.innerHTML = players.map(p => `
-    <div id="round-player-${p.id}" class="player-chip" style="opacity: 0.55; transition: all 0.25s ease;">
-      <span class="player-avatar" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(p.avatar, 24)}</span>
-      <span class="player-name">${escapeHtml(p.nickname)}</span>
-      <span class="player-level-badge">Nv.${p.level || 1}</span>
-      <span class="answer-check" style="display: none; margin-left: 0.3rem; vertical-align: middle;">${renderIcon('check', { size: 16 })}</span>
+  const teamColorMap = {
+    red: '#ef4444',
+    blue: '#3b82f6',
+    green: '#10b981',
+    yellow: '#f59e0b'
+  };
+
+  container.innerHTML = players.map(p => {
+    let extraBadge = '';
+    let extraBorder = '';
+
+    if (selectedGameMode === 'survival') {
+      if (p.isEliminated) {
+        extraBadge = `<span style="color: #ef4444; font-size: 0.72rem; font-weight: 800; display: inline-flex; align-items: center; gap: 2px;">${renderIcon('skull', { size: 13 })} RIP</span>`;
+      } else {
+        extraBadge = `<span style="color: #ef4444; font-size: 0.72rem; font-weight: 800; display: inline-flex; align-items: center; gap: 2px;">${renderIcon('heart', { size: 13 })} ${p.lives || 1}</span>`;
+      }
+    } else if (selectedGameMode === 'teams' && p.teamId && teamColorMap[p.teamId]) {
+      const tc = teamColorMap[p.teamId];
+      extraBorder = `border-color: ${tc}aa; box-shadow: 0 0 10px ${tc}33;`;
+      extraBadge = `<span style="width: 8px; height: 8px; border-radius: 50%; background: ${tc}; display: inline-block;"></span>`;
+    }
+
+    const elimOpacity = p.isEliminated ? 'opacity: 0.35; filter: grayscale(1);' : 'opacity: 0.55;';
+
+    return `
+      <div id="round-player-${p.id}" class="player-chip ${p.isEliminated ? 'eliminated' : ''}" style="${elimOpacity} ${extraBorder} transition: all 0.25s ease;">
+        <span class="player-avatar" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(p.avatar, 24)}</span>
+        <span class="player-name">${escapeHtml(p.nickname)}</span>
+        <span class="player-level-badge">Nv.${p.level || 1}</span>
+        ${extraBadge}
+        <span class="answer-check" style="display: none; margin-left: 0.3rem; vertical-align: middle;">${renderIcon('check', { size: 16 })}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTeamScoreBar(teamScores) {
+  const bar = document.getElementById('host-team-score-bar');
+  if (!bar) return;
+  if (!teamScores || teamScores.length === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+  bar.innerHTML = teamScores.map(t => `
+    <div class="team-score-card" style="border: 2px solid ${t.color}; box-shadow: 0 0 16px ${t.color}33;">
+      <span class="team-dot" style="background: ${t.color};"></span>
+      <span class="team-name" style="color: ${t.color};">${escapeHtml(t.name)}</span>
+      <span class="team-pts">${t.score.toLocaleString('fr-FR')} <small>pts</small></span>
     </div>
-  `).join('');
+  `).join('<div class="team-vs-pill">VS</div>');
 }
 
 socket.on('player_answered', (data) => {
   playPlayerAnswerSfx();
   updateAnsweredCount(data.answeredCount, data.totalPlayers);
+
+  if (data.teamScores && selectedGameMode === 'teams') {
+    renderTeamScoreBar(data.teamScores);
+  }
 
   const playerChip = document.getElementById(`round-player-${data.playerId}`);
   if (playerChip) {
@@ -702,11 +904,40 @@ socket.on('round_ended_host', (data) => {
     if (extraEl) extraEl.style.display = 'none';
   }
 
+  const teamsBoard = document.getElementById('reveal-teams-board');
+  if (teamsBoard) {
+    if (data.gameMode === 'teams' && data.teamScores && data.teamScores.length > 0) {
+      teamsBoard.style.display = 'grid';
+      teamsBoard.innerHTML = `
+        <div style="grid-column: 1 / -1; font-size: 0.95rem; font-weight: 800; text-transform: uppercase; color: var(--party-cyan); letter-spacing: 0.05em; margin-bottom: 0.5rem; text-align: center;">Classement des Équipes</div>
+        ${data.teamScores.map((t, idx) => `
+          <div class="team-reveal-card" style="border: 2px solid ${t.color}; background: rgba(13, 19, 48, 0.88); border-radius: 16px; padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span style="font-size: 1.25rem; font-weight: 900; color: ${t.color};">${idx + 1}</span>
+              <span style="font-weight: 800; color: #fff;">${escapeHtml(t.name)}</span>
+              <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">(${t.playerCount} joueurs)</span>
+            </div>
+            <div style="font-size: 1.3rem; font-weight: 900; color: ${t.color};">${t.score.toLocaleString('fr-FR')} pts</div>
+          </div>
+        `).join('')}
+      `;
+    } else {
+      teamsBoard.style.display = 'none';
+    }
+  }
+
   renderLeaderboard(data.leaderboard);
 });
 
 function renderLeaderboard(leaderboard) {
   const container = document.getElementById('reveal-leaderboard');
+  const teamColorMap = {
+    red: '#ef4444',
+    blue: '#3b82f6',
+    green: '#10b981',
+    yellow: '#f59e0b'
+  };
+
   container.innerHTML = leaderboard.slice(0, 6).map((player, index) => {
     const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
     const medalHtml = index === 0
@@ -717,6 +948,16 @@ function renderLeaderboard(leaderboard) {
       ? renderIcon('medal-bronze', { size: 24 })
       : `<span style="font-size: 1rem; font-weight: 800; color: var(--text-secondary);">${index + 1}</span>`;
 
+    let extraBadgeHtml = '';
+    if (selectedGameMode === 'survival') {
+      extraBadgeHtml = player.isEliminated
+        ? `<span style="font-size: 0.75rem; font-weight: 800; color: #ef4444; display: inline-flex; align-items: center; gap: 3px;">${renderIcon('skull', { size: 14 })} ÉLIMINÉ</span>`
+        : `<span style="font-size: 0.78rem; font-weight: 800; color: #ef4444; display: inline-flex; align-items: center; gap: 3px;">${renderIcon('heart', { size: 14 })} ${player.lives || 1}</span>`;
+    } else if (selectedGameMode === 'teams' && player.teamId && teamColorMap[player.teamId]) {
+      const tc = teamColorMap[player.teamId];
+      extraBadgeHtml = `<span style="width: 10px; height: 10px; border-radius: 50%; background: ${tc}; display: inline-block;"></span>`;
+    }
+
     return `
       <div class="leaderboard-row ${rankClass}">
         <div class="leaderboard-player-info">
@@ -726,6 +967,7 @@ function renderLeaderboard(leaderboard) {
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <span style="font-weight: 700;">${escapeHtml(player.nickname)}</span>
               <span class="player-level-badge">Nv.${player.level || 1}</span>
+              ${extraBadgeHtml}
             </div>
             <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">${escapeHtml(player.title || 'Novice')}</span>
           </div>
@@ -758,6 +1000,27 @@ socket.on('game_over_host', (data) => {
   if (p3icon && typeof renderIcon === 'function') p3icon.innerHTML = renderIcon('medal-bronze', { size: 24 });
   const awTitle = document.getElementById('awards-title-icon');
   if (awTitle && typeof renderIcon === 'function') awTitle.innerHTML = renderIcon('award', { size: 22 });
+
+  const teamBanner = document.getElementById('gameover-team-winner-banner');
+  const teamBadge = document.getElementById('gameover-team-badge');
+  const survBanner = document.getElementById('gameover-survival-winner-banner');
+
+  if (data.gameMode === 'teams' && data.winningTeam) {
+    if (teamBanner) teamBanner.style.display = 'block';
+    if (teamBadge) {
+      teamBadge.style.background = `${data.winningTeam.color}22`;
+      teamBadge.style.border = `2px solid ${data.winningTeam.color}`;
+      teamBadge.style.color = '#ffffff';
+      teamBadge.innerHTML = `🏆 VICTOIRE DE L'${data.winningTeam.name.toUpperCase()} (${data.winningTeam.score.toLocaleString('fr-FR')} pts)`;
+    }
+    if (survBanner) survBanner.style.display = 'none';
+  } else if (data.gameMode === 'survival') {
+    if (teamBanner) teamBanner.style.display = 'none';
+    if (survBanner) survBanner.style.display = 'block';
+  } else {
+    if (teamBanner) teamBanner.style.display = 'none';
+    if (survBanner) survBanner.style.display = 'none';
+  }
 
   const podium = data.podium || [];
   
