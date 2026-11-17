@@ -144,6 +144,29 @@ function playCountdownTickSfx(secondsLeft) {
   osc.stop(now + 0.08);
 }
 
+function playEmotePopSfx() {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const masterVol = getMasterSfxVolume();
+  if (masterVol <= 0) return;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(440, now);
+  osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+
+  gain.gain.setValueAtTime(0.12 * masterVol, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.1);
+}
+
 function playRevealSfx() {
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -842,3 +865,55 @@ function escapeHtml(str) {
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#039;');
 }
+
+function spawnFloatingEmote(data) {
+  const overlay = document.getElementById('reactions-overlay');
+  if (!overlay) return;
+
+  const emoteId = data && typeof data.emoteId === 'string' ? data.emoteId.trim() : '';
+  if (!emoteId) return;
+
+  const item = document.createElement('div');
+  item.className = 'floating-reaction';
+
+  const randomLeft = Math.floor(Math.random() * 70) + 15;
+  const driftX = (Math.random() - 0.5) * 160;
+  const rotStart = (Math.random() - 0.5) * 24;
+  const rotMid = (Math.random() - 0.5) * 16;
+  const rotEnd = (Math.random() - 0.5) * 20;
+
+  item.style.left = `${randomLeft}%`;
+  item.style.setProperty('--drift-x', `${driftX}px`);
+  item.style.setProperty('--rot-start', `${rotStart}deg`);
+  item.style.setProperty('--rot-mid', `${rotMid}deg`);
+  item.style.setProperty('--rot-end', `${rotEnd}deg`);
+
+  const iconSvg = typeof renderIcon === 'function' ? renderIcon(emoteId, { size: 54 }) : '';
+  const avatarSvg = typeof renderAvatar === 'function' ? renderAvatar(data.avatar || 'fox', 18) : '';
+  const safeName = escapeHtml(String(data.nickname || 'Joueur').substring(0, 14));
+
+  item.innerHTML = `
+    <div class="floating-reaction-icon">${iconSvg}</div>
+    <div class="floating-reaction-sender">
+      <span class="floating-reaction-avatar">${avatarSvg}</span>
+      <span>${safeName}</span>
+    </div>
+  `;
+
+  overlay.appendChild(item);
+
+  playEmotePopSfx();
+
+  const allReactions = overlay.querySelectorAll('.floating-reaction');
+  if (allReactions.length > 25) {
+    allReactions[0].remove();
+  }
+
+  item.addEventListener('animationend', () => {
+    item.remove();
+  });
+}
+
+socket.on('room_emote', (data) => {
+  spawnFloatingEmote(data);
+});

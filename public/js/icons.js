@@ -117,10 +117,24 @@ const APP_ICONS = {
 
   award: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><circle cx="16" cy="12" r="8" fill="#FACC15" stroke="#EAB308" stroke-width="1.5"/><circle cx="16" cy="12" r="5" stroke="#FEF08A" stroke-width="1" stroke-dasharray="2 2"/><path d="M12 18 L9 29 L16 25 L23 29 L20 18" fill="#EF4444"/><circle cx="16" cy="12" r="2" fill="#CA8A04"/></svg>`,
 
-  clock: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><circle cx="16" cy="16" r="12" stroke="currentColor" stroke-width="2.5" fill="none"/><line x1="16" y1="8" x2="16" y2="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="16" y1="16" x2="22" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`
+  clock: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><circle cx="16" cy="16" r="12" stroke="currentColor" stroke-width="2.5" fill="none"/><line x1="16" y1="8" x2="16" y2="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="16" y1="16" x2="22" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+
+  heart: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><defs><linearGradient id="bt_hrt_g" x1="6" y1="4" x2="26" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#FF2E7E"/><stop offset="1" stop-color="#E11D48"/></linearGradient></defs><path d="M16 28 C16 28 3 20 3 11 C3 6.5 6.8 3 11.5 3 C14.3 3 15.5 4.5 16 5.5 C16.5 4.5 17.7 3 20.5 3 C25.2 3 29 6.5 29 11 C29 20 16 28 16 28 Z" fill="url(#bt_hrt_g)" stroke="#FF6B9E" stroke-width="0.8"/><circle cx="10" cy="9" r="2.2" fill="#FFAEC9" opacity="0.8"/><circle cx="8" cy="12" r="1.1" fill="#FFFFFF" opacity="0.9"/></svg>`,
+
+  laugh: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><defs><linearGradient id="bt_lgh_g" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#FFEA00"/><stop offset="1" stop-color="#FF9900"/></linearGradient></defs><circle cx="16" cy="16" r="13" fill="url(#bt_lgh_g)" stroke="#F59E0B" stroke-width="1"/><path d="M7 12 C9 15 12 15 13 12" stroke="#78350F" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M19 12 C20 15 23 15 25 12" stroke="#78350F" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M9 18 C9 24 16 26 23 18 Z" fill="#78350F"/><path d="M11 18 C11 20 14 21 16 21 C18 21 21 20 21 18 Z" fill="#FFFFFF"/><path d="M13 23 C14.5 25 17.5 25 19 23 Z" fill="#EF4444"/><path d="M4 14 C3 16 4 19 6 18 M28 14 C29 16 28 19 26 18" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+
+  skull: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><defs><linearGradient id="bt_skl_g" x1="6" y1="4" x2="26" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#CBD5E1"/></linearGradient></defs><path d="M6 14 C6 7.5 10.5 4 16 4 C21.5 4 26 7.5 26 14 C26 19 23 21 21 22 L21 27 C21 27.5 20.5 28 20 28 L12 28 C11.5 28 11 27.5 11 27 L11 22 C9 21 6 19 6 14 Z" fill="url(#bt_skl_g)" stroke="#94A3B8" stroke-width="1"/><circle cx="11.5" cy="14" r="3" fill="#1E293B"/><circle cx="20.5" cy="14" r="3" fill="#1E293B"/><polygon points="16,18 14.5,21 17.5,21" fill="#1E293B"/><line x1="14" y1="25" x2="14" y2="28" stroke="#64748B" stroke-width="1.8" stroke-linecap="round"/><line x1="18" y1="25" x2="18" y2="28" stroke="#64748B" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+
+  clap: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><defs><linearGradient id="bt_clp_g" x1="6" y1="8" x2="26" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#FFDD53"/><stop offset="1" stop-color="#FFAC1C"/></linearGradient></defs><path d="M12 11 L19 4 C20 3 22 4 22 5 L18 12 L24 9 C25.5 8 27.5 9.5 27 11 L21 18 L25 17 C26.5 16.5 28 18 27 19.5 L20 28 C15 31 9 27 7 21 L12 11 Z" fill="url(#bt_clp_g)" stroke="#E07A00" stroke-width="0.8"/><line x1="14" y1="4" x2="12" y2="2" stroke="#FACC15" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="8" x2="5" y2="6" stroke="#FACC15" stroke-width="1.8" stroke-linecap="round"/><line x1="6" y1="14" x2="3" y2="14" stroke="#FACC15" stroke-width="1.8" stroke-linecap="round"/></svg>`
 };
 
 const EMOJI_TO_ICON = {
+  '❤️': 'heart',
+  '💖': 'heart',
+  '😂': 'laugh',
+  '🤣': 'laugh',
+  '💀': 'skull',
+  '👏': 'clap',
   '🦊': 'fox',
   '🐯': 'tiger',
   '🚀': 'rocket',

@@ -45,6 +45,11 @@ function initPlayerStaticIcons() {
   if (playerAvEl && typeof renderAvatar === 'function') {
     playerAvEl.innerHTML = renderAvatar(selectedAvatar, 32);
   }
+
+  document.querySelectorAll('#player-reaction-dock .reaction-btn').forEach(btn => {
+    const em = btn.dataset.emote;
+    if (em && typeof renderIcon === 'function') btn.innerHTML = renderIcon(em, { size: 24 });
+  });
 }
 document.addEventListener('DOMContentLoaded', initPlayerStaticIcons);
 initPlayerStaticIcons();
@@ -143,6 +148,10 @@ function switchView(viewName) {
   });
   if (views[viewName]) {
     views[viewName].style.display = viewName === 'play' ? 'flex' : 'block';
+  }
+  const dock = document.getElementById('player-reaction-dock');
+  if (dock) {
+    dock.style.display = viewName === 'join' ? 'none' : 'flex';
   }
 }
 
@@ -848,3 +857,30 @@ function escapeHtml(str) {
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#039;');
 }
+
+let lastEmoteTime = 0;
+function sendQuickEmote(emoteId, btn) {
+  const now = Date.now();
+  if (now - lastEmoteTime < 400) return;
+  lastEmoteTime = now;
+
+  playMobileTapSfx();
+  vibrate(20);
+
+  if (btn) {
+    btn.classList.add('pop-anim');
+    setTimeout(() => {
+      btn.classList.remove('pop-anim');
+    }, 320);
+  }
+
+  socket.emit('send_emote', { emoteId });
+}
+
+document.querySelectorAll('#player-reaction-dock .reaction-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const emoteId = btn.dataset.emote;
+    if (emoteId) sendQuickEmote(emoteId, btn);
+  });
+});

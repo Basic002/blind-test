@@ -288,6 +288,37 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('send_emote', (payload) => {
+    try {
+      const emoteId = payload && typeof payload.emoteId === 'string' ? payload.emoteId.trim() : '';
+      if (!emoteId) return;
+
+      const allowedEmotes = ['flame', 'heart', 'laugh', 'party', 'bolt', 'skull'];
+      if (!allowedEmotes.includes(emoteId)) return;
+
+      const room = roomManager.getRoomBySocket(socket.id);
+      if (!room) return;
+
+      const player = room.players.get(socket.id);
+      if (!player) return;
+
+      const now = Date.now();
+      const lastEmote = player.lastEmoteTime || 0;
+      if (now - lastEmote < 400) return;
+      player.lastEmoteTime = now;
+
+      io.to(room.code).emit('room_emote', {
+        playerId: player.id,
+        nickname: player.nickname,
+        avatar: player.avatar,
+        emoteId,
+        timestamp: now
+      });
+    } catch (err) {
+      console.error('Erreur send_emote:', err);
+    }
+  });
+
   socket.on('host_quit_game', () => {
     const room = roomManager.getRoomBySocket(socket.id);
     if (room && room.hostSocketId === socket.id) {
