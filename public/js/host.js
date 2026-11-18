@@ -52,6 +52,14 @@ function initStaticIcons() {
   if (balIcon && typeof renderIcon === 'function') balIcon.innerHTML = renderIcon('users', { size: 16 });
   const survIcon = document.getElementById('host-survival-icon');
   if (survIcon && typeof renderIcon === 'function') survIcon.innerHTML = renderIcon('skull', { size: 20 });
+  const stepsIcon = document.getElementById('join-steps-header-icon');
+  if (stepsIcon && typeof renderIcon === 'function') stepsIcon.innerHTML = renderIcon('gamepad', { size: 18 });
+  const copyUrlIcon = document.getElementById('copy-url-icon');
+  if (copyUrlIcon && typeof renderIcon === 'function') copyUrlIcon.innerHTML = renderIcon('copy', { size: 15 });
+  const devPillIcon = document.getElementById('device-pill-icon');
+  if (devPillIcon && typeof renderIcon === 'function') devPillIcon.innerHTML = renderIcon('wifi', { size: 15 });
+  const guideIcon = document.getElementById('lobby-mode-guide-icon');
+  if (guideIcon && typeof renderIcon === 'function') guideIcon.innerHTML = renderIcon('trophy', { size: 18 });
 }
 document.addEventListener('DOMContentLoaded', initStaticIcons);
 initStaticIcons();
@@ -387,6 +395,9 @@ function applyGameModeUI(settings) {
   const descEl = document.getElementById('mode-badge-desc');
   const survSel = document.getElementById('survival-lives-select');
   const teamSel = document.getElementById('teams-count-select');
+  const guideTitle = document.getElementById('lobby-mode-guide-title');
+  const guideDesc = document.getElementById('lobby-mode-guide-desc');
+  const guideIcon = document.getElementById('lobby-mode-guide-icon');
 
   if (survSel) survSel.value = selectedSurvivalLives;
   if (teamSel) teamSel.value = selectedTeamCount;
@@ -395,14 +406,23 @@ function applyGameModeUI(settings) {
     if (survBox) survBox.style.display = 'block';
     if (teamBox) teamBox.style.display = 'none';
     if (descEl) descEl.textContent = 'Vies éliminatoires';
+    if (guideTitle) guideTitle.textContent = 'Règles Survie Battle Royale';
+    if (guideDesc) guideDesc.textContent = `Chaque erreur ou silence coûte 1 vie (${selectedSurvivalLives} vies au départ). Élimination à 0 vie, le dernier survivant fait Top 1 !`;
+    if (guideIcon && typeof renderIcon === 'function') guideIcon.innerHTML = renderIcon('skull', { size: 18 });
   } else if (selectedGameMode === 'teams') {
     if (survBox) survBox.style.display = 'none';
     if (teamBox) teamBox.style.display = 'flex';
     if (descEl) descEl.textContent = 'Guerre des clans';
+    if (guideTitle) guideTitle.textContent = `Règles Mode Équipes (${selectedTeamCount} Clans)`;
+    if (guideDesc) guideDesc.textContent = "Les points individuels de chaque membre sont additionnés au score collectif du clan. L'équipe en tête à la fin l'emporte !";
+    if (guideIcon && typeof renderIcon === 'function') guideIcon.innerHTML = renderIcon('users', { size: 18 });
   } else {
     if (survBox) survBox.style.display = 'none';
     if (teamBox) teamBox.style.display = 'none';
     if (descEl) descEl.textContent = 'Points classiques';
+    if (guideTitle) guideTitle.textContent = 'Règles du Mode Classique';
+    if (guideDesc) guideDesc.textContent = "Chacun pour soi ! Vitesse maximale pour décrocher jusqu'à 1 000 pts par manche, avec bonus de flamme pour les séries de bonnes réponses.";
+    if (guideIcon && typeof renderIcon === 'function') guideIcon.innerHTML = renderIcon('trophy', { size: 18 });
   }
 }
 
@@ -418,6 +438,7 @@ const survLivesSel = document.getElementById('survival-lives-select');
 if (survLivesSel) {
   survLivesSel.addEventListener('change', () => {
     selectedSurvivalLives = parseInt(survLivesSel.value, 10);
+    applyGameModeUI({ gameMode: selectedGameMode, survivalLives: selectedSurvivalLives, teamCount: selectedTeamCount });
     sendSettingsUpdate();
   });
 }
@@ -426,6 +447,7 @@ const teamsCountSel = document.getElementById('teams-count-select');
 if (teamsCountSel) {
   teamsCountSel.addEventListener('change', () => {
     selectedTeamCount = parseInt(teamsCountSel.value, 10);
+    applyGameModeUI({ gameMode: selectedGameMode, survivalLives: selectedSurvivalLives, teamCount: selectedTeamCount });
     sendSettingsUpdate();
   });
 }
@@ -434,6 +456,30 @@ const balBtn = document.getElementById('btn-balance-teams');
 if (balBtn) {
   balBtn.addEventListener('click', () => {
     socket.emit('balance_teams');
+  });
+}
+
+const copyJoinBtn = document.getElementById('btn-copy-join-url');
+if (copyJoinBtn) {
+  copyJoinBtn.addEventListener('click', () => {
+    const urlEl = document.getElementById('display-join-url');
+    const text = urlEl ? urlEl.textContent : '';
+    if (text && text !== 'Chargement...' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        const iconEl = document.getElementById('copy-url-icon');
+        const textEl = document.getElementById('copy-url-text');
+        if (iconEl && typeof renderIcon === 'function') iconEl.innerHTML = renderIcon('check', { size: 15 });
+        if (textEl) textEl.textContent = 'Copié !';
+        copyJoinBtn.style.borderColor = 'var(--party-emerald)';
+        copyJoinBtn.style.color = 'var(--party-emerald)';
+        setTimeout(() => {
+          if (iconEl && typeof renderIcon === 'function') iconEl.innerHTML = renderIcon('copy', { size: 15 });
+          if (textEl) textEl.textContent = 'Copier';
+          copyJoinBtn.style.borderColor = '';
+          copyJoinBtn.style.color = '';
+        }, 2200);
+      }).catch(() => {});
+    }
   });
 }
 

@@ -131,7 +131,11 @@ const APP_ICONS = {
 
   shield: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><defs><linearGradient id="bt_shld_g" x1="6" y1="4" x2="26" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#38BDF8"/><stop offset="1" stop-color="#2563EB"/></linearGradient></defs><path d="M16 3 L6 7 V15 C6 22 10.5 27 16 29 C21.5 27 26 22 26 15 V7 L16 3 Z" fill="url(#bt_shld_g)" stroke="#60A5FA" stroke-width="1.2"/><path d="M16 6 L23 9 V15 C23 20 19.5 24 16 26 Z" fill="#93C5FD" opacity="0.35"/></svg>`,
 
-  'heart-broken': (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><path d="M16 28 C16 28 3 20 3 11 C3 6.5 6.8 3 11.5 3 C13.5 3 14.8 4 16 5.5 L14 11 L18 15 L13 20 L16 28 Z" fill="#EF4444"/><path d="M16 5.5 C17.2 4 18.5 3 20.5 3 C25.2 3 29 6.5 29 11 C29 20 16 28 16 28 L13 20 L18 15 L14 11 L16 5.5 Z" fill="#DC2626"/><line x1="16" y1="5.5" x2="14" y2="11" stroke="#1E293B" stroke-width="1.8"/><line x1="14" y1="11" x2="18" y2="15" stroke="#1E293B" stroke-width="1.8"/><line x1="18" y1="15" x2="13" y2="20" stroke="#1E293B" stroke-width="1.8"/><line x1="13" y1="20" x2="16" y2="28" stroke="#1E293B" stroke-width="1.8"/></svg>`
+  'heart-broken': (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><path d="M16 28 C16 28 3 20 3 11 C3 6.5 6.8 3 11.5 3 C13.5 3 14.8 4 16 5.5 L14 11 L18 15 L13 20 L16 28 Z" fill="#EF4444"/><path d="M16 5.5 C17.2 4 18.5 3 20.5 3 C25.2 3 29 6.5 29 11 C29 20 16 28 16 28 L13 20 L18 15 L14 11 L16 5.5 Z" fill="#DC2626"/><line x1="16" y1="5.5" x2="14" y2="11" stroke="#1E293B" stroke-width="1.8"/><line x1="14" y1="11" x2="18" y2="15" stroke="#1E293B" stroke-width="1.8"/><line x1="18" y1="15" x2="13" y2="20" stroke="#1E293B" stroke-width="1.8"/><line x1="13" y1="20" x2="16" y2="28" stroke="#1E293B" stroke-width="1.8"/></svg>`,
+
+  copy: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><rect x="10" y="10" width="16" height="17" rx="3" stroke="currentColor" stroke-width="2.2" fill="none"/><path d="M6 21 V7 C6 5.5 7.2 4.5 9 4.5 H21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+
+  wifi: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><path d="M5 10 C11 4 21 4 27 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M8.5 15 C13 11 19 11 23.5 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M12.5 20 C14.5 18 17.5 18 19.5 20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="16" cy="25" r="2" fill="currentColor"/></svg>`
 };
 
 const EMOJI_TO_ICON = {
@@ -209,7 +213,9 @@ const EMOJI_TO_ICON = {
   '➔': 'arrow-right',
   '⏭️': 'skip',
   '⏭': 'skip',
-  '⭐': 'star'
+  '⭐': 'star',
+  '📋': 'copy',
+  '📶': 'wifi'
 };
 
 function renderIcon(nameOrEmoji, options = {}) {

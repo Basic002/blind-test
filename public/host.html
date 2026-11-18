@@ -36,19 +36,77 @@
   <main style="flex: 1; display: flex; flex-direction: column;">
     <section id="view-lobby" class="view active">
       <div class="lobby-grid">
-        <div class="join-info-card game-panel">
-          <div class="room-code-tag">Code d'accès du salon</div>
-          <div id="display-room-code" class="room-code-display">----</div>
-          
-          <div class="qr-code-wrapper">
-            <img id="qr-code-img" class="qr-code-img" alt="QR Code d'accès" src="">
+        <div class="lobby-sidebar">
+          <div class="join-info-card game-panel">
+            <div class="lobby-live-badge">
+              <span class="live-dot-pulse"></span>
+              <span>Salon Actif · En attente</span>
+            </div>
+
+            <div class="room-code-tag">Code d'accès du salon</div>
+            <div id="display-room-code" class="room-code-display">----</div>
+            
+            <div class="qr-code-wrapper">
+              <img id="qr-code-img" class="qr-code-img" alt="QR Code d'accès" src="">
+            </div>
+            
+            <div class="join-url-label">Scannez pour rejoindre :</div>
+            <div class="join-url-wrapper">
+              <div id="display-join-url" class="join-url">Chargement...</div>
+              <button id="btn-copy-join-url" class="btn btn-secondary btn-copy-url" title="Copier le lien" type="button">
+                <span id="copy-url-icon"></span>
+                <span id="copy-url-text">Copier</span>
+              </button>
+            </div>
           </div>
-          
-          <div style="margin-bottom: 0.6rem; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.04em; text-transform: uppercase;">Scannez pour rejoindre :</div>
-          <div id="display-join-url" class="join-url">Chargement...</div>
+
+          <div class="join-steps-card game-panel">
+            <div class="join-steps-title">
+              <span id="join-steps-header-icon"></span>
+              <span>Comment jouer ?</span>
+            </div>
+            <div class="join-steps-list">
+              <div class="join-step-item">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                  <div class="step-title">Scannez le QR Code</div>
+                  <div class="step-desc">Ouvrez l'appareil photo de votre smartphone pour rejoindre la manette.</div>
+                </div>
+              </div>
+              <div class="join-step-item">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                  <div class="step-title">Entrez votre pseudo & avatar</div>
+                  <div class="step-desc">Connectez-vous ou rejoignez directement en invité sans inscription.</div>
+                </div>
+              </div>
+              <div class="join-step-item">
+                <span class="step-number">3</span>
+                <div class="step-content">
+                  <div class="step-title">Buzzez le plus vite possible</div>
+                  <div class="step-desc">Écoutez l'extrait musical et choisissez le bon titre avant vos rivaux !</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lobby-mode-guide-card game-panel">
+            <div class="mode-guide-header">
+              <span id="lobby-mode-guide-icon"></span>
+              <span id="lobby-mode-guide-title">Règles du Mode Classique</span>
+            </div>
+            <p id="lobby-mode-guide-desc" class="mode-guide-desc">
+              Chacun pour soi ! Vitesse maximale pour décrocher jusqu'à 1 000 pts par manche, avec bonus de flamme pour les séries de bonnes réponses.
+            </p>
+          </div>
+
+          <div class="lobby-device-pill">
+            <span id="device-pill-icon"></span>
+            <span>Sans téléchargement · Compatible tout smartphone & navigateur</span>
+          </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="lobby-main-column" style="display: flex; flex-direction: column; gap: 1.5rem;">
           <div class="game-panel" style="padding: 1.75rem 2rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
               <h2 style="font-size: 1.4rem;">Sélectionnez le Thème</h2>
