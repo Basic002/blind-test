@@ -167,6 +167,8 @@ function initPlayerStaticIcons() {
   if (sProfIcon && typeof renderIcon === 'function') sProfIcon.innerHTML = renderIcon('camera', { size: 22 });
   const sProfBtnIcon = document.getElementById('btn-selfie-profile-card-icon');
   if (sProfBtnIcon && typeof renderIcon === 'function') sProfBtnIcon.innerHTML = renderIcon('camera', { size: 14 });
+  const sFilterTitleIcon = document.getElementById('selfie-filter-title-icon');
+  if (sFilterTitleIcon && typeof renderIcon === 'function') sFilterTitleIcon.innerHTML = renderIcon('sparkles', { size: 22 });
 
   document.querySelectorAll('#avatar-picker .avatar-option').forEach(el => {
     const av = el.dataset.avatar;
@@ -244,6 +246,8 @@ function syncAvatarPickersUI(activeAvatar) {
       if (sub) sub.textContent = 'Avatar sélectionné ✓';
       const btnTxt = document.getElementById('btn-selfie-action-text');
       if (btnTxt) btnTxt.textContent = 'Changer';
+      const btnFilterGuest = document.getElementById('btn-selfie-filter-guest');
+      if (btnFilterGuest) btnFilterGuest.style.display = 'inline-flex';
     }
   }
 
@@ -257,6 +261,8 @@ function syncAvatarPickersUI(activeAvatar) {
       if (sub) sub.textContent = 'Avatar sélectionné ✓';
       const btnTxt = document.getElementById('btn-selfie-profile-card-text');
       if (btnTxt) btnTxt.textContent = 'Changer';
+      const btnFilterProf = document.getElementById('btn-selfie-filter-profile');
+      if (btnFilterProf) btnFilterProf.style.display = 'inline-flex';
     }
   }
 }
@@ -333,6 +339,11 @@ function applyGuestSelfie(dataUrl, shouldSelect = true) {
   const profActionText = document.getElementById('btn-selfie-profile-card-text');
   if (profActionText) profActionText.textContent = 'Changer';
 
+  const btnFilterGuest = document.getElementById('btn-selfie-filter-guest');
+  if (btnFilterGuest) btnFilterGuest.style.display = 'inline-flex';
+  const btnFilterProf = document.getElementById('btn-selfie-filter-profile');
+  if (btnFilterProf) btnFilterProf.style.display = 'inline-flex';
+
   if (shouldSelect) {
     updateAccountAvatar(dataUrl);
   }
@@ -351,6 +362,9 @@ function applyAuthSelfie(dataUrl, shouldSelect = true) {
   const actionText = document.getElementById('btn-selfie-auth-action-text');
   if (actionText) actionText.textContent = 'Changer';
 
+  const btnFilterAuth = document.getElementById('btn-selfie-filter-auth');
+  if (btnFilterAuth) btnFilterAuth.style.display = 'inline-flex';
+
   if (shouldSelect) {
     authSelectedAvatar = dataUrl;
     const card = document.getElementById('selfie-auth-card');
@@ -363,8 +377,249 @@ try {
   const savedSelfie = localStorage.getItem('blindtest_custom_selfie');
   if (savedSelfie) {
     applyGuestSelfie(savedSelfie, false);
+    const btnFilterAuth = document.getElementById('btn-selfie-filter-auth');
+    if (btnFilterAuth) btnFilterAuth.style.display = 'inline-flex';
   }
 } catch (e) {}
+
+let selfieFilterBaseImageData = null;
+let selfieFilterContext = 'guest';
+let activeSelfieFilter = 'normal';
+
+function applyDistortionFilter(srcImageData, filterType) {
+  const width = srcImageData.width;
+  const height = srcImageData.height;
+  const src = srcImageData.data;
+  const dstImage = new ImageData(width, height);
+  const dst = dstImage.data;
+  const cx = width / 2;
+  const cy = height / 2;
+  const R = width / 2;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      let srcX = x;
+      let srcY = y;
+      const dx = x - cx;
+      const dy = y - cy;
+      const r = Math.sqrt(dx * dx + dy * dy);
+
+      if (filterType === 'bulge') {
+        if (r < R && r > 0.0001) {
+          const rn = r / R;
+          const srcR = R * Math.pow(rn, 1.8);
+          const ratio = srcR / r;
+          srcX = cx + dx * ratio;
+          srcY = cy + dy * ratio;
+        }
+      } else if (filterType === 'megamind') {
+        const normY = dy / cy;
+        if (normY < 0.1) {
+          const f = 1.0 + 0.65 * (1.0 - Math.abs(normY + 0.4));
+          srcX = cx + dx / f;
+          srcY = cy + dy * 1.15;
+        } else {
+          const f = Math.max(0.2, 1.0 - 0.45 * normY);
+          srcX = cx + dx / f;
+          srcY = cy + dy * 0.9;
+        }
+      } else if (filterType === 'swirl') {
+        if (r < R) {
+          const angle = Math.atan2(dy, dx) + 2.5 * Math.pow(1.0 - r / R, 2);
+          srcX = cx + r * Math.cos(angle);
+          srcY = cy + r * Math.sin(angle);
+        }
+      } else if (filterType === 'pinch') {
+        if (r < R && r > 0.0001) {
+          const rn = r / R;
+          const srcR = R * Math.sqrt(rn);
+          const ratio = srcR / r;
+          srcX = cx + dx * ratio;
+          srcY = cy + dy * ratio;
+        }
+      } else if (filterType === 'wide') {
+        srcX = cx + (x - cx) * 0.55;
+        srcY = cy + (y - cy) * 1.25;
+      } else if (filterType === 'stretch_vert') {
+        srcX = cx + (x - cx) * 1.35;
+        srcY = cy + (y - cy) * 0.52;
+      } else if (filterType === 'wave') {
+        srcX = x + 10 * Math.sin(y / 11);
+        srcY = y + 8 * Math.cos(x / 13);
+      } else if (filterType === 'mirror') {
+        srcX = (x > cx) ? (2 * cx - x) : x;
+      } else if (filterType === 'pixel') {
+        const bs = 8;
+        srcX = Math.floor(x / bs) * bs + Math.floor(bs / 2);
+        srcY = Math.floor(y / bs) * bs + Math.floor(bs / 2);
+      }
+
+      const sx = Math.max(0, Math.min(width - 1, Math.round(srcX)));
+      const sy = Math.max(0, Math.min(height - 1, Math.round(srcY)));
+      const targetIdx = (y * width + x) * 4;
+      const srcIdx = (sy * width + sx) * 4;
+
+      dst[targetIdx] = src[srcIdx];
+      dst[targetIdx + 1] = src[srcIdx + 1];
+      dst[targetIdx + 2] = src[srcIdx + 2];
+      dst[targetIdx + 3] = src[srcIdx + 3];
+    }
+  }
+
+  return dstImage;
+}
+
+function renderActiveSelfieFilter() {
+  if (!selfieFilterBaseImageData) return;
+  const canvas = document.getElementById('selfie-filter-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const filtered = applyDistortionFilter(selfieFilterBaseImageData, activeSelfieFilter);
+  ctx.putImageData(filtered, 0, 0);
+}
+
+function openSelfieFilterModal(img, context = 'guest') {
+  if (!img) return;
+  selfieFilterContext = context;
+  activeSelfieFilter = 'normal';
+
+  const modal = document.getElementById('modal-selfie-filter');
+  const canvas = document.getElementById('selfie-filter-canvas');
+  if (!modal || !canvas) return;
+
+  const size = 200;
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const minDim = Math.min(img.width, img.height);
+  const sx = (img.width - minDim) / 2;
+  const sy = (img.height - minDim) / 2;
+  ctx.clearRect(0, 0, size, size);
+  ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+
+  selfieFilterBaseImageData = ctx.getImageData(0, 0, size, size);
+
+  document.querySelectorAll('#selfie-filters-list .selfie-filter-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.filter === 'normal');
+  });
+
+  modal.style.display = 'flex';
+}
+
+function closeSelfieFilterModal() {
+  const modal = document.getElementById('modal-selfie-filter');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+function loadSelfieImageFromFile(file, callback) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => callback(null, img);
+    img.onerror = () => callback(new Error('Image invalide'));
+    img.src = e.target.result;
+  };
+  reader.onerror = () => callback(new Error('Lecture impossible'));
+  reader.readAsDataURL(file);
+}
+
+function openFilterForExistingSelfie(context = 'guest') {
+  let src = null;
+  if (context === 'auth') {
+    if (authSelectedAvatar && authSelectedAvatar.startsWith('data:image/')) {
+      src = authSelectedAvatar;
+    } else {
+      src = localStorage.getItem('blindtest_custom_selfie');
+    }
+  } else {
+    if (selectedAvatar && (selectedAvatar.startsWith('data:image/') || selectedAvatar.startsWith('http'))) {
+      src = selectedAvatar;
+    } else {
+      src = localStorage.getItem('blindtest_custom_selfie');
+    }
+  }
+  if (!src) return;
+  const img = new Image();
+  img.onload = () => {
+    openSelfieFilterModal(img, context);
+  };
+  img.src = src;
+}
+
+document.querySelectorAll('#selfie-filters-list .selfie-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#selfie-filters-list .selfie-filter-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    activeSelfieFilter = btn.dataset.filter || 'normal';
+    renderActiveSelfieFilter();
+    vibrate(20);
+  });
+});
+
+const btnCloseSelfieFilter = document.getElementById('btn-close-selfie-filter');
+if (btnCloseSelfieFilter) {
+  btnCloseSelfieFilter.addEventListener('click', closeSelfieFilterModal);
+}
+
+const btnCancelSelfieFilter = document.getElementById('btn-cancel-selfie-filter');
+if (btnCancelSelfieFilter) {
+  btnCancelSelfieFilter.addEventListener('click', closeSelfieFilterModal);
+}
+
+const btnApplySelfieFilter = document.getElementById('btn-apply-selfie-filter');
+if (btnApplySelfieFilter) {
+  btnApplySelfieFilter.addEventListener('click', () => {
+    const canvas = document.getElementById('selfie-filter-canvas');
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    if (selfieFilterContext === 'auth') {
+      applyAuthSelfie(dataUrl, true);
+    } else {
+      applyGuestSelfie(dataUrl, true);
+    }
+    vibrate(35);
+    closeSelfieFilterModal();
+  });
+}
+
+const modalSelfieFilter = document.getElementById('modal-selfie-filter');
+if (modalSelfieFilter) {
+  modalSelfieFilter.addEventListener('click', (e) => {
+    if (e.target === modalSelfieFilter) {
+      closeSelfieFilterModal();
+    }
+  });
+}
+
+const btnSelfieFilterAuth = document.getElementById('btn-selfie-filter-auth');
+if (btnSelfieFilterAuth) {
+  btnSelfieFilterAuth.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openFilterForExistingSelfie('auth');
+  });
+}
+
+const btnSelfieFilterGuest = document.getElementById('btn-selfie-filter-guest');
+if (btnSelfieFilterGuest) {
+  btnSelfieFilterGuest.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openFilterForExistingSelfie('guest');
+  });
+}
+
+const btnSelfieFilterProf = document.getElementById('btn-selfie-filter-profile');
+if (btnSelfieFilterProf) {
+  btnSelfieFilterProf.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openFilterForExistingSelfie('profile');
+  });
+}
 
 const MobileAudioCtxClass = window.AudioContext || window.webkitAudioContext;
 let mobileAudioCtx = null;
@@ -777,10 +1032,9 @@ if (inputSelfieAuth) {
   inputSelfieAuth.addEventListener('change', () => {
     const file = inputSelfieAuth.files && inputSelfieAuth.files[0];
     if (file) {
-      processSelfieFile(file, (err, dataUrl) => {
-        if (!err && dataUrl) {
-          applyAuthSelfie(dataUrl, true);
-          vibrate(35);
+      loadSelfieImageFromFile(file, (err, img) => {
+        if (!err && img) {
+          openSelfieFilterModal(img, 'auth');
         }
       });
       inputSelfieAuth.value = '';
@@ -1028,6 +1282,7 @@ window.addEventListener('keydown', (e) => {
     closePlayerChartModal();
     closeProfileModal();
     closeLegalModalPlayer();
+    closeSelfieFilterModal();
   }
 });
 
@@ -1157,10 +1412,9 @@ if (inputSelfieGuest) {
   inputSelfieGuest.addEventListener('change', () => {
     const file = inputSelfieGuest.files && inputSelfieGuest.files[0];
     if (file) {
-      processSelfieFile(file, (err, dataUrl) => {
-        if (!err && dataUrl) {
-          applyGuestSelfie(dataUrl, true);
-          vibrate(35);
+      loadSelfieImageFromFile(file, (err, img) => {
+        if (!err && img) {
+          openSelfieFilterModal(img, 'guest');
         }
       });
       inputSelfieGuest.value = '';
@@ -1202,10 +1456,9 @@ if (inputProfileSelfie) {
   inputProfileSelfie.addEventListener('change', () => {
     const file = inputProfileSelfie.files && inputProfileSelfie.files[0];
     if (file) {
-      processSelfieFile(file, (err, dataUrl) => {
-        if (!err && dataUrl) {
-          applyGuestSelfie(dataUrl, true);
-          vibrate(35);
+      loadSelfieImageFromFile(file, (err, img) => {
+        if (!err && img) {
+          openSelfieFilterModal(img, 'guest');
         }
       });
       inputProfileSelfie.value = '';

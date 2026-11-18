@@ -89,10 +89,13 @@
                   <div class="selfie-card-subtitle" id="selfie-auth-sub">Utilise ta photo comme avatar</div>
                 </div>
               </div>
-              <button type="button" id="btn-selfie-snap-auth" class="btn-selfie-action">
-                <span id="btn-selfie-auth-action-icon"></span>
-                <span id="btn-selfie-auth-action-text">Photo</span>
-              </button>
+              <div style="display: flex; gap: 0.4rem; align-items: center;">
+                <button type="button" id="btn-selfie-filter-auth" class="btn-selfie-filter-trigger" style="display: none;" title="Filtres et déformations">Filtres</button>
+                <button type="button" id="btn-selfie-snap-auth" class="btn-selfie-action">
+                  <span id="btn-selfie-auth-action-icon"></span>
+                  <span id="btn-selfie-auth-action-text">Photo</span>
+                </button>
+              </div>
             </div>
             <input type="file" id="input-selfie-auth" accept="image/*" capture="user" style="display: none;">
 
@@ -133,10 +136,13 @@
                 <div class="selfie-card-subtitle" id="selfie-guest-sub">Utilise ta photo comme avatar</div>
               </div>
             </div>
-            <button type="button" id="btn-selfie-snap-guest" class="btn-selfie-action">
-              <span id="btn-selfie-action-icon"></span>
-              <span id="btn-selfie-action-text">Photo</span>
-            </button>
+            <div style="display: flex; gap: 0.4rem; align-items: center;">
+              <button type="button" id="btn-selfie-filter-guest" class="btn-selfie-filter-trigger" style="display: none;" title="Filtres et déformations">Filtres</button>
+              <button type="button" id="btn-selfie-snap-guest" class="btn-selfie-action">
+                <span id="btn-selfie-action-icon"></span>
+                <span id="btn-selfie-action-text">Photo</span>
+              </button>
+            </div>
           </div>
           <input type="file" id="input-selfie-guest" accept="image/*" capture="user" style="display: none;">
 
@@ -315,6 +321,74 @@
     <div id="countdown-label" class="countdown-label">PRÊTS ?</div>
   </div>
 
+  <div id="modal-selfie-filter" class="modal-overlay" style="display: none;">
+    <div class="modal-card selfie-filter-modal-card game-panel">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span id="selfie-filter-title-icon" style="display: inline-flex;"></span>
+          <h2 style="font-size: 1.25rem; font-weight: 800;">Filtres & Déformations</h2>
+        </div>
+        <button id="btn-close-selfie-filter" class="modal-close-btn" type="button" title="Fermer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+
+      <div class="modal-content" style="padding: 0.75rem 0.25rem; text-align: center; max-height: 80vh; overflow-y: auto;">
+        <div class="selfie-filter-preview-wrap">
+          <canvas id="selfie-filter-canvas" width="200" height="200" class="selfie-filter-canvas"></canvas>
+        </div>
+
+        <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin: 1rem 0 0.5rem 0; text-align: left;">Choisis une déformation rigolote</div>
+        
+        <div id="selfie-filters-list" class="selfie-filters-grid">
+          <button type="button" class="selfie-filter-btn selected" data-filter="normal">
+            <span class="filter-emoji">😐</span>
+            <span class="filter-name">Normal</span>
+          </button>
+          <button type="button" class="selfie-filter-btn" data-filter="bulge">
+            <span class="filter-emoji">🐡</span>
+            <span class="filter-name">Gros Nez</span>
+          </button>
+          <button type="button" class="selfie-filter-btn" data-filter="megamind">
+            <span class="filter-emoji">👽</span>
+            <span class="filter-name">Mégamind</span>
+          </button>
+          <button type="button" class="selfie-filter-btn" data-filter="swirl">
+            <span class="filter-emoji">🌀</span>
+            <span class="filter-name">Tourbillon</span>
+          </button>
+          <button type="button" class="selfie-filter-btn" data-filter="pinch">
+            <span class="filter-emoji">🤏</span>
+            <span class="filter-name">Pincé</span>
+          </button>
+          <button type="button" class="selfie-filter-btn" data-filter="wide">
+            <span class="filter-emoji">🥪</span>
+            <span class="filter-name">Chonky Wide</span>
+          </button>
+          <button type="button" class="selfie-filter-btn" data-filter="stretch_vert">
+            <span class="filter-emoji">🦒</span>
+            <span class="filter-name">Girafe</span>
+          </button>
+          <button type="button" class="selfie-filter-btn" data-filter="wave">
+            <span class="filter-emoji">🌊</span>
+            <span class="filter-name">Vaguelette</span>
+          </button>
+          <button type="button" class="selfie-filter-btn" data-filter="mirror">
+            <span class="filter-emoji">🪞</span>
+            <span class="filter-name">Symétrie</span>
+          </button>
+          <button type="button" class="selfie-filter-btn" data-filter="pixel">
+            <span class="filter-emoji">👾</span>
+            <span class="filter-name">Pixel 8-Bit</span>
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 0.65rem; margin-top: 1.25rem;">
+          <button type="button" id="btn-cancel-selfie-filter" class="btn btn-secondary" style="flex: 1; padding: 0.75rem; font-size: 0.9rem;">Annuler</button>
+          <button type="button" id="btn-apply-selfie-filter" class="btn btn-primary" style="flex: 1; padding: 0.75rem; font-size: 0.9rem; font-weight: 800;">Valider l'Avatar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-profile" class="modal-overlay" style="display: none;">
     <div class="modal-card game-panel">
       <div class="modal-header">
@@ -374,10 +448,13 @@
                 <div class="selfie-card-subtitle" id="selfie-profile-sub">Prendre ou changer de selfie</div>
               </div>
             </div>
-            <button type="button" id="btn-selfie-snap-profile-card" class="btn-selfie-action">
-              <span id="btn-selfie-profile-card-icon"></span>
-              <span id="btn-selfie-profile-card-text">Photo</span>
-            </button>
+            <div style="display: flex; gap: 0.4rem; align-items: center;">
+              <button type="button" id="btn-selfie-filter-profile" class="btn-selfie-filter-trigger" style="display: none;" title="Filtres et déformations">Filtres</button>
+              <button type="button" id="btn-selfie-snap-profile-card" class="btn-selfie-action">
+                <span id="btn-selfie-profile-card-icon"></span>
+                <span id="btn-selfie-profile-card-text">Photo</span>
+              </button>
+            </div>
           </div>
 
           <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0.75rem 0 0.4rem 0; text-align: left;">Ou choisis un avatar classique</div>
