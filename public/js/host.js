@@ -60,9 +60,28 @@ function initStaticIcons() {
   if (devPillIcon && typeof renderIcon === 'function') devPillIcon.innerHTML = renderIcon('wifi', { size: 15 });
   const guideIcon = document.getElementById('lobby-mode-guide-icon');
   if (guideIcon && typeof renderIcon === 'function') guideIcon.innerHTML = renderIcon('trophy', { size: 18 });
+  const legIcon = document.getElementById('legal-modal-title-icon');
+  if (legIcon && typeof renderIcon === 'function') legIcon.innerHTML = renderIcon('shield', { size: 22 });
 }
 document.addEventListener('DOMContentLoaded', initStaticIcons);
 initStaticIcons();
+
+function openLegalModalHost() {
+  const modal = document.getElementById('modal-legal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeLegalModalHost() {
+  const modal = document.getElementById('modal-legal');
+  if (modal) modal.style.display = 'none';
+}
+
+document.getElementById('btn-open-legal-host')?.addEventListener('click', openLegalModalHost);
+document.getElementById('btn-close-legal')?.addEventListener('click', closeLegalModalHost);
+document.getElementById('btn-close-legal-bottom')?.addEventListener('click', closeLegalModalHost);
+document.getElementById('modal-legal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'modal-legal') closeLegalModalHost();
+});
 
 const SILENT_AUDIO = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
 

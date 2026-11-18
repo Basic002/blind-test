@@ -147,6 +147,8 @@ function initPlayerStaticIcons() {
   if (profTitleIcon && typeof renderIcon === 'function') profTitleIcon.innerHTML = renderIcon('trophy', { size: 22 });
   const survInfIcon = document.getElementById('player-surv-info-icon');
   if (survInfIcon && typeof renderIcon === 'function') survInfIcon.innerHTML = renderIcon('skull', { size: 16 });
+  const legIconPlayer = document.getElementById('legal-modal-player-title-icon');
+  if (legIconPlayer && typeof renderIcon === 'function') legIconPlayer.innerHTML = renderIcon('shield', { size: 22 });
 
   document.querySelectorAll('#avatar-picker .avatar-option').forEach(el => {
     const av = el.dataset.avatar;
@@ -560,6 +562,23 @@ document.getElementById('btn-close-profile-bottom')?.addEventListener('click', c
 
 document.getElementById('modal-profile')?.addEventListener('click', (e) => {
   if (e.target.id === 'modal-profile') closeProfileModal();
+});
+
+function openLegalModalPlayer() {
+  const modal = document.getElementById('modal-legal-player');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeLegalModalPlayer() {
+  const modal = document.getElementById('modal-legal-player');
+  if (modal) modal.style.display = 'none';
+}
+
+document.getElementById('btn-open-legal-player')?.addEventListener('click', openLegalModalPlayer);
+document.getElementById('btn-close-legal-player')?.addEventListener('click', closeLegalModalPlayer);
+document.getElementById('btn-close-legal-player-bottom')?.addEventListener('click', closeLegalModalPlayer);
+document.getElementById('modal-legal-player')?.addEventListener('click', (e) => {
+  if (e.target.id === 'modal-legal-player') closeLegalModalPlayer();
 });
 
 socket.on('profile_data', (data) => {

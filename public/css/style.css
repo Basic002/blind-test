@@ -2047,3 +2047,102 @@ select.form-input option:checked,
     transform: scale(1.02);
   }
 }
+
+.app-footer {
+  width: 100%;
+  max-width: 1300px;
+  margin: 1.5rem auto 1rem;
+  padding: 0.75rem 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.player-footer {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.footer-separator {
+  opacity: 0.4;
+}
+
+.footer-legal-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--party-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.footer-legal-link:hover {
+  color: #ffffff;
+  opacity: 0.9;
+}
+
+.legal-modal-card {
+  max-width: 580px !important;
+}
+
+.legal-section {
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.legal-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-party);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--party-gold);
+  margin-bottom: 0.35rem;
+}
+
+.legal-bullet {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--party-gold);
+  flex-shrink: 0;
+}
+
+.legal-section-text {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.legal-section-text code {
+  background: #0d1330;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  color: var(--party-cyan);
+  font-size: 0.8rem;
+}

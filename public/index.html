@@ -240,6 +240,12 @@
       <p style="color: var(--text-muted); font-size: 1.05rem; font-weight: 600;">Regardez le podium sur le grand écran !</p>
     </div>
 
+    <footer class="player-footer">
+      <span>© 2026 Blind-Test</span>
+      <span class="footer-separator">·</span>
+      <button type="button" id="btn-open-legal-player" class="footer-legal-link">Mentions Légales & Crédits</button>
+    </footer>
+
     <div id="player-reaction-dock" class="player-reaction-dock" style="display: none;">
       <button type="button" class="reaction-btn" data-emote="flame" title="Feu"></button>
       <button type="button" class="reaction-btn" data-emote="heart" title="Cœur"></button>
@@ -321,6 +327,79 @@
           </button>
           <button id="btn-close-profile-bottom" class="btn btn-primary" style="flex: 1; padding: 0.75rem; font-size: 0.9rem;" type="button">
             Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-legal-player" class="modal-overlay" style="display: none;">
+    <div class="modal-card legal-modal-card game-panel">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span id="legal-modal-player-title-icon" style="display: inline-flex;"></span>
+          <h2 style="font-size: 1.25rem; font-weight: 800;">Mentions Légales & Crédits</h2>
+        </div>
+        <button id="btn-close-legal-player" class="modal-close-btn" type="button" title="Fermer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+
+      <div class="modal-content" style="max-height: 70vh; overflow-y: auto; text-align: left; padding: 0.5rem 0.25rem;">
+        <div class="legal-section">
+          <div class="legal-section-title">
+            <span class="legal-bullet"></span>
+            <span>Éditeur & Nature du Projet</span>
+          </div>
+          <p class="legal-section-text">
+            Blind-Test est une application web festive multijoueur créée pour animer des soirées entre amis et en famille. L'application est un projet indépendant à usage récréatif et non commercial.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <div class="legal-section-title">
+            <span class="legal-bullet"></span>
+            <span>Propriété Intellectuelle & Extraits Musicaux</span>
+          </div>
+          <p class="legal-section-text">
+            Les extraits audio courts (30 secondes) et les pochettes d'albums sont mis à disposition via les API publiques de prévisualisation (notamment Deezer et Apple Music / iTunes).<br>
+            Tous les droits des auteurs, compositeurs, interprètes, éditeurs et producteurs phonographiques restent leur propriété pleine et entière. Les extraits sont utilisés uniquement pour identifier les morceaux dans le jeu.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <div class="legal-section-title">
+            <span class="legal-bullet"></span>
+            <span>Protection des Données (RGPD)</span>
+          </div>
+          <p class="legal-section-text">
+            Seules les données strictement nécessaires au jeu sont collectées : pseudonyme, avatar, scores, niveau et succès. Les mots de passe sont hachés cryptographiquement.<br>
+            Aucune donnée n'est vendue, partagée ni transmise à des tiers.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <div class="legal-section-title">
+            <span class="legal-bullet"></span>
+            <span>Cookies & Stockage Local</span>
+          </div>
+          <p class="legal-section-text">
+            Aucun cookie tiers publicitaire. Seul le stockage local du navigateur (<code>localStorage</code>) conserve votre jeton de session et vos préférences.
+          </p>
+        </div>
+
+        <div class="legal-section" style="border-bottom: none; margin-bottom: 0;">
+          <div class="legal-section-title">
+            <span class="legal-bullet"></span>
+            <span>Crédits & Technologies</span>
+          </div>
+          <p class="legal-section-text">
+            Développé avec Node.js, Express, Socket.IO et Canvas Confetti.<br>
+            Graphismes et icônes vectorielles originales SVG © Blind-Test.
+          </p>
+        </div>
+
+        <div style="margin-top: 1.5rem; text-align: center;">
+          <button id="btn-close-legal-player-bottom" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem;" type="button">
+            J'ai compris
           </button>
         </div>
       </div>
