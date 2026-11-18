@@ -331,6 +331,7 @@ class RoomManager {
 
     if (room.hostSocketId === socketId) {
       if (room.roundTimer) clearTimeout(room.roundTimer);
+      if (room.countdownTimer) clearTimeout(room.countdownTimer);
       this.io.to(room.code).emit('room_closed', { message: 'L\'hôte a quitté la partie.' });
       for (const pId of room.players.keys()) {
         this.socketToRoom.delete(pId);
@@ -603,8 +604,16 @@ class RoomManager {
       };
     }
 
-    room.status = 'playing';
-    this.startRound(room);
+    room.status = 'countdown';
+    this.io.to(room.code).emit('game_countdown', { duration: 3 });
+    if (room.countdownTimer) {
+      clearTimeout(room.countdownTimer);
+    }
+    room.countdownTimer = setTimeout(() => {
+      room.countdownTimer = null;
+      if (room.status !== 'countdown') return;
+      this.startRound(room);
+    }, 3800);
   }
 
   startRound(room) {
@@ -1226,6 +1235,7 @@ class RoomManager {
     if (!room) return;
 
     if (room.roundTimer) clearTimeout(room.roundTimer);
+    if (room.countdownTimer) clearTimeout(room.countdownTimer);
     room.status = 'lobby';
     room.currentRoundIndex = 0;
     room.currentRound = null;

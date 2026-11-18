@@ -446,6 +446,141 @@ function playMobileResultSfx(isCorrect) {
   } catch (e) {}
 }
 
+let playerCountdownInterval = null;
+
+function playMobileMarioKartBeep(isGo = false) {
+  const ctx = getMobileAudioCtx();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    if (!isGo) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.35, now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.36);
+    } else {
+      [1046.50, 1318.51].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.28 - idx * 0.08, now + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.71);
+      });
+    }
+  } catch (e) {}
+}
+
+function startPlayerCountdown() {
+  const overlay = document.getElementById('game-countdown-overlay');
+  const numEl = document.getElementById('countdown-number');
+  const labelEl = document.getElementById('countdown-label');
+  const l1 = document.getElementById('countdown-light-1');
+  const l2 = document.getElementById('countdown-light-2');
+  const l3 = document.getElementById('countdown-light-3');
+
+  if (!overlay || !numEl || !labelEl) return;
+
+  if (playerCountdownInterval) {
+    clearInterval(playerCountdownInterval);
+    playerCountdownInterval = null;
+  }
+
+  overlay.style.display = 'flex';
+
+  let currentStep = 3;
+
+  function renderStep(step) {
+    numEl.classList.remove('pop', 'state-3', 'state-2', 'state-1', 'state-go');
+    void numEl.offsetWidth;
+    numEl.classList.add('pop');
+
+    if (l1) l1.className = 'countdown-light';
+    if (l2) l2.className = 'countdown-light';
+    if (l3) l3.className = 'countdown-light';
+
+    if (step === 3) {
+      numEl.textContent = '3';
+      numEl.classList.add('state-3');
+      labelEl.textContent = 'PRÊTS ?';
+      labelEl.style.color = '#ff3366';
+      if (l1) l1.className = 'countdown-light active-red';
+      vibrate(80);
+      playMobileMarioKartBeep(false);
+    } else if (step === 2) {
+      numEl.textContent = '2';
+      numEl.classList.add('state-2');
+      labelEl.textContent = 'ATTENTION...';
+      labelEl.style.color = '#ffb703';
+      if (l1) l1.className = 'countdown-light active-yellow';
+      if (l2) l2.className = 'countdown-light active-yellow';
+      vibrate(80);
+      playMobileMarioKartBeep(false);
+    } else if (step === 1) {
+      numEl.textContent = '1';
+      numEl.classList.add('state-1');
+      labelEl.textContent = 'CONCENTREZ-VOUS...';
+      labelEl.style.color = '#fb8500';
+      if (l1) l1.className = 'countdown-light active-yellow';
+      if (l2) l2.className = 'countdown-light active-yellow';
+      if (l3) l3.className = 'countdown-light active-yellow';
+      vibrate(80);
+      playMobileMarioKartBeep(false);
+    } else if (step === 0) {
+      numEl.textContent = 'PARTEZ !';
+      numEl.classList.add('state-go');
+      labelEl.textContent = 'C\'EST PARTI !';
+      labelEl.style.color = '#00f59b';
+      if (l1) l1.className = 'countdown-light active-green';
+      if (l2) l2.className = 'countdown-light active-green';
+      if (l3) l3.className = 'countdown-light active-green';
+      vibrate([100, 50, 150]);
+      playMobileMarioKartBeep(true);
+    }
+  }
+
+  renderStep(3);
+
+  playerCountdownInterval = setInterval(() => {
+    currentStep--;
+    if (currentStep >= 0) {
+      renderStep(currentStep);
+    } else {
+      clearInterval(playerCountdownInterval);
+      playerCountdownInterval = null;
+    }
+  }, 1000);
+}
+
+function hidePlayerCountdown() {
+  if (playerCountdownInterval) {
+    clearInterval(playerCountdownInterval);
+    playerCountdownInterval = null;
+  }
+  const overlay = document.getElementById('game-countdown-overlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+  }
+}
+
 const views = {
   join: document.getElementById('view-join'),
   waiting: document.getElementById('view-waiting'),
@@ -1122,7 +1257,12 @@ socket.on('join_error', (data) => {
   btnJoin.textContent = 'Rejoindre';
 });
 
+socket.on('game_countdown', () => {
+  startPlayerCountdown();
+});
+
 socket.on('round_start_player', (data) => {
+  hidePlayerCountdown();
   hasAnsweredCurrentRound = false;
   currentOptions = data.options;
   if (data.gameMode) currentGameMode = data.gameMode;
@@ -1517,6 +1657,7 @@ socket.on('game_over_player', (data) => {
 });
 
 socket.on('back_to_lobby', (data) => {
+  hidePlayerCountdown();
   if (playerTimerInterval) {
     clearInterval(playerTimerInterval);
     playerTimerInterval = null;

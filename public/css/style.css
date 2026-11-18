@@ -2552,3 +2552,145 @@ select.form-input option:checked,
 .chart-modal-card {
   max-width: 620px;
 }
+
+.game-countdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 10, 18, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  pointer-events: auto;
+  user-select: none;
+}
+
+.countdown-lights {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 0.9rem 1.6rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-full);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.countdown-light {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.countdown-light.active-red {
+  background: #ff3366;
+  border-color: #ff6699;
+  box-shadow: 0 0 24px rgba(255, 51, 102, 0.85), inset 0 0 8px #ffffff;
+  transform: scale(1.15);
+}
+
+.countdown-light.active-yellow {
+  background: #ffb703;
+  border-color: #ffd166;
+  box-shadow: 0 0 24px rgba(255, 183, 3, 0.85), inset 0 0 8px #ffffff;
+  transform: scale(1.15);
+}
+
+.countdown-light.active-green {
+  background: #00f59b;
+  border-color: #57ffbe;
+  box-shadow: 0 0 30px rgba(0, 245, 155, 0.9), inset 0 0 10px #ffffff;
+  transform: scale(1.2);
+}
+
+.countdown-number {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Montserrat", system-ui, sans-serif;
+  font-size: 11rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -2px;
+  color: #ffffff;
+  text-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+  will-change: transform;
+}
+
+.countdown-number.pop {
+  animation: countdownPopAnim 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes countdownPopAnim {
+  0% {
+    transform: scale(0.3) translateY(30px);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.18) translateY(-6px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.countdown-label {
+  margin-top: 1.25rem;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.countdown-number.state-3 {
+  color: #ff3366;
+  text-shadow: 0 0 45px rgba(255, 51, 102, 0.7);
+}
+
+.countdown-number.state-2 {
+  color: #ffb703;
+  text-shadow: 0 0 45px rgba(255, 183, 3, 0.7);
+}
+
+.countdown-number.state-1 {
+  color: #fb8500;
+  text-shadow: 0 0 45px rgba(251, 133, 0, 0.7);
+}
+
+.countdown-number.state-go {
+  font-size: 7.5rem;
+  background: linear-gradient(135deg, #00f59b 0%, #00d2ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 35px rgba(0, 245, 155, 0.65));
+}
+
+@media (max-width: 600px) {
+  .countdown-number {
+    font-size: 6.5rem;
+  }
+  .countdown-number.state-go {
+    font-size: 4.2rem;
+  }
+  .countdown-lights {
+    gap: 1rem;
+    padding: 0.6rem 1.2rem;
+    margin-bottom: 1.25rem;
+  }
+  .countdown-light {
+    width: 22px;
+    height: 22px;
+  }
+  .countdown-label {
+    font-size: 1.15rem;
+  }
+}

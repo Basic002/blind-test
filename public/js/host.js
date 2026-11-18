@@ -440,6 +440,152 @@ function playPodiumFanfareSfx() {
   });
 }
 
+let countdownInterval = null;
+
+function playMarioKartBeepSfx(isGo = false) {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const masterVol = getMasterSfxVolume();
+  if (masterVol <= 0) return;
+  const now = ctx.currentTime;
+
+  if (!isGo) {
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(523.25, now);
+
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(523.25, now);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1400, now);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.45 * masterVol, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.39);
+    osc2.stop(now + 0.39);
+  } else {
+    const freqs = [1046.50, 1318.51, 1567.98];
+    freqs.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = idx === 0 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime((0.36 - idx * 0.08) * masterVol, now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.86);
+    });
+  }
+}
+
+function startCountdownVisualAndSound() {
+  const overlay = document.getElementById('game-countdown-overlay');
+  const numEl = document.getElementById('countdown-number');
+  const labelEl = document.getElementById('countdown-label');
+  const l1 = document.getElementById('countdown-light-1');
+  const l2 = document.getElementById('countdown-light-2');
+  const l3 = document.getElementById('countdown-light-3');
+
+  if (!overlay || !numEl || !labelEl) return;
+
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
+  overlay.style.display = 'flex';
+
+  let currentStep = 3;
+
+  function renderStep(step) {
+    numEl.classList.remove('pop', 'state-3', 'state-2', 'state-1', 'state-go');
+    void numEl.offsetWidth;
+    numEl.classList.add('pop');
+
+    if (l1) l1.className = 'countdown-light';
+    if (l2) l2.className = 'countdown-light';
+    if (l3) l3.className = 'countdown-light';
+
+    if (step === 3) {
+      numEl.textContent = '3';
+      numEl.classList.add('state-3');
+      labelEl.textContent = 'PRÊTS ?';
+      labelEl.style.color = '#ff3366';
+      if (l1) l1.className = 'countdown-light active-red';
+      playMarioKartBeepSfx(false);
+    } else if (step === 2) {
+      numEl.textContent = '2';
+      numEl.classList.add('state-2');
+      labelEl.textContent = 'ATTENTION...';
+      labelEl.style.color = '#ffb703';
+      if (l1) l1.className = 'countdown-light active-yellow';
+      if (l2) l2.className = 'countdown-light active-yellow';
+      playMarioKartBeepSfx(false);
+    } else if (step === 1) {
+      numEl.textContent = '1';
+      numEl.classList.add('state-1');
+      labelEl.textContent = 'CONCENTREZ-VOUS...';
+      labelEl.style.color = '#fb8500';
+      if (l1) l1.className = 'countdown-light active-yellow';
+      if (l2) l2.className = 'countdown-light active-yellow';
+      if (l3) l3.className = 'countdown-light active-yellow';
+      playMarioKartBeepSfx(false);
+    } else if (step === 0) {
+      numEl.textContent = 'PARTEZ !';
+      numEl.classList.add('state-go');
+      labelEl.textContent = 'C\'EST PARTI !';
+      labelEl.style.color = '#00f59b';
+      if (l1) l1.className = 'countdown-light active-green';
+      if (l2) l2.className = 'countdown-light active-green';
+      if (l3) l3.className = 'countdown-light active-green';
+      playMarioKartBeepSfx(true);
+    }
+  }
+
+  renderStep(3);
+
+  countdownInterval = setInterval(() => {
+    currentStep--;
+    if (currentStep >= 0) {
+      renderStep(currentStep);
+    } else {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+  }, 1000);
+}
+
+function hideCountdownOverlay() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+  const overlay = document.getElementById('game-countdown-overlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+  }
+}
+
 let lobbyBgmMasterGain = null;
 let lobbyBgmTimer = null;
 let lobbyBgmStep = 0;
@@ -1197,7 +1343,13 @@ socket.on('game_loading', (data) => {
   startBtn.textContent = data.message || 'Chargement...';
 });
 
+socket.on('game_countdown', () => {
+  stopLobbyMusic(0.3);
+  startCountdownVisualAndSound();
+});
+
 socket.on('game_start_error', (data) => {
+  hideCountdownOverlay();
   alert('Erreur: ' + data.message);
   startBtn.disabled = false;
   startBtn.textContent = 'Lancer la Partie';
@@ -1207,6 +1359,7 @@ socket.on('game_start_error', (data) => {
 });
 
 socket.on('round_start_host', (data) => {
+  hideCountdownOverlay();
   audioPlayer.loop = false;
   if (audioFadeInterval) {
     clearInterval(audioFadeInterval);
@@ -1733,6 +1886,7 @@ document.getElementById('replay-btn').addEventListener('click', () => {
 });
 
 socket.on('back_to_lobby', (data) => {
+  hideCountdownOverlay();
   audioPlayer.loop = false;
   if (roundTimerInterval) {
     clearInterval(roundTimerInterval);
