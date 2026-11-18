@@ -8,11 +8,19 @@ let audioFadeInterval = null;
 let audioPlayer = document.getElementById('audio-player');
 let currentPlayers = [];
 let currentAudioFallback = null;
+let bgmEnabled = localStorage.getItem('blindtest_bgm_enabled') !== 'false';
 
 function initStaticIcons() {
   const brandBadge = document.getElementById('host-brand-badge');
   if (brandBadge && typeof renderIcon === 'function') {
     brandBadge.innerHTML = renderIcon('bolt', { size: 22 });
+  }
+  const bgmBtnIcon = document.getElementById('bgm-btn-icon');
+  if (bgmBtnIcon && typeof renderIcon === 'function') {
+    bgmBtnIcon.innerHTML = renderIcon('music', { size: 18 });
+  }
+  if (typeof updateBgmBtnState === 'function') {
+    updateBgmBtnState();
   }
   const sfxBtnIcon = document.getElementById('sfx-btn-icon');
   if (sfxBtnIcon && typeof renderIcon === 'function') {
@@ -432,6 +440,314 @@ function playPodiumFanfareSfx() {
   });
 }
 
+let lobbyBgmMasterGain = null;
+let lobbyBgmTimer = null;
+let lobbyBgmStep = 0;
+let nextBgmStepTime = 0;
+let lobbyMusicPlaying = false;
+let bgmNoiseBuffer = null;
+
+function getBgmNoiseBuffer(ctx) {
+  if (!bgmNoiseBuffer && ctx) {
+    const bufferSize = Math.floor(ctx.sampleRate * 1.5);
+    bgmNoiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = bgmNoiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+  }
+  return bgmNoiseBuffer;
+}
+
+function getMasterBgmVolume() {
+  if (!bgmEnabled) return 0;
+  const vol = parseFloat(volumeSlider ? volumeSlider.value : 0.8);
+  return Math.max(0, Math.min(1, vol)) * 0.35;
+}
+
+function updateBgmVolume() {
+  if (lobbyBgmMasterGain && audioCtx) {
+    const targetVol = getMasterBgmVolume();
+    lobbyBgmMasterGain.gain.setTargetAtTime(targetVol, audioCtx.currentTime, 0.05);
+  }
+}
+
+function updateBgmBtnState() {
+  const bgmToggleBtn = document.getElementById('bgm-toggle-btn');
+  const bgmBtnIcon = document.getElementById('bgm-btn-icon');
+  const bgmBtnText = document.getElementById('bgm-btn-text');
+  if (bgmBtnIcon && typeof renderIcon === 'function') {
+    bgmBtnIcon.innerHTML = renderIcon('music', { size: 18 });
+  }
+  if (bgmBtnText) {
+    bgmBtnText.textContent = bgmEnabled ? 'Musique ON' : 'Musique OFF';
+  }
+  if (bgmToggleBtn) {
+    bgmToggleBtn.style.opacity = bgmEnabled ? '1' : '0.6';
+  }
+}
+
+function playBgmKick(ctx, time, destGain) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(125, time);
+  osc.frequency.exponentialRampToValueAtTime(42, time + 0.1);
+  gain.gain.setValueAtTime(0.5, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
+  osc.connect(gain);
+  gain.connect(destGain);
+  osc.start(time);
+  osc.stop(time + 0.23);
+}
+
+function playBgmSnare(ctx, time, destGain) {
+  const noiseBuf = getBgmNoiseBuffer(ctx);
+  if (!noiseBuf) return;
+  const noise = ctx.createBufferSource();
+  noise.buffer = noiseBuf;
+
+  const bandpass = ctx.createBiquadFilter();
+  bandpass.type = 'bandpass';
+  bandpass.frequency.setValueAtTime(1800, time);
+  bandpass.Q.setValueAtTime(1.8, time);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.24, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+
+  const osc = ctx.createOscillator();
+  const oscGain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(180, time);
+  osc.frequency.exponentialRampToValueAtTime(80, time + 0.08);
+  oscGain.gain.setValueAtTime(0.18, time);
+  oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+
+  noise.connect(bandpass);
+  bandpass.connect(gain);
+  gain.connect(destGain);
+
+  osc.connect(oscGain);
+  oscGain.connect(destGain);
+
+  noise.start(time);
+  noise.stop(time + 0.17);
+  osc.start(time);
+  osc.stop(time + 0.09);
+}
+
+function playBgmHiHat(ctx, time, destGain, velocity = 0.12) {
+  const noiseBuf = getBgmNoiseBuffer(ctx);
+  if (!noiseBuf) return;
+  const noise = ctx.createBufferSource();
+  noise.buffer = noiseBuf;
+
+  const highpass = ctx.createBiquadFilter();
+  highpass.type = 'highpass';
+  highpass.frequency.setValueAtTime(6500, time);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(velocity, time);
+  gain.gain.exponentialRampToValueAtTime(0.0005, time + 0.045);
+
+  noise.connect(highpass);
+  highpass.connect(gain);
+  gain.connect(destGain);
+
+  noise.start(time);
+  noise.stop(time + 0.05);
+}
+
+function playBgmBass(ctx, time, freq, duration, destGain) {
+  const osc = ctx.createOscillator();
+  const filter = ctx.createBiquadFilter();
+  const gain = ctx.createGain();
+
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(freq, time);
+
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(260, time);
+
+  gain.gain.setValueAtTime(0.001, time);
+  gain.gain.linearRampToValueAtTime(0.38, time + 0.02);
+  gain.gain.setValueAtTime(0.32, time + duration * 0.7);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(destGain);
+
+  osc.start(time);
+  osc.stop(time + duration + 0.02);
+}
+
+function playBgmRhodesChord(ctx, time, freqs, duration, destGain) {
+  freqs.forEach((freq, idx) => {
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(freq, time);
+
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(freq * 1.002, time);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1200, time);
+    filter.frequency.exponentialRampToValueAtTime(600, time + duration);
+
+    const noteVol = (0.08 / Math.sqrt(freqs.length)) * (1 - idx * 0.08);
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.linearRampToValueAtTime(noteVol, time + 0.025);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(destGain);
+
+    osc1.start(time);
+    osc2.start(time);
+    osc1.stop(time + duration + 0.05);
+    osc2.stop(time + duration + 0.05);
+  });
+}
+
+function playBgmChime(ctx, time, freq, destGain) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, time);
+
+  gain.gain.setValueAtTime(0.0001, time);
+  gain.gain.linearRampToValueAtTime(0.065, time + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.95);
+
+  osc.connect(gain);
+  gain.connect(destGain);
+
+  osc.start(time);
+  osc.stop(time + 1.0);
+}
+
+function playLobbyBgmStep(ctx, step, time, stepDur) {
+  if (step === 0) playBgmRhodesChord(ctx, time, [174.61, 261.63, 329.63, 392.00, 440.00], stepDur * 7.5, lobbyBgmMasterGain);
+  if (step === 8) playBgmRhodesChord(ctx, time, [174.61, 261.63, 329.63, 392.00, 440.00], stepDur * 6.5, lobbyBgmMasterGain);
+  if (step === 16) playBgmRhodesChord(ctx, time, [196.00, 246.94, 293.66, 329.63, 440.00], stepDur * 7.5, lobbyBgmMasterGain);
+  if (step === 24) playBgmRhodesChord(ctx, time, [196.00, 246.94, 293.66, 329.63, 440.00], stepDur * 6.5, lobbyBgmMasterGain);
+  if (step === 32) playBgmRhodesChord(ctx, time, [164.81, 246.94, 293.66, 369.99, 392.00], stepDur * 7.5, lobbyBgmMasterGain);
+  if (step === 40) playBgmRhodesChord(ctx, time, [164.81, 246.94, 293.66, 369.99, 392.00], stepDur * 6.5, lobbyBgmMasterGain);
+  if (step === 48) playBgmRhodesChord(ctx, time, [220.00, 261.63, 329.63, 392.00, 493.88], stepDur * 7.5, lobbyBgmMasterGain);
+  if (step === 56) playBgmRhodesChord(ctx, time, [220.00, 261.63, 329.63, 392.00, 493.88], stepDur * 6.5, lobbyBgmMasterGain);
+
+  if (step === 0) playBgmBass(ctx, time, 87.31, stepDur * 4.5, lobbyBgmMasterGain);
+  if (step === 6) playBgmBass(ctx, time, 110.00, stepDur * 3, lobbyBgmMasterGain);
+  if (step === 10) playBgmBass(ctx, time, 130.81, stepDur * 4, lobbyBgmMasterGain);
+  if (step === 16) playBgmBass(ctx, time, 98.00, stepDur * 4.5, lobbyBgmMasterGain);
+  if (step === 22) playBgmBass(ctx, time, 123.47, stepDur * 3, lobbyBgmMasterGain);
+  if (step === 26) playBgmBass(ctx, time, 146.83, stepDur * 4, lobbyBgmMasterGain);
+  if (step === 32) playBgmBass(ctx, time, 82.41, stepDur * 4.5, lobbyBgmMasterGain);
+  if (step === 38) playBgmBass(ctx, time, 98.00, stepDur * 3, lobbyBgmMasterGain);
+  if (step === 42) playBgmBass(ctx, time, 123.47, stepDur * 4, lobbyBgmMasterGain);
+  if (step === 48) playBgmBass(ctx, time, 110.00, stepDur * 4.5, lobbyBgmMasterGain);
+  if (step === 54) playBgmBass(ctx, time, 130.81, stepDur * 3, lobbyBgmMasterGain);
+  if (step === 58) playBgmBass(ctx, time, 164.81, stepDur * 3, lobbyBgmMasterGain);
+  if (step === 62) playBgmBass(ctx, time, 98.00, stepDur * 2, lobbyBgmMasterGain);
+
+  if ([0, 6, 10, 16, 22, 26, 32, 38, 42, 48, 54, 58].includes(step)) {
+    playBgmKick(ctx, time, lobbyBgmMasterGain);
+  }
+
+  if ([4, 12, 20, 28, 36, 44, 52, 60].includes(step)) {
+    playBgmSnare(ctx, time, lobbyBgmMasterGain);
+  }
+
+  if (step % 2 === 0) {
+    const isOffbeat = (step % 4 !== 0);
+    const hatTime = isOffbeat ? time + 0.018 : time;
+    const hatVol = isOffbeat ? 0.08 : 0.14;
+    playBgmHiHat(ctx, hatTime, lobbyBgmMasterGain, hatVol);
+  }
+
+  if (step === 14) playBgmChime(ctx, time, 1046.50, lobbyBgmMasterGain);
+  if (step === 18) playBgmChime(ctx, time, 1318.51, lobbyBgmMasterGain);
+  if (step === 30) playBgmChime(ctx, time, 783.99, lobbyBgmMasterGain);
+  if (step === 46) playBgmChime(ctx, time, 880.00, lobbyBgmMasterGain);
+  if (step === 60) playBgmChime(ctx, time, 1318.51, lobbyBgmMasterGain);
+  if (step === 62) playBgmChime(ctx, time, 1174.66, lobbyBgmMasterGain);
+}
+
+function scheduleLobbyBgmSteps() {
+  if (!lobbyMusicPlaying) return;
+  const ctx = getAudioContext();
+  if (!ctx || ctx.state === 'suspended') return;
+
+  const stepDur = 60 / 84 / 4;
+  const lookahead = 0.15;
+
+  while (nextBgmStepTime < ctx.currentTime + lookahead) {
+    playLobbyBgmStep(ctx, lobbyBgmStep, nextBgmStepTime, stepDur);
+    nextBgmStepTime += stepDur;
+    lobbyBgmStep = (lobbyBgmStep + 1) % 64;
+  }
+}
+
+function startLobbyMusic() {
+  if (lobbyMusicPlaying || !bgmEnabled) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(() => {});
+  }
+
+  if (!lobbyBgmMasterGain) {
+    lobbyBgmMasterGain = ctx.createGain();
+    lobbyBgmMasterGain.connect(ctx.destination);
+  }
+
+  const targetVol = getMasterBgmVolume();
+  const now = ctx.currentTime;
+  lobbyBgmMasterGain.gain.cancelScheduledValues(now);
+  lobbyBgmMasterGain.gain.setValueAtTime(0.0001, now);
+  lobbyBgmMasterGain.gain.linearRampToValueAtTime(targetVol, now + 1.2);
+
+  lobbyMusicPlaying = true;
+  lobbyBgmStep = 0;
+  nextBgmStepTime = now + 0.1;
+
+  if (lobbyBgmTimer) {
+    clearInterval(lobbyBgmTimer);
+  }
+  lobbyBgmTimer = setInterval(scheduleLobbyBgmSteps, 40);
+}
+
+function stopLobbyMusic(fadeDuration = 0.6) {
+  if (!lobbyMusicPlaying) return;
+  lobbyMusicPlaying = false;
+  if (lobbyBgmTimer) {
+    clearInterval(lobbyBgmTimer);
+    lobbyBgmTimer = null;
+  }
+  if (lobbyBgmMasterGain && audioCtx) {
+    const now = audioCtx.currentTime;
+    lobbyBgmMasterGain.gain.cancelScheduledValues(now);
+    lobbyBgmMasterGain.gain.setValueAtTime(Math.max(0.0001, lobbyBgmMasterGain.gain.value), now);
+    lobbyBgmMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + fadeDuration);
+  }
+}
+
+function tryResumeLobbyBgm() {
+  if (bgmEnabled && views.lobby && views.lobby.classList.contains('active') && !lobbyMusicPlaying) {
+    startLobbyMusic();
+  }
+}
+document.addEventListener('pointerdown', tryResumeLobbyBgm, { once: true });
+document.addEventListener('keydown', tryResumeLobbyBgm, { once: true });
+
 function showAudioPrompt() {
   let prompt = document.getElementById('audio-unmute-prompt');
   if (!prompt) {
@@ -502,6 +818,12 @@ function switchView(viewName) {
     views[viewName].classList.add('active');
   }
 
+  if (viewName === 'lobby') {
+    if (bgmEnabled) startLobbyMusic();
+  } else {
+    stopLobbyMusic(0.5);
+  }
+
   const quitBtn = document.getElementById('host-quit-btn');
   if (quitBtn) {
     if (viewName === 'round' || viewName === 'reveal') {
@@ -525,7 +847,25 @@ const volumeSlider = document.getElementById('volume-slider');
 audioPlayer.volume = parseFloat(volumeSlider.value);
 volumeSlider.addEventListener('input', (e) => {
   audioPlayer.volume = parseFloat(e.target.value);
+  updateBgmVolume();
 });
+
+const bgmToggleBtn = document.getElementById('bgm-toggle-btn');
+if (bgmToggleBtn) {
+  bgmToggleBtn.addEventListener('click', () => {
+    bgmEnabled = !bgmEnabled;
+    localStorage.setItem('blindtest_bgm_enabled', bgmEnabled ? 'true' : 'false');
+    updateBgmBtnState();
+    if (bgmEnabled) {
+      if (views.lobby && views.lobby.classList.contains('active')) {
+        startLobbyMusic();
+      }
+    } else {
+      stopLobbyMusic(0.3);
+    }
+    getAudioContext();
+  });
+}
 
 const sfxToggleBtn = document.getElementById('sfx-toggle-btn');
 if (sfxToggleBtn) {
@@ -683,6 +1023,9 @@ socket.on('room_created', (data) => {
   if (data.settings) {
     applyGameModeUI(data.settings);
   }
+  if (bgmEnabled && views.lobby && views.lobby.classList.contains('active')) {
+    startLobbyMusic();
+  }
 });
 
 socket.on('settings_updated', (data) => {
@@ -837,6 +1180,7 @@ function updateLobbyPlayers(players, teamScores) {
 
 const startBtn = document.getElementById('start-game-btn');
 startBtn.addEventListener('click', () => {
+  stopLobbyMusic(0.8);
   getAudioContext();
   try {
     audioPlayer.src = SILENT_AUDIO;
@@ -849,6 +1193,7 @@ startBtn.addEventListener('click', () => {
 });
 
 socket.on('game_loading', (data) => {
+  stopLobbyMusic(0.8);
   startBtn.textContent = data.message || 'Chargement...';
 });
 
@@ -856,6 +1201,9 @@ socket.on('game_start_error', (data) => {
   alert('Erreur: ' + data.message);
   startBtn.disabled = false;
   startBtn.textContent = 'Lancer la Partie';
+  if (bgmEnabled && views.lobby && views.lobby.classList.contains('active')) {
+    startLobbyMusic();
+  }
 });
 
 socket.on('round_start_host', (data) => {
