@@ -685,6 +685,7 @@ socket.on('game_start_error', (data) => {
 });
 
 socket.on('round_start_host', (data) => {
+  audioPlayer.loop = false;
   if (audioFadeInterval) {
     clearInterval(audioFadeInterval);
     audioFadeInterval = null;
@@ -895,20 +896,17 @@ socket.on('round_ended_host', (data) => {
   playRevealSfx();
   const skipBtn = document.getElementById('skip-round-btn');
   if (skipBtn) skipBtn.style.display = 'none';
-  
-  if (audioFadeInterval) clearInterval(audioFadeInterval);
-  let fadeVolume = audioPlayer.volume;
-  audioFadeInterval = setInterval(() => {
-    if (fadeVolume > 0.05) {
-      fadeVolume -= 0.05;
-      audioPlayer.volume = Math.max(0, fadeVolume);
-    } else {
-      clearInterval(audioFadeInterval);
-      audioFadeInterval = null;
-      audioPlayer.pause();
-      audioPlayer.volume = parseFloat(volumeSlider.value);
-    }
-  }, 50);
+
+  if (audioFadeInterval) {
+    clearInterval(audioFadeInterval);
+    audioFadeInterval = null;
+  }
+  audioPlayer.loop = false;
+  audioPlayer.currentTime = 0;
+  audioPlayer.volume = parseFloat(volumeSlider.value);
+  if (audioPlayer.src && audioPlayer.src !== SILENT_AUDIO) {
+    audioPlayer.play().catch(() => {});
+  }
 
   switchView('reveal');
 
@@ -1045,6 +1043,7 @@ function renderLeaderboard(leaderboard) {
 }
 
 socket.on('game_over_host', (data) => {
+  audioPlayer.loop = false;
   if (roundTimerInterval) clearInterval(roundTimerInterval);
   if (audioFadeInterval) {
     clearInterval(audioFadeInterval);
@@ -1149,6 +1148,7 @@ document.getElementById('replay-btn').addEventListener('click', () => {
 });
 
 socket.on('back_to_lobby', (data) => {
+  audioPlayer.loop = false;
   if (roundTimerInterval) {
     clearInterval(roundTimerInterval);
     roundTimerInterval = null;

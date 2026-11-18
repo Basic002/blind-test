@@ -994,6 +994,9 @@ class RoomManager {
     const survivors = Array.from(room.players.values()).filter(p => !p.isEliminated);
     const wasMultiplayer = room.players.size >= 2;
     const isBattleRoyaleOver = room.settings.gameMode === 'survival' && wasMultiplayer && (survivors.length <= 1);
+    if (room.currentRound) {
+      room.currentRound.isBattleRoyaleOver = isBattleRoyaleOver;
+    }
 
     this.io.to(room.hostSocketId).emit('round_ended_host', {
       track: {
