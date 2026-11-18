@@ -446,6 +446,28 @@ function playMobileResultSfx(isCorrect) {
   } catch (e) {}
 }
 
+function playHapticTickSfx() {
+  const ctx = getMobileAudioCtx();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(50, now + 0.04);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.05);
+  } catch (e) {}
+}
+
 let playerCountdownInterval = null;
 
 function playMobileMarioKartBeep(isGo = false) {
@@ -1419,26 +1441,76 @@ function startMobileTimer(durationSeconds) {
   if (playerTimerInterval) clearInterval(playerTimerInterval);
 
   const timerBar = document.getElementById('player-timer-bar');
+  const viewPlay = document.getElementById('view-play');
+  const badge = document.getElementById('player-timer-countdown-badge');
   const startTime = Date.now();
   const totalMs = durationSeconds * 1000;
+  let lastWarningSecond = -1;
 
-  timerBar.style.width = '100%';
+  if (timerBar) {
+    timerBar.style.width = '100%';
+    timerBar.style.boxShadow = '';
+    timerBar.classList.remove('timer-warning-pulse');
+  }
+  if (badge) {
+    badge.style.display = 'none';
+  }
 
   playerTimerInterval = setInterval(() => {
     const elapsed = Date.now() - startTime;
     const remaining = Math.max(0, totalMs - elapsed);
     const percent = (remaining / totalMs) * 100;
 
-    timerBar.style.width = `${percent}%`;
+    if (timerBar) {
+      timerBar.style.width = `${percent}%`;
+    }
+
+    const secCeil = Math.ceil(remaining / 1000);
+    if (secCeil <= 5 && secCeil > 0 && secCeil !== lastWarningSecond) {
+      lastWarningSecond = secCeil;
+      if (!isPlayerEliminated) {
+        vibrate(hasAnsweredCurrentRound ? [60] : [85]);
+        playHapticTickSfx();
+      }
+      if (timerBar) {
+        timerBar.style.boxShadow = '0 0 18px rgba(255, 51, 102, 0.9)';
+        timerBar.classList.add('timer-warning-pulse');
+      }
+      if (viewPlay) {
+        viewPlay.classList.remove('haptic-shake');
+        void viewPlay.offsetWidth;
+        viewPlay.classList.add('haptic-shake');
+      }
+      if (badge) {
+        badge.style.display = 'inline-flex';
+        badge.textContent = `⏱ ${secCeil}s !`;
+      }
+    }
 
     if (remaining <= 0) {
       clearInterval(playerTimerInterval);
+      if (timerBar) {
+        timerBar.classList.remove('timer-warning-pulse');
+      }
+      if (badge) {
+        badge.style.display = 'none';
+      }
+      if (!isPlayerEliminated && lastWarningSecond !== 0) {
+        lastWarningSecond = 0;
+        vibrate([100, 50, 100]);
+        playHapticTickSfx();
+      }
     }
   }, 50);
 }
 
 socket.on('round_ended_player', (data) => {
   if (playerTimerInterval) clearInterval(playerTimerInterval);
+
+  const endBadge = document.getElementById('player-timer-countdown-badge');
+  if (endBadge) endBadge.style.display = 'none';
+  const endTBar = document.getElementById('player-timer-bar');
+  if (endTBar) endTBar.classList.remove('timer-warning-pulse');
 
   switchView('result');
 
@@ -1677,9 +1749,10 @@ socket.on('back_to_lobby', (data) => {
 });
 
 function vibrate(pattern) {
-  if (navigator && navigator.vibrate) {
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
     try {
-      navigator.vibrate(pattern);
+      const p = Array.isArray(pattern) ? pattern : [pattern];
+      navigator.vibrate(p);
     } catch (e) {
     }
   }

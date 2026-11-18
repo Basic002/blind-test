@@ -2694,3 +2694,28 @@ select.form-input option:checked,
     font-size: 1.15rem;
   }
 }
+
+@keyframes hapticMicroShake {
+  0% { transform: scale(1) translateX(0); }
+  25% { transform: scale(1.015) translateX(-3px); }
+  50% { transform: scale(1.015) translateX(3px); }
+  75% { transform: scale(1.008) translateX(-1px); }
+  100% { transform: scale(1) translateX(0); }
+}
+
+.haptic-shake {
+  animation: hapticMicroShake 0.22s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important;
+}
+
+.timer-warning-pulse {
+  animation: timerBarAlert 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes timerBarAlert {
+  from {
+    filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6));
+  }
+  to {
+    filter: drop-shadow(0 0 16px rgba(255, 51, 102, 1));
+  }
+}
