@@ -105,9 +105,10 @@ class AccountManager {
       throw new Error('Le mot de passe ne peut pas dépasser 128 caractères.');
     }
 
-    const cleanAvatar = typeof avatar === 'string' && avatar.trim().length > 0 && avatar.trim().length <= 30
-      ? avatar.trim()
-      : 'fox';
+    const isDataImg = typeof avatar === 'string' && (avatar.startsWith('data:image/') || avatar.startsWith('http://') || avatar.startsWith('https://'));
+    const cleanAvatar = isDataImg && avatar.length <= 150000
+      ? avatar
+      : (typeof avatar === 'string' && avatar.trim().length > 0 && avatar.trim().length <= 30 ? avatar.trim() : 'fox');
 
     const lower = cleanUsername.toLowerCase();
     if (this.usernameIndex.has(lower)) {
@@ -214,7 +215,11 @@ class AccountManager {
   updateAvatar(userId, newAvatar) {
     const user = this.accounts.get(userId);
     if (!user) return null;
-    user.avatar = newAvatar;
+    const isDataImg = typeof newAvatar === 'string' && (newAvatar.startsWith('data:image/') || newAvatar.startsWith('http://') || newAvatar.startsWith('https://'));
+    const cleanAvatar = isDataImg && newAvatar.length <= 150000
+      ? newAvatar
+      : (typeof newAvatar === 'string' && newAvatar.trim().length > 0 && newAvatar.trim().length <= 30 ? newAvatar.trim() : 'fox');
+    user.avatar = cleanAvatar;
     this.saveStorage();
     return this.sanitizeUser(user);
   }

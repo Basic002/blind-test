@@ -2146,3 +2146,246 @@ select.form-input option:checked,
   color: var(--party-cyan);
   font-size: 0.8rem;
 }
+
+.selfie-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: #141b3d;
+  border: 2px solid #283770;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 0 var(--depth-shadow);
+  user-select: none;
+}
+
+.selfie-card:hover {
+  background: #1a2350;
+  border-color: #3b4e96;
+  transform: translateY(-2px);
+}
+
+.selfie-card.selected {
+  border-color: var(--party-gold);
+  background: rgba(251, 191, 36, 0.12);
+  box-shadow: 0 4px 0 var(--party-gold-dark), 0 0 16px rgba(251, 191, 36, 0.3);
+}
+
+.selfie-card-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.selfie-preview-circle {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: #0d1330;
+  border: 2px solid #324382;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  color: var(--party-cyan);
+}
+
+.selfie-card.selected .selfie-preview-circle {
+  border-color: var(--party-gold);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+}
+
+.selfie-preview-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.selfie-card-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  min-width: 0;
+}
+
+.selfie-card-title {
+  font-family: var(--font-party);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selfie-card-subtitle {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-top: 0.1rem;
+}
+
+.btn-selfie-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  font-family: var(--font-party);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 10px;
+  border: 1.5px solid var(--party-cyan);
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--party-cyan);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btn-selfie-action:hover {
+  background: var(--party-cyan);
+  color: #0d1330;
+  transform: scale(1.04);
+}
+
+.btn-selfie-action:active {
+  transform: scale(0.96);
+}
+
+.profile-selfie-badge-btn {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--party-cyan);
+  color: #0d1330;
+  border: 2px solid #0d1330;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.profile-selfie-badge-btn:hover {
+  transform: scale(1.15);
+  background: var(--party-gold);
+}
+
+.avatar-photo {
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.profile-avatar-edit-box {
+  margin-top: 1.15rem;
+  background: #0d1330;
+  border: 2px solid var(--border-card);
+  border-radius: 16px;
+  padding: 1rem 1.15rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.logged-avatar-edit-icon {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--party-cyan);
+  color: #0d1330;
+  border: 1.5px solid #0d1330;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.host-profile-modal-card {
+  max-width: 540px;
+}
+
+.host-profile-type-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.host-profile-type-badge.member {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1.5px solid var(--party-cyan);
+  color: var(--party-cyan);
+}
+
+.host-profile-type-badge.guest {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-secondary);
+}
+
+.player-chip.clickable-profile {
+  cursor: pointer;
+  user-select: none;
+}
+
+.player-chip.clickable-profile:hover {
+  transform: translateY(-2px) scale(1.03);
+  border-color: var(--party-cyan);
+  box-shadow: 0 6px 16px rgba(0, 240, 255, 0.25);
+}
+
+.leaderboard-row.clickable-profile {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.leaderboard-row.clickable-profile:hover {
+  transform: translateX(4px);
+  border-color: var(--party-cyan);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.podium-box.clickable-profile {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.podium-box.clickable-profile:hover {
+  transform: translateY(-4px);
+  filter: brightness(1.15);
+}
+
+.award-card-clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.award-card-clickable:hover {
+  transform: translateY(-3px);
+  border-color: var(--party-gold) !important;
+  box-shadow: 0 8px 24px rgba(255, 194, 26, 0.2) !important;
+}

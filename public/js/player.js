@@ -149,12 +149,34 @@ function initPlayerStaticIcons() {
   if (survInfIcon && typeof renderIcon === 'function') survInfIcon.innerHTML = renderIcon('skull', { size: 16 });
   const legIconPlayer = document.getElementById('legal-modal-player-title-icon');
   if (legIconPlayer && typeof renderIcon === 'function') legIconPlayer.innerHTML = renderIcon('shield', { size: 22 });
+  const sGuestIcon = document.getElementById('selfie-guest-icon');
+  if (sGuestIcon && typeof renderIcon === 'function') sGuestIcon.innerHTML = renderIcon('camera', { size: 22 });
+  const sGuestBtnIcon = document.getElementById('btn-selfie-action-icon');
+  if (sGuestBtnIcon && typeof renderIcon === 'function') sGuestBtnIcon.innerHTML = renderIcon('camera', { size: 14 });
+  const sAuthIcon = document.getElementById('selfie-auth-icon');
+  if (sAuthIcon && typeof renderIcon === 'function') sAuthIcon.innerHTML = renderIcon('camera', { size: 22 });
+  const sAuthBtnIcon = document.getElementById('btn-selfie-auth-action-icon');
+  if (sAuthBtnIcon && typeof renderIcon === 'function') sAuthBtnIcon.innerHTML = renderIcon('camera', { size: 14 });
+  const sProfCamIcon = document.getElementById('profile-selfie-cam-icon');
+  if (sProfCamIcon && typeof renderIcon === 'function') sProfCamIcon.innerHTML = renderIcon('camera', { size: 12 });
+  const logEditIcon = document.getElementById('logged-avatar-edit-icon');
+  if (logEditIcon && typeof renderIcon === 'function') logEditIcon.innerHTML = renderIcon('edit', { size: 9 });
+  const profEditIcon = document.getElementById('profile-edit-avatar-icon');
+  if (profEditIcon && typeof renderIcon === 'function') profEditIcon.innerHTML = renderIcon('edit', { size: 16 });
+  const sProfIcon = document.getElementById('selfie-profile-icon');
+  if (sProfIcon && typeof renderIcon === 'function') sProfIcon.innerHTML = renderIcon('camera', { size: 22 });
+  const sProfBtnIcon = document.getElementById('btn-selfie-profile-card-icon');
+  if (sProfBtnIcon && typeof renderIcon === 'function') sProfBtnIcon.innerHTML = renderIcon('camera', { size: 14 });
 
   document.querySelectorAll('#avatar-picker .avatar-option').forEach(el => {
     const av = el.dataset.avatar;
     if (typeof renderAvatar === 'function') el.innerHTML = renderAvatar(av, 34);
   });
   document.querySelectorAll('#auth-avatar-picker .avatar-option').forEach(el => {
+    const av = el.dataset.avatar;
+    if (typeof renderAvatar === 'function') el.innerHTML = renderAvatar(av, 34);
+  });
+  document.querySelectorAll('#profile-avatar-picker .avatar-option').forEach(el => {
     const av = el.dataset.avatar;
     if (typeof renderAvatar === 'function') el.innerHTML = renderAvatar(av, 34);
   });
@@ -171,6 +193,178 @@ function initPlayerStaticIcons() {
 }
 document.addEventListener('DOMContentLoaded', initPlayerStaticIcons);
 initPlayerStaticIcons();
+
+function processSelfieFile(file, callback) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const size = 160;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        callback(null, dataUrl);
+      } catch (err) {
+        callback(err);
+      }
+    };
+    img.onerror = () => callback(new Error('Image invalide'));
+    img.src = e.target.result;
+  };
+  reader.onerror = () => callback(new Error('Lecture impossible'));
+  reader.readAsDataURL(file);
+}
+
+function syncAvatarPickersUI(activeAvatar) {
+  const isSelfie = activeAvatar && (activeAvatar.startsWith('data:image/') || activeAvatar.startsWith('http'));
+
+  document.querySelectorAll('#avatar-picker .avatar-option').forEach(o => {
+    o.classList.toggle('selected', !isSelfie && o.dataset.avatar === activeAvatar);
+  });
+
+  document.querySelectorAll('#profile-avatar-picker .avatar-option').forEach(o => {
+    o.classList.toggle('selected', !isSelfie && o.dataset.avatar === activeAvatar);
+  });
+
+  const guestCard = document.getElementById('selfie-guest-card');
+  if (guestCard) {
+    guestCard.classList.toggle('selected', Boolean(isSelfie));
+    if (isSelfie) {
+      const p = document.getElementById('selfie-guest-preview');
+      if (p) p.innerHTML = `<img src="${activeAvatar}" alt="Selfie" />`;
+      const sub = document.getElementById('selfie-guest-sub');
+      if (sub) sub.textContent = 'Avatar sélectionné ✓';
+      const btnTxt = document.getElementById('btn-selfie-action-text');
+      if (btnTxt) btnTxt.textContent = 'Changer';
+    }
+  }
+
+  const profileCard = document.getElementById('selfie-profile-card');
+  if (profileCard) {
+    profileCard.classList.toggle('selected', Boolean(isSelfie));
+    if (isSelfie) {
+      const p = document.getElementById('selfie-profile-preview');
+      if (p) p.innerHTML = `<img src="${activeAvatar}" alt="Selfie" />`;
+      const sub = document.getElementById('selfie-profile-sub');
+      if (sub) sub.textContent = 'Avatar sélectionné ✓';
+      const btnTxt = document.getElementById('btn-selfie-profile-card-text');
+      if (btnTxt) btnTxt.textContent = 'Changer';
+    }
+  }
+}
+
+function updateAccountAvatar(newAvatar) {
+  if (!newAvatar) return;
+  selectedAvatar = newAvatar;
+
+  if (currentUser) {
+    currentUser.avatar = newAvatar;
+    if (currentUser.id && socket && socket.connected) {
+      socket.emit('update_account_avatar', { userId: currentUser.id, avatar: newAvatar, token: authToken });
+    }
+    if (authToken) {
+      fetch('/api/auth/avatar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ avatar: newAvatar })
+      }).catch(() => {});
+    }
+  }
+
+  if (socket && socket.connected) {
+    socket.emit('change_avatar', { avatar: newAvatar });
+  }
+
+  const profAv = document.getElementById('profile-avatar');
+  if (profAv && typeof renderAvatar === 'function') profAv.innerHTML = renderAvatar(newAvatar, 54);
+  const loggedAv = document.getElementById('logged-avatar');
+  if (loggedAv && typeof renderAvatar === 'function') loggedAv.innerHTML = renderAvatar(newAvatar, 40);
+  const badge = document.getElementById('player-avatar-badge');
+  if (badge && typeof renderAvatar === 'function') badge.innerHTML = renderAvatar(newAvatar, 32);
+
+  const statusBadge = document.getElementById('profile-avatar-status-badge');
+  if (statusBadge) {
+    statusBadge.style.display = 'inline';
+    statusBadge.textContent = 'Enregistré ✓';
+    setTimeout(() => {
+      if (statusBadge) statusBadge.style.display = 'none';
+    }, 2500);
+  }
+
+  syncAvatarPickersUI(newAvatar);
+}
+
+function applyGuestSelfie(dataUrl, shouldSelect = true) {
+  if (!dataUrl) return;
+  try {
+    localStorage.setItem('blindtest_custom_selfie', dataUrl);
+  } catch (e) {}
+
+  const preview = document.getElementById('selfie-guest-preview');
+  if (preview) {
+    preview.innerHTML = `<img src="${dataUrl}" alt="Selfie" />`;
+  }
+  const title = document.getElementById('selfie-guest-title');
+  if (title) title.textContent = 'Mon Selfie';
+  const sub = document.getElementById('selfie-guest-sub');
+  if (sub) sub.textContent = shouldSelect ? 'Avatar sélectionné ✓' : 'Photo enregistrée';
+  const actionText = document.getElementById('btn-selfie-action-text');
+  if (actionText) actionText.textContent = 'Changer';
+
+  const profPreview = document.getElementById('selfie-profile-preview');
+  if (profPreview) {
+    profPreview.innerHTML = `<img src="${dataUrl}" alt="Selfie" />`;
+  }
+  const profTitle = document.getElementById('selfie-profile-title');
+  if (profTitle) profTitle.textContent = 'Mon Selfie';
+  const profSub = document.getElementById('selfie-profile-sub');
+  if (profSub) profSub.textContent = shouldSelect ? 'Avatar sélectionné ✓' : 'Photo enregistrée';
+  const profActionText = document.getElementById('btn-selfie-profile-card-text');
+  if (profActionText) profActionText.textContent = 'Changer';
+
+  if (shouldSelect) {
+    updateAccountAvatar(dataUrl);
+  }
+}
+
+function applyAuthSelfie(dataUrl, shouldSelect = true) {
+  if (!dataUrl) return;
+  const preview = document.getElementById('selfie-auth-preview');
+  if (preview) {
+    preview.innerHTML = `<img src="${dataUrl}" alt="Selfie" />`;
+  }
+  const title = document.getElementById('selfie-auth-title');
+  if (title) title.textContent = 'Mon Selfie';
+  const sub = document.getElementById('selfie-auth-sub');
+  if (sub) sub.textContent = shouldSelect ? 'Avatar sélectionné ✓' : 'Photo enregistrée';
+  const actionText = document.getElementById('btn-selfie-auth-action-text');
+  if (actionText) actionText.textContent = 'Changer';
+
+  if (shouldSelect) {
+    authSelectedAvatar = dataUrl;
+    const card = document.getElementById('selfie-auth-card');
+    if (card) card.classList.add('selected');
+    document.querySelectorAll('#auth-avatar-picker .avatar-option').forEach(o => o.classList.remove('selected'));
+  }
+}
+
+try {
+  const savedSelfie = localStorage.getItem('blindtest_custom_selfie');
+  if (savedSelfie) {
+    applyGuestSelfie(savedSelfie, false);
+  }
+} catch (e) {}
 
 const MobileAudioCtxClass = window.AudioContext || window.webkitAudioContext;
 let mobileAudioCtx = null;
@@ -289,18 +483,21 @@ function applyUserState(user) {
     document.getElementById('player-title-badge').textContent = user.progression?.title || 'Novice';
 
     document.getElementById('logged-user-section').style.display = 'flex';
-    document.getElementById('logged-avatar').innerHTML = renderAvatar(user.avatar || 'fox', 36);
+    document.getElementById('logged-avatar').innerHTML = renderAvatar(user.avatar || 'fox', 40);
     document.getElementById('logged-username').textContent = user.username;
     document.getElementById('logged-level').textContent = `Nv. ${user.progression?.level || 1}`;
     document.getElementById('logged-title').textContent = user.progression?.title || 'Novice';
 
     document.getElementById('auth-tabs').style.display = 'none';
     document.getElementById('account-auth-section').style.display = 'none';
-    document.getElementById('guest-avatar-section').style.display = 'none';
+    document.getElementById('guest-avatar-section').style.display = 'block';
+    const gLabel = document.getElementById('guest-avatar-label');
+    if (gLabel) gLabel.textContent = 'Mon avatar';
     document.getElementById('guest-nickname-section').style.display = 'none';
 
     document.getElementById('input-nickname').value = user.username;
     selectedAvatar = user.avatar || 'fox';
+    syncAvatarPickersUI(selectedAvatar);
   } else {
     document.getElementById('player-avatar-badge').innerHTML = renderAvatar(selectedAvatar, 32);
     document.getElementById('player-name-badge').textContent = 'Joueur';
@@ -309,7 +506,12 @@ function applyUserState(user) {
 
     document.getElementById('logged-user-section').style.display = 'none';
     document.getElementById('auth-tabs').style.display = 'flex';
+    const gLabel = document.getElementById('guest-avatar-label');
+    if (gLabel) gLabel.textContent = 'Choix de l\'avatar';
+    document.getElementById('guest-avatar-section').style.display = 'block';
+    document.getElementById('guest-nickname-section').style.display = 'block';
     switchAuthTab(currentAuthTab);
+    syncAvatarPickersUI(selectedAvatar);
   }
 }
 
@@ -377,10 +579,57 @@ document.querySelectorAll('#auth-avatar-picker .avatar-option').forEach(el => {
   el.addEventListener('click', () => {
     document.querySelectorAll('#auth-avatar-picker .avatar-option').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
+    const authCard = document.getElementById('selfie-auth-card');
+    if (authCard) authCard.classList.remove('selected');
+    const sub = document.getElementById('selfie-auth-sub');
+    if (sub && authSelectedAvatar && authSelectedAvatar.startsWith('data:image/')) sub.textContent = 'Photo enregistrée';
     authSelectedAvatar = el.dataset.avatar;
     vibrate(20);
   });
 });
+
+const btnSnapAuth = document.getElementById('btn-selfie-snap-auth');
+const inputSelfieAuth = document.getElementById('input-selfie-auth');
+const cardSelfieAuth = document.getElementById('selfie-auth-card');
+
+if (btnSnapAuth && inputSelfieAuth) {
+  btnSnapAuth.addEventListener('click', (e) => {
+    e.stopPropagation();
+    inputSelfieAuth.click();
+  });
+}
+
+if (cardSelfieAuth && inputSelfieAuth) {
+  cardSelfieAuth.addEventListener('click', () => {
+    if (authSelectedAvatar && authSelectedAvatar.startsWith('data:image/')) {
+      applyAuthSelfie(authSelectedAvatar, true);
+      vibrate(20);
+    } else {
+      const saved = localStorage.getItem('blindtest_custom_selfie');
+      if (saved) {
+        applyAuthSelfie(saved, true);
+        vibrate(20);
+      } else {
+        inputSelfieAuth.click();
+      }
+    }
+  });
+}
+
+if (inputSelfieAuth) {
+  inputSelfieAuth.addEventListener('change', () => {
+    const file = inputSelfieAuth.files && inputSelfieAuth.files[0];
+    if (file) {
+      processSelfieFile(file, (err, dataUrl) => {
+        if (!err && dataUrl) {
+          applyAuthSelfie(dataUrl, true);
+          vibrate(35);
+        }
+      });
+      inputSelfieAuth.value = '';
+    }
+  });
+}
 
 const btnAuthSubmit = document.getElementById('btn-auth-submit');
 
@@ -523,10 +772,13 @@ function openProfileModal() {
   if (!modal) return;
   modal.style.display = 'flex';
 
+  const activeAv = currentUser ? (currentUser.avatar || 'fox') : selectedAvatar;
+  syncAvatarPickersUI(activeAv);
+
   if (currentUser) {
     socket.emit('get_profile', { userId: currentUser.id });
   } else {
-    document.getElementById('profile-avatar').innerHTML = renderAvatar(selectedAvatar, 48);
+    document.getElementById('profile-avatar').innerHTML = renderAvatar(selectedAvatar, 54);
     document.getElementById('profile-username').textContent = document.getElementById('input-nickname').value || 'Invité';
     document.getElementById('profile-level-badge').textContent = 'Nv. 1';
     document.getElementById('profile-title').textContent = 'Invité sans compte';
@@ -557,6 +809,7 @@ function closeProfileModal() {
 document.getElementById('btn-open-profile-header')?.addEventListener('click', openProfileModal);
 document.getElementById('player-profile-header-trigger')?.addEventListener('click', openProfileModal);
 document.getElementById('btn-logged-profile')?.addEventListener('click', openProfileModal);
+document.getElementById('logged-user-info-trigger')?.addEventListener('click', openProfileModal);
 document.getElementById('btn-close-profile')?.addEventListener('click', closeProfileModal);
 document.getElementById('btn-close-profile-bottom')?.addEventListener('click', closeProfileModal);
 
@@ -629,6 +882,19 @@ function renderAchievementsList(achievements) {
   `).join('');
 }
 
+socket.on('account_avatar_updated', (data) => {
+  if (data && data.user) {
+    currentUser = data.user;
+    selectedAvatar = data.user.avatar || 'fox';
+    const profAv = document.getElementById('profile-avatar');
+    if (profAv && typeof renderAvatar === 'function') profAv.innerHTML = renderAvatar(selectedAvatar, 54);
+    const loggedAv = document.getElementById('logged-avatar');
+    if (loggedAv && typeof renderAvatar === 'function') loggedAv.innerHTML = renderAvatar(selectedAvatar, 36);
+    const badge = document.getElementById('player-avatar-badge');
+    if (badge && typeof renderAvatar === 'function') badge.innerHTML = renderAvatar(selectedAvatar, 32);
+  }
+});
+
 function showToast(icon, title, subtitle, isLevelUp = false) {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -655,12 +921,100 @@ function showToast(icon, title, subtitle, isLevelUp = false) {
 
 document.querySelectorAll('#avatar-picker .avatar-option').forEach(el => {
   el.addEventListener('click', () => {
-    document.querySelectorAll('#avatar-picker .avatar-option').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedAvatar = el.dataset.avatar;
+    updateAccountAvatar(el.dataset.avatar);
     vibrate(20);
   });
 });
+
+document.querySelectorAll('#profile-avatar-picker .avatar-option').forEach(el => {
+  el.addEventListener('click', () => {
+    updateAccountAvatar(el.dataset.avatar);
+    vibrate(20);
+  });
+});
+
+const btnSnapGuest = document.getElementById('btn-selfie-snap-guest');
+const inputSelfieGuest = document.getElementById('input-selfie-guest');
+const cardSelfieGuest = document.getElementById('selfie-guest-card');
+
+if (btnSnapGuest && inputSelfieGuest) {
+  btnSnapGuest.addEventListener('click', (e) => {
+    e.stopPropagation();
+    inputSelfieGuest.click();
+  });
+}
+
+if (cardSelfieGuest && inputSelfieGuest) {
+  cardSelfieGuest.addEventListener('click', () => {
+    const saved = localStorage.getItem('blindtest_custom_selfie');
+    if (saved) {
+      applyGuestSelfie(saved, true);
+      vibrate(20);
+    } else {
+      inputSelfieGuest.click();
+    }
+  });
+}
+
+if (inputSelfieGuest) {
+  inputSelfieGuest.addEventListener('change', () => {
+    const file = inputSelfieGuest.files && inputSelfieGuest.files[0];
+    if (file) {
+      processSelfieFile(file, (err, dataUrl) => {
+        if (!err && dataUrl) {
+          applyGuestSelfie(dataUrl, true);
+          vibrate(35);
+        }
+      });
+      inputSelfieGuest.value = '';
+    }
+  });
+}
+
+const btnProfileSelfie = document.getElementById('btn-profile-snap-selfie');
+const inputProfileSelfie = document.getElementById('input-selfie-profile');
+const btnSnapProfileCard = document.getElementById('btn-selfie-snap-profile-card');
+const cardSelfieProfile = document.getElementById('selfie-profile-card');
+
+if (btnProfileSelfie && inputProfileSelfie) {
+  btnProfileSelfie.addEventListener('click', () => {
+    inputProfileSelfie.click();
+  });
+}
+
+if (btnSnapProfileCard && inputProfileSelfie) {
+  btnSnapProfileCard.addEventListener('click', (e) => {
+    e.stopPropagation();
+    inputProfileSelfie.click();
+  });
+}
+
+if (cardSelfieProfile && inputProfileSelfie) {
+  cardSelfieProfile.addEventListener('click', () => {
+    const saved = localStorage.getItem('blindtest_custom_selfie');
+    if (saved) {
+      applyGuestSelfie(saved, true);
+      vibrate(20);
+    } else {
+      inputProfileSelfie.click();
+    }
+  });
+}
+
+if (inputProfileSelfie) {
+  inputProfileSelfie.addEventListener('change', () => {
+    const file = inputProfileSelfie.files && inputProfileSelfie.files[0];
+    if (file) {
+      processSelfieFile(file, (err, dataUrl) => {
+        if (!err && dataUrl) {
+          applyGuestSelfie(dataUrl, true);
+          vibrate(35);
+        }
+      });
+      inputProfileSelfie.value = '';
+    }
+  });
+}
 
 const btnJoin = document.getElementById('btn-join');
 btnJoin.addEventListener('click', () => {

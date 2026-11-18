@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 });
 
 app.use(cors());
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, '../public')));
 
 app.get('/api/themes', (req, res) => {
@@ -88,6 +88,21 @@ app.get('/api/auth/me', (req, res) => {
   const user = accountManager.getUserByToken(token);
   if (!user) return res.status(401).json({ error: 'Non authentifié' });
   res.json({ user });
+});
+
+app.post('/api/auth/avatar', (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : req.query.token;
+    const user = accountManager.getUserByToken(token);
+    if (!user) return res.status(401).json({ error: 'Non authentifié' });
+    const { avatar } = req.body || {};
+    const updatedUser = accountManager.updateAvatar(user.id, avatar);
+    if (!updatedUser) return res.status(400).json({ error: 'Mise à jour impossible' });
+    res.json({ user: updatedUser });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.get('/api/profile/:userId', (req, res) => {
@@ -231,6 +246,31 @@ io.on('connection', (socket) => {
     } catch (err) {
       console.error('Erreur get_profile:', err);
     }
+  });
+
+  socket.on('change_avatar', ({ avatar }) => {
+    try {
+      if (!avatar) return;
+      const res = roomManager.updatePlayerAvatar(socket.id, avatar);
+      if (res) {
+        socket.emit('avatar_changed', { avatar: res.player.avatar });
+      }
+    } catch (err) {}
+  });
+
+  socket.on('update_account_avatar', ({ userId, avatar, token }) => {
+    try {
+      let targetUserId = userId;
+      if (!targetUserId && token) {
+        const u = accountManager.getUserByToken(token);
+        if (u) targetUserId = u.id;
+      }
+      if (!targetUserId || !avatar) return;
+      const updatedUser = accountManager.updateAvatar(targetUserId, avatar);
+      if (updatedUser) {
+        socket.emit('account_avatar_updated', { user: updatedUser });
+      }
+    } catch (err) {}
   });
 
   socket.on('join_room', ({ roomCode, nickname, avatar, userId }) => {

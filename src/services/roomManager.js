@@ -134,7 +134,7 @@ function calculateAwards(room, finalLeaderboard) {
       icon: 'fusee',
       desc: 'Vitesse de réponse moyenne éclair',
       value: `${(bestAvgSpeed / 1000).toFixed(2)}s moy.`,
-      player: { id: bestSpeedPlayer.id || '', nickname: bestSpeedPlayer.nickname, avatar: bestSpeedPlayer.avatar }
+      player: { id: bestSpeedPlayer.id || '', userId: bestSpeedPlayer.userId || null, nickname: bestSpeedPlayer.nickname, avatar: bestSpeedPlayer.avatar }
     });
   }
 
@@ -145,7 +145,7 @@ function calculateAwards(room, finalLeaderboard) {
       icon: 'sniper',
       desc: 'Précision chirurgicale sur les manches',
       value: `${Math.round(bestSniperRatio * 100)}% de réussite`,
-      player: { id: bestSniperPlayer.id || '', nickname: bestSniperPlayer.nickname, avatar: bestSniperPlayer.avatar }
+      player: { id: bestSniperPlayer.id || '', userId: bestSniperPlayer.userId || null, nickname: bestSniperPlayer.nickname, avatar: bestSniperPlayer.avatar }
     });
   }
 
@@ -156,7 +156,7 @@ function calculateAwards(room, finalLeaderboard) {
       icon: 'eclair',
       desc: 'Bonne réponse la plus rapide de la partie',
       value: `${(fastestAnswerTime / 1000).toFixed(2)}s chrono`,
-      player: { id: fastestAnswerPlayer.id || '', nickname: fastestAnswerPlayer.nickname, avatar: fastestAnswerPlayer.avatar }
+      player: { id: fastestAnswerPlayer.id || '', userId: fastestAnswerPlayer.userId || null, nickname: fastestAnswerPlayer.nickname, avatar: fastestAnswerPlayer.avatar }
     });
   }
 
@@ -167,7 +167,7 @@ function calculateAwards(room, finalLeaderboard) {
       icon: 'incendiaire',
       desc: 'Plus longue série de bonnes réponses',
       value: `Série de ${highestStreak}`,
-      player: { id: bestStreakPlayer.id || '', nickname: bestStreakPlayer.nickname, avatar: bestStreakPlayer.avatar }
+      player: { id: bestStreakPlayer.id || '', userId: bestStreakPlayer.userId || null, nickname: bestStreakPlayer.nickname, avatar: bestStreakPlayer.avatar }
     });
   }
 
@@ -178,7 +178,7 @@ function calculateAwards(room, finalLeaderboard) {
       icon: 'tortue',
       desc: 'A validé in extremis au buzzer',
       value: `${mostLateCount} fois in extremis`,
-      player: { id: mostLatePlayer.id || '', nickname: mostLatePlayer.nickname, avatar: mostLatePlayer.avatar }
+      player: { id: mostLatePlayer.id || '', userId: mostLatePlayer.userId || null, nickname: mostLatePlayer.nickname, avatar: mostLatePlayer.avatar }
     });
   }
 
@@ -189,7 +189,7 @@ function calculateAwards(room, finalLeaderboard) {
       icon: 'chat_noir',
       desc: 'Le joueur qui n\'a vraiment pas eu de chance',
       value: `${mostWrongCount} erreurs`,
-      player: { id: mostWrongPlayer.id || '', nickname: mostWrongPlayer.nickname, avatar: mostWrongPlayer.avatar }
+      player: { id: mostWrongPlayer.id || '', userId: mostWrongPlayer.userId || null, nickname: mostWrongPlayer.nickname, avatar: mostWrongPlayer.avatar }
     });
   }
 
@@ -272,9 +272,10 @@ class RoomManager {
       }
     }
 
-    const cleanAvatar = typeof avatar === 'string' && avatar.trim().length > 0 && avatar.trim().length <= 30
-      ? avatar.trim()
-      : 'fox';
+    const isDataImg = typeof avatar === 'string' && (avatar.startsWith('data:image/') || avatar.startsWith('http://') || avatar.startsWith('https://'));
+    const cleanAvatar = isDataImg && avatar.length <= 150000
+      ? avatar
+      : (typeof avatar === 'string' && avatar.trim().length > 0 && avatar.trim().length <= 30 ? avatar.trim() : 'fox');
 
     let userLevel = 1;
     let userTitle = 'Novice';
@@ -422,6 +423,34 @@ class RoomManager {
       players: this.getPlayersList(room),
       teamScores: this.getTeamScores(room)
     });
+  }
+
+  updatePlayerAvatar(socketId, newAvatar) {
+    let targetRoom = null;
+    let targetPlayer = null;
+    for (const room of this.rooms.values()) {
+      if (room.players.has(socketId)) {
+        targetRoom = room;
+        targetPlayer = room.players.get(socketId);
+        break;
+      }
+    }
+    if (!targetRoom || !targetPlayer) return null;
+    const isDataImg = typeof newAvatar === 'string' && (newAvatar.startsWith('data:image/') || newAvatar.startsWith('http://') || newAvatar.startsWith('https://'));
+    const cleanAvatar = isDataImg && newAvatar.length <= 150000
+      ? newAvatar
+      : (typeof newAvatar === 'string' && newAvatar.trim().length > 0 && newAvatar.trim().length <= 30 ? newAvatar.trim() : 'fox');
+    targetPlayer.avatar = cleanAvatar;
+    this.io.to(targetRoom.code).emit('lobby_update', {
+      players: this.getPlayersList(targetRoom),
+      teamScores: this.getTeamScores(targetRoom),
+      settings: targetRoom.settings
+    });
+    this.io.to(targetRoom.hostSocketId).emit('player_joined', {
+      players: this.getPlayersList(targetRoom),
+      teamScores: this.getTeamScores(targetRoom)
+    });
+    return { room: targetRoom, player: targetPlayer };
   }
 
   balanceTeams(roomCode) {

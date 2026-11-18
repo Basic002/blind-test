@@ -36,8 +36,11 @@
       </div>
 
       <div id="logged-user-section" class="logged-user-banner" style="display: none;">
-        <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
-          <span id="logged-avatar" class="player-avatar" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;"></span>
+        <div id="logged-user-info-trigger" style="display: flex; align-items: center; gap: 0.65rem; min-width: 0; cursor: pointer;" title="Modifier mon profil et mon avatar">
+          <div style="position: relative; flex-shrink: 0;">
+            <span id="logged-avatar" class="player-avatar" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;"></span>
+            <span id="logged-avatar-edit-icon" class="logged-avatar-edit-icon"></span>
+          </div>
           <div style="display: flex; flex-direction: column; text-align: left; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 0.35rem;">
               <span id="logged-username" style="font-weight: 800; font-size: 1rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Alex</span>
@@ -74,7 +77,25 @@
           </div>
           
           <div id="auth-avatar-picker-group" style="display: none;">
-            <label style="font-weight: 600; font-size: 0.76rem; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 0.3rem;">Choix de l'avatar</label>
+            <label style="font-weight: 600; font-size: 0.76rem; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Choix de l'avatar</label>
+            <div class="selfie-card" id="selfie-auth-card">
+              <div class="selfie-card-left">
+                <div class="selfie-preview-circle" id="selfie-auth-preview">
+                  <span id="selfie-auth-icon"></span>
+                </div>
+                <div class="selfie-card-text">
+                  <div class="selfie-card-title" id="selfie-auth-title">Prendre un selfie</div>
+                  <div class="selfie-card-subtitle" id="selfie-auth-sub">Utilise ta photo comme avatar</div>
+                </div>
+              </div>
+              <button type="button" id="btn-selfie-snap-auth" class="btn-selfie-action">
+                <span id="btn-selfie-auth-action-icon"></span>
+                <span id="btn-selfie-auth-action-text">Photo</span>
+              </button>
+            </div>
+            <input type="file" id="input-selfie-auth" accept="image/*" capture="user" style="display: none;">
+
+            <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0.6rem 0 0.3rem 0; text-align: left;">Ou choisis un avatar classique</div>
             <div id="auth-avatar-picker" class="avatar-grid" style="margin: 0.5rem 0;">
               <div class="avatar-option selected" data-avatar="fox" title="Renard"></div>
               <div class="avatar-option" data-avatar="tiger" title="Tigre"></div>
@@ -99,7 +120,26 @@
         </div>
 
         <div id="guest-avatar-section">
-          <label style="font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.4rem;">Choix de l'avatar</label>
+          <label id="guest-avatar-label" style="font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.45rem;">Choix de l'avatar</label>
+          
+          <div class="selfie-card" id="selfie-guest-card">
+            <div class="selfie-card-left">
+              <div class="selfie-preview-circle" id="selfie-guest-preview">
+                <span id="selfie-guest-icon"></span>
+              </div>
+              <div class="selfie-card-text">
+                <div class="selfie-card-title" id="selfie-guest-title">Prendre un selfie</div>
+                <div class="selfie-card-subtitle" id="selfie-guest-sub">Utilise ta photo comme avatar</div>
+              </div>
+            </div>
+            <button type="button" id="btn-selfie-snap-guest" class="btn-selfie-action">
+              <span id="btn-selfie-action-icon"></span>
+              <span id="btn-selfie-action-text">Photo</span>
+            </button>
+          </div>
+          <input type="file" id="input-selfie-guest" accept="image/*" capture="user" style="display: none;">
+
+          <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0.75rem 0 0.35rem 0; text-align: left;">Ou choisis un avatar classique</div>
           <div id="avatar-picker" class="avatar-grid">
             <div class="avatar-option selected" data-avatar="fox" title="Renard"></div>
             <div class="avatar-option" data-avatar="tiger" title="Tigre"></div>
@@ -269,7 +309,13 @@
       <div class="modal-content">
         <div class="profile-hero-card">
           <div style="display: flex; align-items: center; gap: 0.85rem;">
-            <span id="profile-avatar" class="player-avatar" style="width: 52px; height: 52px; display: inline-flex; align-items: center; justify-content: center;"></span>
+            <div style="position: relative; flex-shrink: 0;">
+              <span id="profile-avatar" class="player-avatar" style="width: 54px; height: 54px; display: inline-flex; align-items: center; justify-content: center;"></span>
+              <button type="button" id="btn-profile-snap-selfie" class="profile-selfie-badge-btn" title="Changer de photo">
+                <span id="profile-selfie-cam-icon"></span>
+              </button>
+            </div>
+            <input type="file" id="input-selfie-profile" accept="image/*" capture="user" style="display: none;">
             <div style="display: flex; flex-direction: column; text-align: left; min-width: 0;">
               <div style="display: flex; align-items: center; gap: 0.45rem;">
                 <span id="profile-username" style="font-size: 1.25rem; font-weight: 800; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Joueur</span>
@@ -287,6 +333,46 @@
             <div class="xp-bar-container">
               <div id="profile-xp-bar" class="xp-bar-fill" style="width: 0%;"></div>
             </div>
+          </div>
+        </div>
+
+        <div id="profile-avatar-edit-box" class="profile-avatar-edit-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem;">
+            <div style="font-weight: 800; font-size: 0.95rem; color: #ffffff; display: flex; align-items: center; gap: 0.45rem;">
+              <span id="profile-edit-avatar-icon"></span>
+              <span>Modifier mon avatar</span>
+            </div>
+            <span id="profile-avatar-status-badge" style="font-size: 0.74rem; font-weight: 700; color: var(--party-emerald); display: none;">Enregistré ✓</span>
+          </div>
+
+          <div class="selfie-card" id="selfie-profile-card">
+            <div class="selfie-card-left">
+              <div class="selfie-preview-circle" id="selfie-profile-preview">
+                <span id="selfie-profile-icon"></span>
+              </div>
+              <div class="selfie-card-text">
+                <div class="selfie-card-title" id="selfie-profile-title">Photo Selfie</div>
+                <div class="selfie-card-subtitle" id="selfie-profile-sub">Prendre ou changer de selfie</div>
+              </div>
+            </div>
+            <button type="button" id="btn-selfie-snap-profile-card" class="btn-selfie-action">
+              <span id="btn-selfie-profile-card-icon"></span>
+              <span id="btn-selfie-profile-card-text">Photo</span>
+            </button>
+          </div>
+
+          <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0.75rem 0 0.4rem 0; text-align: left;">Ou choisis un avatar classique</div>
+          <div id="profile-avatar-picker" class="avatar-grid" style="margin: 0.35rem 0 0 0;">
+            <div class="avatar-option" data-avatar="fox" title="Renard"></div>
+            <div class="avatar-option" data-avatar="tiger" title="Tigre"></div>
+            <div class="avatar-option" data-avatar="rocket" title="Fusée"></div>
+            <div class="avatar-option" data-avatar="headphones" title="Casque"></div>
+            <div class="avatar-option" data-avatar="bolt" title="Éclair"></div>
+            <div class="avatar-option" data-avatar="pizza" title="Pizza"></div>
+            <div class="avatar-option" data-avatar="crown" title="Couronne"></div>
+            <div class="avatar-option" data-avatar="unicorn" title="Licorne"></div>
+            <div class="avatar-option" data-avatar="guitar" title="Guitare"></div>
+            <div class="avatar-option" data-avatar="invader" title="Alien"></div>
           </div>
         </div>
 

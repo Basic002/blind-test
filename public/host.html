@@ -412,6 +412,91 @@
     </div>
   </div>
 
+  <div id="modal-host-profile" class="modal-overlay" style="display: none;">
+    <div class="modal-card host-profile-modal-card game-panel">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
+          <span id="host-profile-header-icon" style="display: inline-flex;"></span>
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin: 0;">Fiche Joueur</h2>
+        </div>
+        <button id="btn-close-host-profile" class="modal-close-btn" type="button" title="Fermer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-content" style="max-height: 75vh; overflow-y: auto; text-align: left; padding: 0.5rem 0.25rem;">
+        <div class="profile-hero-card">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <span id="host-profile-avatar" class="player-avatar" style="width: 64px; height: 64px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"></span>
+            <div style="display: flex; flex-direction: column; text-align: left; min-width: 0; flex: 1;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span id="host-profile-nickname" style="font-size: 1.4rem; font-weight: 900; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">-</span>
+                <span id="host-profile-level-badge" class="player-level-badge">Nv. 1</span>
+                <span id="host-profile-type-badge" class="host-profile-type-badge">Joueur</span>
+              </div>
+              <span id="host-profile-title" style="font-size: 0.88rem; color: var(--party-cyan); font-weight: 700; margin-top: 0.15rem;">Novice</span>
+            </div>
+          </div>
+
+          <div id="host-profile-xp-section" style="margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem;">
+              <span id="host-profile-xp-text">0 / 300 XP</span>
+              <span id="host-profile-xp-percent">0%</span>
+            </div>
+            <div class="xp-bar-container">
+              <div id="host-profile-xp-bar" class="xp-bar-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div id="host-profile-guest-notice" style="display: none; margin-top: 0.85rem; padding: 0.75rem 0.9rem; background: rgba(255, 255, 255, 0.04); border: 1.5px dashed rgba(255, 255, 255, 0.15); border-radius: 12px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4;">
+            Ce joueur participe en tant qu'invité. Ses stats de session sont actives pour la partie en cours.
+          </div>
+        </div>
+
+        <div class="profile-stats-grid" id="host-profile-stats-grid" style="margin-top: 1rem;">
+          <div class="stat-box">
+            <span class="stat-value" id="host-stat-games">0</span>
+            <span class="stat-label">Parties</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="host-stat-wins">0</span>
+            <span class="stat-label">Victoires</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="host-stat-podiums">0</span>
+            <span class="stat-label">Top 3</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="host-stat-accuracy">0%</span>
+            <span class="stat-label">Précision</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="host-stat-streak">0</span>
+            <span class="stat-label">Meilleure Série</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="host-stat-current-score" style="color: var(--party-gold);">0</span>
+            <span class="stat-label">Score Session</span>
+          </div>
+        </div>
+
+        <div id="host-profile-achievements-section" style="margin-top: 1.25rem; text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 800; margin: 0;">Succès Débloqués</h3>
+            <span id="host-profile-achievements-badge" class="hud-font" style="font-size: 0.78rem; color: var(--party-gold);">0 / 16</span>
+          </div>
+          <div id="host-profile-achievements-list" class="achievements-list" style="max-height: 240px;"></div>
+        </div>
+
+        <div style="margin-top: 1.5rem; text-align: center;">
+          <button id="btn-close-host-profile-bottom" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem;" type="button">
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/host.js"></script>
 </body>
 </html>

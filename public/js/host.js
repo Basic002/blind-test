@@ -62,6 +62,8 @@ function initStaticIcons() {
   if (guideIcon && typeof renderIcon === 'function') guideIcon.innerHTML = renderIcon('trophy', { size: 18 });
   const legIcon = document.getElementById('legal-modal-title-icon');
   if (legIcon && typeof renderIcon === 'function') legIcon.innerHTML = renderIcon('shield', { size: 22 });
+  const hostProfileIcon = document.getElementById('host-profile-header-icon');
+  if (hostProfileIcon && typeof renderIcon === 'function') hostProfileIcon.innerHTML = renderIcon('user', { size: 22 });
 }
 document.addEventListener('DOMContentLoaded', initStaticIcons);
 initStaticIcons();
@@ -81,6 +83,171 @@ document.getElementById('btn-close-legal')?.addEventListener('click', closeLegal
 document.getElementById('btn-close-legal-bottom')?.addEventListener('click', closeLegalModalHost);
 document.getElementById('modal-legal')?.addEventListener('click', (e) => {
   if (e.target.id === 'modal-legal') closeLegalModalHost();
+});
+
+function closeHostPlayerProfile() {
+  const modal = document.getElementById('modal-host-profile');
+  if (modal) modal.style.display = 'none';
+}
+
+async function openHostPlayerProfile(playerId, userId) {
+  const modal = document.getElementById('modal-host-profile');
+  if (!modal) return;
+
+  const headerIcon = document.getElementById('host-profile-header-icon');
+  if (headerIcon && typeof renderIcon === 'function') {
+    headerIcon.innerHTML = renderIcon('user', { size: 22 });
+  }
+
+  const avatarEl = document.getElementById('host-profile-avatar');
+  const nameEl = document.getElementById('host-profile-nickname');
+  const lvlEl = document.getElementById('host-profile-level-badge');
+  const typeEl = document.getElementById('host-profile-type-badge');
+  const titleEl = document.getElementById('host-profile-title');
+  const xpSection = document.getElementById('host-profile-xp-section');
+  const xpText = document.getElementById('host-profile-xp-text');
+  const xpPercent = document.getElementById('host-profile-xp-percent');
+  const xpBar = document.getElementById('host-profile-xp-bar');
+  const guestNotice = document.getElementById('host-profile-guest-notice');
+
+  const statGames = document.getElementById('host-stat-games');
+  const statWins = document.getElementById('host-stat-wins');
+  const statPodiums = document.getElementById('host-stat-podiums');
+  const statAccuracy = document.getElementById('host-stat-accuracy');
+  const statStreak = document.getElementById('host-stat-streak');
+  const statCurScore = document.getElementById('host-stat-current-score');
+
+  const achSection = document.getElementById('host-profile-achievements-section');
+  const achBadge = document.getElementById('host-profile-achievements-badge');
+  const achList = document.getElementById('host-profile-achievements-list');
+
+  const inGamePlayer = (currentPlayers || []).find(p => (playerId && p.id === playerId) || (userId && p.userId === userId));
+
+  const fallbackAvatar = inGamePlayer ? inGamePlayer.avatar : 'fox';
+  const fallbackNick = inGamePlayer ? inGamePlayer.nickname : 'Joueur';
+  const fallbackLvl = inGamePlayer ? (inGamePlayer.level || 1) : 1;
+  const fallbackTitle = inGamePlayer ? (inGamePlayer.title || 'Novice') : 'Novice';
+  const currentScore = inGamePlayer && inGamePlayer.score !== undefined ? `${inGamePlayer.score.toLocaleString('fr-FR')} pts` : '0 pts';
+
+  if (avatarEl) avatarEl.innerHTML = renderAvatar(fallbackAvatar, 58);
+  if (nameEl) nameEl.textContent = fallbackNick;
+  if (lvlEl) lvlEl.textContent = `Nv. ${fallbackLvl}`;
+  if (titleEl) titleEl.textContent = fallbackTitle;
+  if (statCurScore) statCurScore.textContent = currentScore;
+
+  const effectiveUserId = userId || (inGamePlayer && inGamePlayer.userId) || null;
+
+  if (effectiveUserId) {
+    if (typeEl) {
+      typeEl.textContent = 'Compte';
+      typeEl.className = 'host-profile-type-badge member';
+    }
+    if (guestNotice) guestNotice.style.display = 'none';
+    if (xpSection) xpSection.style.display = 'block';
+    if (achSection) achSection.style.display = 'block';
+
+    if (achList) {
+      achList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1.5rem 0;">Chargement du profil...</div>';
+    }
+
+    modal.style.display = 'flex';
+
+    try {
+      const res = await fetch(`/api/profile/${encodeURIComponent(effectiveUserId)}`);
+      if (!res.ok) throw new Error('Profil introuvable');
+      const data = await res.json();
+      const u = data.user;
+      const achievements = data.achievements || [];
+
+      if (u.avatar && avatarEl) {
+        avatarEl.innerHTML = renderAvatar(u.avatar, 58);
+      }
+      if (nameEl) nameEl.textContent = u.username || fallbackNick;
+
+      const lvl = u.progression?.level || fallbackLvl;
+      const title = u.progression?.title || fallbackTitle;
+      if (lvlEl) lvlEl.textContent = `Nv. ${lvl}`;
+      if (titleEl) titleEl.textContent = title;
+
+      const info = u.progression?.levelInfo;
+      const xpInto = info ? info.xpIntoLevel : 0;
+      const xpNeeded = info ? info.xpNeededForLevel : 100;
+      const pct = info ? info.progressPercent : 0;
+      if (xpText) xpText.textContent = `${xpInto.toLocaleString('fr-FR')} / ${xpNeeded.toLocaleString('fr-FR')} XP`;
+      if (xpPercent) xpPercent.textContent = `${pct}%`;
+      if (xpBar) xpBar.style.width = `${pct}%`;
+
+      const s = u.stats || {};
+      if (statGames) statGames.textContent = s.gamesPlayed || 0;
+      if (statWins) statWins.textContent = s.gamesWon || 0;
+      if (statPodiums) statPodiums.textContent = s.podiums || 0;
+
+      const acc = s.totalAnswers && s.totalAnswers > 0
+        ? Math.round(((s.totalCorrectAnswers || 0) / s.totalAnswers) * 100)
+        : 0;
+      if (statAccuracy) statAccuracy.textContent = `${acc}%`;
+      if (statStreak) statStreak.textContent = s.bestStreak || (inGamePlayer ? inGamePlayer.streak : 0);
+
+      const unlockedCount = achievements.filter(a => a.isUnlocked).length;
+      if (achBadge) achBadge.textContent = `${unlockedCount} / ${achievements.length}`;
+
+      if (achList) {
+        if (achievements.length === 0) {
+          achList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem 0;">Aucun succès disponible.</div>';
+        } else {
+          achList.innerHTML = achievements.map(a => {
+            const statusClass = a.isUnlocked ? 'unlocked' : 'locked';
+            const iconHtml = typeof renderIcon === 'function' ? renderIcon(a.icon || 'trophy', { size: 26 }) : '';
+            return `
+              <div class="achievement-card ${statusClass}">
+                <span style="width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">${iconHtml}</span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                    <span style="font-weight: 800; font-size: 0.95rem; color: #fff;">${escapeHtml(a.name)}</span>
+                    <span style="font-size: 0.76rem; font-weight: 700; color: ${a.isUnlocked ? 'var(--party-gold)' : 'var(--text-tertiary)'};">+${a.xpReward || 50} XP</span>
+                  </div>
+                  <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; line-height: 1.3;">${escapeHtml(a.description)}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+    } catch (err) {
+      if (achList) {
+        achList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem 0;">Données de compte indisponibles.</div>';
+      }
+    }
+  } else {
+    if (typeEl) {
+      typeEl.textContent = 'Invité';
+      typeEl.className = 'host-profile-type-badge guest';
+    }
+    if (guestNotice) guestNotice.style.display = 'block';
+    if (xpSection) xpSection.style.display = 'none';
+    if (achSection) achSection.style.display = 'none';
+
+    if (statGames) statGames.textContent = '1';
+    if (statWins) statWins.textContent = '-';
+    if (statPodiums) statPodiums.textContent = '-';
+    if (statAccuracy) statAccuracy.textContent = '-';
+    if (statStreak) statStreak.textContent = inGamePlayer ? (inGamePlayer.streak || 0) : '0';
+
+    modal.style.display = 'flex';
+  }
+}
+
+document.getElementById('btn-close-host-profile')?.addEventListener('click', closeHostPlayerProfile);
+document.getElementById('btn-close-host-profile-bottom')?.addEventListener('click', closeHostPlayerProfile);
+document.getElementById('modal-host-profile')?.addEventListener('click', (e) => {
+  if (e.target.id === 'modal-host-profile') closeHostPlayerProfile();
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeHostPlayerProfile();
+    closeLegalModalHost();
+  }
 });
 
 const SILENT_AUDIO = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
@@ -647,7 +814,7 @@ function updateLobbyPlayers(players, teamScores) {
         : '';
 
       return `
-        <div class="player-chip" style="${teamBorder}">
+        <div class="player-chip clickable-profile" data-player-id="${p.id}" data-user-id="${p.userId || ''}" style="${teamBorder}" title="Voir le profil">
           <span class="player-avatar" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(p.avatar, 28)}</span>
           <span class="player-name">${escapeHtml(p.nickname)}</span>
           <span class="player-level-badge">Nv.${p.level || 1}</span>
@@ -656,6 +823,13 @@ function updateLobbyPlayers(players, teamScores) {
         </div>
       `;
     }).join('');
+
+    grid.querySelectorAll('.player-chip.clickable-profile').forEach(chip => {
+      chip.addEventListener('click', () => {
+        openHostPlayerProfile(chip.dataset.playerId, chip.dataset.userId);
+      });
+    });
+
     startBtn.disabled = false;
     startBtn.textContent = `Lancer la Partie (${count})`;
   }
@@ -749,6 +923,7 @@ socket.on('round_start_host', (data) => {
     document.getElementById('round-question-subtext').textContent = 'Devinez le bon titre sur votre manette !';
   }
 
+  currentPlayers = data.players || [];
   updateAnsweredCount(0, data.players.length);
   renderRoundPlayersList(data.players);
 
@@ -799,7 +974,7 @@ function renderRoundPlayersList(players) {
     const elimOpacity = p.isEliminated ? 'opacity: 0.35; filter: grayscale(1);' : 'opacity: 0.55;';
 
     return `
-      <div id="round-player-${p.id}" class="player-chip ${p.isEliminated ? 'eliminated' : ''}" style="${elimOpacity} ${extraBorder} transition: all 0.25s ease;">
+      <div id="round-player-${p.id}" class="player-chip clickable-profile ${p.isEliminated ? 'eliminated' : ''}" data-player-id="${p.id}" data-user-id="${p.userId || ''}" style="${elimOpacity} ${extraBorder} transition: all 0.25s ease;" title="Voir le profil">
         <span class="player-avatar" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(p.avatar, 24)}</span>
         <span class="player-name">${escapeHtml(p.nickname)}</span>
         <span class="player-level-badge">Nv.${p.level || 1}</span>
@@ -808,6 +983,12 @@ function renderRoundPlayersList(players) {
       </div>
     `;
   }).join('');
+
+  container.querySelectorAll('.player-chip.clickable-profile').forEach(chip => {
+    chip.addEventListener('click', () => {
+      openHostPlayerProfile(chip.dataset.playerId, chip.dataset.userId);
+    });
+  });
 }
 
 function renderTeamScoreBar(teamScores) {
@@ -908,6 +1089,9 @@ socket.on('round_ended_host', (data) => {
     audioPlayer.play().catch(() => {});
   }
 
+  if (data.leaderboard) {
+    currentPlayers = data.leaderboard;
+  }
   switchView('reveal');
 
   const coverUrl = data.track.cover || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400';
@@ -1022,7 +1206,7 @@ function renderLeaderboard(leaderboard) {
     }
 
     return `
-      <div class="leaderboard-row ${rankClass}">
+      <div class="leaderboard-row clickable-profile ${rankClass}" data-player-id="${player.id}" data-user-id="${player.userId || ''}" title="Voir le profil">
         <div class="leaderboard-player-info">
           <span style="width: 28px; display: inline-flex; align-items: center; justify-content: center;">${medalHtml}</span>
           <span class="player-avatar" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">${renderAvatar(player.avatar, 30)}</span>
@@ -1040,6 +1224,12 @@ function renderLeaderboard(leaderboard) {
       </div>
     `;
   }).join('');
+
+  container.querySelectorAll('.leaderboard-row.clickable-profile').forEach(row => {
+    row.addEventListener('click', () => {
+      openHostPlayerProfile(row.dataset.playerId, row.dataset.userId);
+    });
+  });
 }
 
 socket.on('game_over_host', (data) => {
@@ -1086,33 +1276,54 @@ socket.on('game_over_host', (data) => {
     if (survBanner) survBanner.style.display = 'none';
   }
 
+  if (data.leaderboard) {
+    currentPlayers = data.leaderboard;
+  } else if (data.podium) {
+    currentPlayers = data.podium;
+  }
+
   const podium = data.podium || [];
   
   if (podium[0]) {
     const p1 = document.getElementById('podium-1');
+    p1.dataset.playerId = podium[0].id || '';
+    p1.dataset.userId = podium[0].userId || '';
+    p1.classList.add('clickable-profile');
+    p1.setAttribute('title', 'Voir le profil');
     p1.querySelector('.podium-avatar').innerHTML = renderAvatar(podium[0].avatar, 64);
     p1.querySelector('.podium-name').textContent = podium[0].nickname;
     p1.querySelector('.podium-score').textContent = `${podium[0].score.toLocaleString('fr-FR')} pts`;
     const lvl1 = p1.querySelector('.podium-level');
     if (lvl1) lvl1.textContent = `Nv.${podium[0].level || 1} · ${podium[0].title || 'Novice'}`;
+    p1.onclick = () => openHostPlayerProfile(podium[0].id, podium[0].userId);
   }
 
   if (podium[1]) {
     const p2 = document.getElementById('podium-2');
+    p2.dataset.playerId = podium[1].id || '';
+    p2.dataset.userId = podium[1].userId || '';
+    p2.classList.add('clickable-profile');
+    p2.setAttribute('title', 'Voir le profil');
     p2.querySelector('.podium-avatar').innerHTML = renderAvatar(podium[1].avatar, 52);
     p2.querySelector('.podium-name').textContent = podium[1].nickname;
     p2.querySelector('.podium-score').textContent = `${podium[1].score.toLocaleString('fr-FR')} pts`;
     const lvl2 = p2.querySelector('.podium-level');
     if (lvl2) lvl2.textContent = `Nv.${podium[1].level || 1} · ${podium[1].title || 'Novice'}`;
+    p2.onclick = () => openHostPlayerProfile(podium[1].id, podium[1].userId);
   }
 
   if (podium[2]) {
     const p3 = document.getElementById('podium-3');
+    p3.dataset.playerId = podium[2].id || '';
+    p3.dataset.userId = podium[2].userId || '';
+    p3.classList.add('clickable-profile');
+    p3.setAttribute('title', 'Voir le profil');
     p3.querySelector('.podium-avatar').innerHTML = renderAvatar(podium[2].avatar, 46);
     p3.querySelector('.podium-name').textContent = podium[2].nickname;
     p3.querySelector('.podium-score').textContent = `${podium[2].score.toLocaleString('fr-FR')} pts`;
     const lvl3 = p3.querySelector('.podium-level');
     if (lvl3) lvl3.textContent = `Nv.${podium[2].level || 1} · ${podium[2].title || 'Novice'}`;
+    p3.onclick = () => openHostPlayerProfile(podium[2].id, podium[2].userId);
   }
 
   const awardsSection = document.getElementById('gameover-awards-section');
@@ -1121,7 +1332,7 @@ socket.on('game_over_host', (data) => {
     if (data.awards && data.awards.length > 0) {
       awardsSection.style.display = 'block';
       awardsGrid.innerHTML = data.awards.map(a => `
-        <div style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 1.1rem 1.25rem; display: flex; align-items: center; gap: 1rem; text-align: left; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);">
+        <div class="award-card-clickable" data-player-id="${a.player?.id || ''}" data-user-id="${a.player?.userId || ''}" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.12); border-radius: 18px; padding: 1.1rem 1.25rem; display: flex; align-items: center; gap: 1rem; text-align: left; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);" title="Voir le profil">
           <span style="width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center;">${renderIcon(a.id || a.icon, { size: 38 })}</span>
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
@@ -1136,6 +1347,12 @@ socket.on('game_over_host', (data) => {
           </div>
         </div>
       `).join('');
+
+      awardsGrid.querySelectorAll('.award-card-clickable').forEach(card => {
+        card.addEventListener('click', () => {
+          openHostPlayerProfile(card.dataset.playerId, card.dataset.userId);
+        });
+      });
     } else {
       awardsSection.style.display = 'none';
       awardsGrid.innerHTML = '';

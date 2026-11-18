@@ -135,10 +135,19 @@ const APP_ICONS = {
 
   copy: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><rect x="10" y="10" width="16" height="17" rx="3" stroke="currentColor" stroke-width="2.2" fill="none"/><path d="M6 21 V7 C6 5.5 7.2 4.5 9 4.5 H21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`,
 
-  wifi: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><path d="M5 10 C11 4 21 4 27 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M8.5 15 C13 11 19 11 23.5 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M12.5 20 C14.5 18 17.5 18 19.5 20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="16" cy="25" r="2" fill="currentColor"/></svg>`
+  wifi: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><path d="M5 10 C11 4 21 4 27 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M8.5 15 C13 11 19 11 23.5 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M12.5 20 C14.5 18 17.5 18 19.5 20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="16" cy="25" r="2" fill="currentColor"/></svg>`,
+
+  camera: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><path d="M6 10 C6 8.5 7.2 7.5 8.7 7.5 H10.5 L12 5 H20 L21.5 7.5 H23.3 C24.8 7.5 26 8.5 26 10 V23 C26 24.5 24.8 25.5 23.3 25.5 H8.7 C7.2 25.5 6 24.5 6 23 Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="16" cy="16.5" r="4.5" stroke="currentColor" stroke-width="2.2" fill="none"/><circle cx="21.5" cy="11.5" r="1.2" fill="currentColor"/></svg>`,
+
+  edit: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><path d="M7 25 L12 24 L25 11 L20 6 L7 19 Z" fill="#38BDF8"/><path d="M20 6 L25 11 L27 9 C28 8 28 6.5 27 5.5 L25.5 4 C24.5 3 23 3 22 4 Z" fill="#818CF8"/><path d="M5 27 L9 26 L6 23 Z" fill="#0F172A"/></svg>`
 };
 
 const EMOJI_TO_ICON = {
+  '✏️': 'edit',
+  '✏': 'edit',
+  '📷': 'camera',
+  '📸': 'camera',
+  '🤳': 'camera',
   '💔': 'heart-broken',
   '👥': 'users',
   '🛡️': 'shield',
@@ -252,6 +261,11 @@ function renderAvatar(avatarKeyOrEmoji, size = 32, className = '', style = '') {
   }
 
   const cleanKey = String(avatarKeyOrEmoji).trim();
+  if (cleanKey.startsWith('data:image/') || cleanKey.startsWith('http://') || cleanKey.startsWith('https://') || cleanKey.startsWith('blob:')) {
+    const escaped = cleanKey.replace(/"/g, '&quot;');
+    return `<img src="${escaped}" alt="avatar" class="avatar-photo ${className}" style="width:${size}px;height:${size}px;min-width:${size}px;min-height:${size}px;border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.3);${style}" />`;
+  }
+
   if (APP_ICONS[cleanKey]) {
     return APP_ICONS[cleanKey](size, className, style);
   }
