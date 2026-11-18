@@ -311,7 +311,8 @@ class RoomManager {
       isEliminated: false,
       eliminatedAtRound: null,
       teamId: assignedTeam,
-      teamScoreContributed: 0
+      teamScoreContributed: 0,
+      scoreHistory: [0]
     };
 
     room.players.set(socketId, player);
@@ -587,6 +588,7 @@ class RoomManager {
       player.isEliminated = false;
       player.eliminatedAtRound = null;
       player.teamScoreContributed = 0;
+      player.scoreHistory = [0];
       if (!player.teamId) {
         player.teamId = this.getNextBalancedTeam(room);
       }
@@ -1019,6 +1021,13 @@ class RoomManager {
       }
     }
 
+    for (const player of room.players.values()) {
+      if (!Array.isArray(player.scoreHistory)) {
+        player.scoreHistory = [0];
+      }
+      player.scoreHistory.push(player.score);
+    }
+
     const leaderboard = this.getPlayersList(room);
     const survivors = Array.from(room.players.values()).filter(p => !p.isEliminated);
     const wasMultiplayer = room.players.size >= 2;
@@ -1114,6 +1123,56 @@ class RoomManager {
       mvpPlayer = finalLeaderboard[0];
     }
 
+    const maxRoundsPlayed = Math.max(1, ...Array.from(room.players.values()).map(p => (Array.isArray(p.scoreHistory) ? p.scoreHistory.length - 1 : 1)));
+    const roundLabels = ['Départ'];
+    for (let r = 1; r <= maxRoundsPlayed; r++) {
+      roundLabels.push(`M${r}`);
+    }
+
+    const playersScoreHistory = Array.from(room.players.values()).map(p => {
+      let scores = Array.isArray(p.scoreHistory) ? [...p.scoreHistory] : [0, p.score];
+      while (scores.length < maxRoundsPlayed + 1) {
+        scores.push(scores[scores.length - 1] || 0);
+      }
+      return {
+        id: p.id,
+        userId: p.userId || null,
+        nickname: p.nickname,
+        avatar: p.avatar,
+        teamId: p.teamId || null,
+        scores,
+        finalScore: p.score
+      };
+    }).sort((a, b) => b.finalScore - a.finalScore);
+
+    let teamsScoreHistory = null;
+    if (room.settings.gameMode === 'teams') {
+      const teamColorMap = { red: '#ef4444', blue: '#3b82f6', green: '#10b981', yellow: '#f59e0b' };
+      const teamNameMap = { red: 'Rouge', blue: 'Bleue', green: 'Verte', yellow: 'Jaune' };
+      teamsScoreHistory = ['red', 'blue', 'green', 'yellow'].map(teamId => {
+        const members = playersScoreHistory.filter(p => p.teamId === teamId);
+        if (members.length === 0) return null;
+        const scores = [];
+        for (let r = 0; r <= maxRoundsPlayed; r++) {
+          const sum = members.reduce((acc, m) => acc + (m.scores[r] || 0), 0);
+          scores.push(sum);
+        }
+        return {
+          id: teamId,
+          name: `Équipe ${teamNameMap[teamId]}`,
+          color: teamColorMap[teamId],
+          scores,
+          finalScore: scores[scores.length - 1] || 0
+        };
+      }).filter(Boolean).sort((a, b) => b.finalScore - a.finalScore);
+    }
+
+    const scoreHistory = {
+      rounds: roundLabels,
+      players: playersScoreHistory,
+      teams: teamsScoreHistory
+    };
+
     this.io.to(room.hostSocketId).emit('game_over_host', {
       podium: finalLeaderboard.slice(0, 3),
       leaderboard: finalLeaderboard,
@@ -1122,7 +1181,8 @@ class RoomManager {
       teamScores,
       winningTeam,
       mvpPlayer,
-      survivorsCount: survivors.length
+      survivorsCount: survivors.length,
+      scoreHistory
     });
 
     for (const [socketId, player] of room.players) {
@@ -1155,7 +1215,8 @@ class RoomManager {
         teamId: player.teamId,
         teamScores,
         winningTeam,
-        isWinnerTeam
+        isWinnerTeam,
+        scoreHistory
       });
     }
   }
@@ -1179,6 +1240,7 @@ class RoomManager {
       player.isEliminated = false;
       player.eliminatedAtRound = null;
       player.teamScoreContributed = 0;
+      player.scoreHistory = [0];
       player.gameStats = {
         correctCount: 0,
         wrongCount: 0,

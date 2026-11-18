@@ -1358,6 +1358,26 @@ socket.on('game_over_host', (data) => {
       awardsGrid.innerHTML = '';
     }
   }
+
+  const chartSection = document.getElementById('gameover-chart-section');
+  if (chartSection && data.scoreHistory) {
+    chartSection.style.display = 'block';
+    const chartIcon = document.getElementById('chart-title-icon');
+    if (chartIcon && typeof renderIcon === 'function') {
+      chartIcon.innerHTML = renderIcon('chart', { size: 24 });
+    }
+    if (typeof window.renderScoreChart === 'function') {
+      window.renderScoreChart({
+        canvas: document.getElementById('score-evolution-canvas'),
+        tooltipEl: document.getElementById('score-chart-tooltip'),
+        legendEl: document.getElementById('chart-legend-container'),
+        toggleGroupEl: document.getElementById('chart-mode-toggle'),
+        scoreHistory: data.scoreHistory
+      });
+    }
+  } else if (chartSection) {
+    chartSection.style.display = 'none';
+  }
 });
 
 document.getElementById('replay-btn').addEventListener('click', () => {
@@ -1377,6 +1397,8 @@ socket.on('back_to_lobby', (data) => {
   audioPlayer.pause();
   audioPlayer.currentTime = 0;
   hideAudioPrompt();
+  const chartSection = document.getElementById('gameover-chart-section');
+  if (chartSection) chartSection.style.display = 'none';
   switchView('lobby');
   updateLobbyPlayers(data.players);
 });

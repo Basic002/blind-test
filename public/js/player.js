@@ -834,6 +834,46 @@ document.getElementById('modal-legal-player')?.addEventListener('click', (e) => 
   if (e.target.id === 'modal-legal-player') closeLegalModalPlayer();
 });
 
+let playerChartInstance = null;
+let lastScoreHistoryPlayer = null;
+
+function openPlayerChartModal() {
+  const modal = document.getElementById('modal-player-score-chart');
+  if (!modal || !lastScoreHistoryPlayer) return;
+  modal.style.display = 'flex';
+  const modalIcon = document.getElementById('player-chart-modal-icon');
+  if (modalIcon && typeof renderIcon === 'function') modalIcon.innerHTML = renderIcon('chart', { size: 22 });
+  if (typeof window.renderScoreChart === 'function') {
+    playerChartInstance = window.renderScoreChart({
+      canvas: document.getElementById('score-evolution-canvas-player'),
+      tooltipEl: document.getElementById('score-chart-tooltip-player'),
+      legendEl: document.getElementById('chart-legend-container-player'),
+      toggleGroupEl: document.getElementById('player-chart-mode-toggle'),
+      scoreHistory: lastScoreHistoryPlayer
+    });
+  }
+}
+
+function closePlayerChartModal() {
+  const modal = document.getElementById('modal-player-score-chart');
+  if (modal) modal.style.display = 'none';
+}
+
+document.getElementById('btn-open-score-chart-player')?.addEventListener('click', openPlayerChartModal);
+document.getElementById('btn-close-player-chart')?.addEventListener('click', closePlayerChartModal);
+document.getElementById('btn-close-player-chart-bottom')?.addEventListener('click', closePlayerChartModal);
+document.getElementById('modal-player-score-chart')?.addEventListener('click', (e) => {
+  if (e.target.id === 'modal-player-score-chart') closePlayerChartModal();
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closePlayerChartModal();
+    closeProfileModal();
+    closeLegalModalPlayer();
+  }
+});
+
 socket.on('profile_data', (data) => {
   const user = data.user;
   const achievements = data.achievements || [];
@@ -1462,6 +1502,18 @@ socket.on('game_over_player', (data) => {
       }, 1600);
     }
   }
+
+  const chartBtn = document.getElementById('btn-open-score-chart-player');
+  if (chartBtn) {
+    if (data.scoreHistory) {
+      chartBtn.style.display = 'inline-flex';
+      const iconBtn = document.getElementById('icon-btn-chart-player');
+      if (iconBtn && typeof renderIcon === 'function') iconBtn.innerHTML = renderIcon('chart', { size: 18 });
+      lastScoreHistoryPlayer = data.scoreHistory;
+    } else {
+      chartBtn.style.display = 'none';
+    }
+  }
 });
 
 socket.on('back_to_lobby', (data) => {
@@ -1471,6 +1523,9 @@ socket.on('back_to_lobby', (data) => {
   }
   hasAnsweredCurrentRound = false;
   isPlayerEliminated = false;
+  const chartBtn = document.getElementById('btn-open-score-chart-player');
+  if (chartBtn) chartBtn.style.display = 'none';
+  closePlayerChartModal();
   if (data && data.settings) {
     applyLobbyGameModeUI(data.settings, null, data.teamScores);
   }

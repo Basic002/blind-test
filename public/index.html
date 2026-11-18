@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/icons.js"></script>
+  <script src="/js/score-chart.js"></script>
 </head>
 <body>
   <div class="mobile-view">
@@ -278,6 +279,11 @@
       </div>
 
       <p style="color: var(--text-muted); font-size: 1.05rem; font-weight: 600;">Regardez le podium sur le grand écran !</p>
+
+      <button type="button" id="btn-open-score-chart-player" class="btn btn-secondary" style="width: 100%; margin-top: 1rem; display: none; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.85rem;">
+        <span id="icon-btn-chart-player"></span>
+        <span>Graphique des scores</span>
+      </button>
     </div>
 
     <footer class="player-footer">
@@ -487,6 +493,34 @@
           <button id="btn-close-legal-player-bottom" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem;" type="button">
             J'ai compris
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-player-score-chart" class="modal-overlay" style="display: none;">
+    <div class="modal-card chart-modal-card game-panel">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span id="player-chart-modal-icon" style="display: inline-flex;"></span>
+          <h2 style="font-size: 1.25rem; font-weight: 800; margin: 0;">Évolution des Scores</h2>
+        </div>
+        <button id="btn-close-player-chart" class="modal-close-btn" type="button" title="Fermer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-content" style="padding: 0.5rem 0.25rem; max-height: 75vh;">
+        <div id="player-chart-mode-toggle" class="chart-toggle-group" style="display: none; margin-bottom: 0.75rem;">
+          <button type="button" class="chart-toggle-btn active" data-chart-mode="players">Joueurs</button>
+          <button type="button" class="chart-toggle-btn" data-chart-mode="teams">Équipes</button>
+        </div>
+        <div class="chart-canvas-wrapper" style="position: relative; width: 100%; height: 260px;">
+          <canvas id="score-evolution-canvas-player"></canvas>
+          <div id="score-chart-tooltip-player" class="chart-tooltip" style="display: none;"></div>
+        </div>
+        <div id="chart-legend-container-player" class="chart-legend-grid" style="margin-top: 1rem;"></div>
+        <div style="margin-top: 1.25rem;">
+          <button id="btn-close-player-chart-bottom" class="btn btn-primary" style="width: 100%; padding: 0.85rem;" type="button">Fermer</button>
         </div>
       </div>
     </div>

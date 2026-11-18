@@ -97,6 +97,8 @@ const APP_ICONS = {
 
   skip: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><polygon points="6,8 18,16 6,24" fill="currentColor"/><polygon points="16,8 28,16 16,24" fill="currentColor"/></svg>`,
 
+  chart: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><defs><linearGradient id="bt_cht_g" x1="6" y1="22" x2="26" y2="6" gradientUnits="userSpaceOnUse"><stop stop-color="#00F0FF"/><stop offset="1" stop-color="#FFD600"/></linearGradient></defs><path d="M4 27 L28 27" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M6 21 L12 14 L18 18 L26 7" stroke="url(#bt_cht_g)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="14" r="2.2" fill="#00F0FF"/><circle cx="18" cy="18" r="2.2" fill="#38BDF8"/><circle cx="26" cy="7" r="2.8" fill="#FFD600"/></svg>`,
+
   star: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><polygon points="16,3 20,11.5 29,12.5 22.5,18.5 24.5,27.5 16,23 7.5,27.5 9.5,18.5 3,12.5 12,11.5" fill="#FACC15" stroke="#EAB308" stroke-width="1"/></svg>`,
 
   sprout: (s = 24, c = '', st = '') => `<svg width="${s}" height="${s}" viewBox="0 0 32 32" fill="none" class="${c}" style="${st}"><path d="M16 28 V15 M16 15 C16 9 10 6 5 8 C5 14 10 16 16 15 Z" fill="#4ADE80" stroke="#16A34A" stroke-width="1.5"/><path d="M16 15 C16 10 21 7 27 9 C27 15 22 17 16 15 Z" fill="#22C55E" stroke="#16A34A" stroke-width="1.5"/></svg>`,
