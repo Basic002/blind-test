@@ -12,8 +12,8 @@ let bgmEnabled = localStorage.getItem('blindtest_bgm_enabled') !== 'false';
 
 function initStaticIcons() {
   const brandBadge = document.getElementById('host-brand-badge');
-  if (brandBadge && typeof renderIcon === 'function') {
-    brandBadge.innerHTML = renderIcon('bolt', { size: 22 });
+  if (brandBadge) {
+    brandBadge.innerHTML = '<img src="/logo.svg" alt="Melovix" style="width: 100%; height: 100%; display: block; border-radius: inherit;">';
   }
   const bgmBtnIcon = document.getElementById('bgm-btn-icon');
   if (bgmBtnIcon && typeof renderIcon === 'function') {
@@ -1419,7 +1419,7 @@ socket.on('round_start_host', (data) => {
     document.getElementById('round-question-subtext').textContent = 'Devinez le bon jeu vidéo sur votre manette !';
   } else {
     const themeObj = currentThemes.find(t => t.id === selectedThemeId);
-    document.getElementById('round-mode-display').textContent = themeObj ? themeObj.name : 'Blind-Test';
+    document.getElementById('round-mode-display').textContent = themeObj ? themeObj.name : 'Melovix';
     document.getElementById('round-question-heading').textContent = 'Écoutez l\'extrait...';
     document.getElementById('round-question-subtext').textContent = 'Devinez le bon titre sur votre manette !';
   }

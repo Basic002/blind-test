@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Blind-Test — Manette Joueur</title>
+  <title>Melovix — Manette Joueur</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/icons.js"></script>
@@ -32,7 +33,13 @@
 
     <div id="view-join" class="game-panel" style="padding: 1.6rem 1.25rem; margin: auto 0; text-align: left; width: 100%; box-sizing: border-box;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.65rem; border-bottom: 2px solid var(--border-card);">
-        <span style="font-size: 0.85rem; font-weight: 800; color: var(--party-cyan); letter-spacing: 0.05em; text-transform: uppercase;">Manette Joueur</span>
+        <div style="display: flex; align-items: center; gap: 0.55rem;">
+          <img src="/logo.svg" alt="Melovix" width="28" height="28" style="border-radius: 8px; display: block;">
+          <div style="display: flex; flex-direction: column; line-height: 1.1;">
+            <span style="font-size: 1rem; font-weight: 900; color: #ffffff; letter-spacing: -0.01em;">Melovix</span>
+            <span style="font-size: 0.68rem; font-weight: 700; color: var(--party-cyan); letter-spacing: 0.05em; text-transform: uppercase;">Manette Joueur</span>
+          </div>
+        </div>
         <span style="font-size: 0.8rem; font-weight: 700; color: var(--party-emerald);">● En ligne</span>
       </div>
 
@@ -301,7 +308,7 @@
     </div>
 
     <footer class="player-footer">
-      <span>© 2026 Blind-Test</span>
+      <span>© 2026 Melovix</span>
       <span class="footer-separator">·</span>
       <button type="button" id="btn-open-legal-player" class="footer-legal-link">Mentions Légales & Crédits</button>
     </footer>
@@ -600,7 +607,7 @@
             <span>Éditeur & Nature du Projet</span>
           </div>
           <p class="legal-section-text">
-            Blind-Test est une application web festive multijoueur créée pour animer des soirées entre amis et en famille. L'application est un projet indépendant à usage récréatif et non commercial.
+            Melovix est une application web festive multijoueur créée pour animer des soirées entre amis et en famille. L'application est un projet indépendant à usage récréatif et non commercial.
           </p>
         </div>
 
@@ -643,7 +650,7 @@
           </div>
           <p class="legal-section-text">
             Développé avec Node.js, Express, Socket.IO et Canvas Confetti.<br>
-            Graphismes et icônes vectorielles originales SVG © Blind-Test.
+            Graphismes et icônes vectorielles originales SVG © Melovix.
           </p>
         </div>
 

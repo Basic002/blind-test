@@ -432,7 +432,7 @@ io.on('connection', (socket) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n======================================================`);
-  console.log(`[BLIND TEST MULTIJOUEUR EN TEMPS RÉEL]`);
+  console.log(`[MELOVIX — BLIND TEST MULTIJOUEUR EN TEMPS RÉEL]`);
   console.log(`======================================================`);
   console.log(`  Écran Hôte (TV/PC)    : http://localhost:${PORT}/host`);
   console.log(`  Manette Joueur (Mobile): http://${localIp}:${PORT}`);

@@ -1,5 +1,5 @@
 {
-  "name": "blind-test",
+  "name": "melovix",
   "version": "1.0.0",
   "description": "Application web de blind-test multijoueur en temps réel avec écran hôte et manettes smartphones",
   "main": "src/server.js",
