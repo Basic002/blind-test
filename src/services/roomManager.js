@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { getTracksForTheme } = require('./deezerService');
 const accountManager = require('./accountManager');
 
@@ -296,6 +297,9 @@ class RoomManager {
 
     const player = {
       id: socketId,
+      reconnectToken: crypto.randomBytes(16).toString('hex'),
+      connected: true,
+      disconnectTimer: null,
       userId: registeredUserId,
       nickname: cleanNick,
       avatar: cleanAvatar,
@@ -321,6 +325,90 @@ class RoomManager {
     return { room, player };
   }
 
+  rejoinRoom(roomCode, newSocketId, reconnectToken) {
+    const room = this.getRoom(roomCode);
+    if (!room) {
+      throw new Error('Salon introuvable');
+    }
+    if (!reconnectToken || typeof reconnectToken !== 'string') {
+      throw new Error('Session invalide');
+    }
+
+    let foundOldId = null;
+    let foundPlayer = null;
+    for (const [id, p] of room.players.entries()) {
+      if (p.reconnectToken === reconnectToken) {
+        foundOldId = id;
+        foundPlayer = p;
+        break;
+      }
+    }
+
+    if (!foundPlayer) {
+      throw new Error('Session expirée');
+    }
+
+    if (foundPlayer.disconnectTimer) {
+      clearTimeout(foundPlayer.disconnectTimer);
+      foundPlayer.disconnectTimer = null;
+    }
+
+    if (foundOldId && foundOldId !== newSocketId) {
+      room.players.delete(foundOldId);
+      this.socketToRoom.delete(foundOldId);
+    }
+
+    foundPlayer.id = newSocketId;
+    foundPlayer.connected = true;
+    room.players.set(newSocketId, foundPlayer);
+    this.socketToRoom.set(newSocketId, room.code);
+
+    let roundData = null;
+    if (room.status === 'playing' && room.currentRound) {
+      const round = room.currentRound;
+      const elapsedSec = (Date.now() - round.startedAt) / 1000;
+      const remainingDuration = Math.max(1, Math.ceil(round.duration - elapsedSec));
+      const questionLabel = round.isDisney
+        ? 'Trouve le Disney !'
+        : (round.isAnime
+          ? 'Trouve l\'animé !'
+          : (round.isCinema
+            ? 'Trouve le film !'
+            : (round.isSeries
+              ? 'Trouve la série !'
+              : (round.isGaming
+                ? 'Trouve le jeu vidéo !'
+                : 'Trouve le morceau !'))));
+
+      roundData = {
+        roundIndex: room.currentRoundIndex + 1,
+        totalRounds: room.settings.totalRounds,
+        gameMode: room.settings.gameMode,
+        lives: foundPlayer.lives !== undefined ? foundPlayer.lives : (room.settings.survivalLives || 3),
+        isEliminated: Boolean(foundPlayer.isEliminated),
+        teamId: foundPlayer.teamId || 'red',
+        teamScores: this.getTeamScores(room),
+        isAnime: round.isAnime,
+        isDisney: round.isDisney,
+        isCinema: round.isCinema,
+        isSeries: round.isSeries,
+        isGaming: round.isGaming,
+        questionLabel,
+        options: round.options.map((opt, idx) => ({
+          id: opt.id,
+          index: idx,
+          title: opt.title,
+          artist: opt.artist
+        })),
+        duration: remainingDuration,
+        hasAnswered: Boolean(foundPlayer.hasAnswered),
+        lastOptionId: foundPlayer.lastAnswer ? foundPlayer.lastAnswer.optionId : null
+      };
+    }
+
+    return { room, player: foundPlayer, roundData };
+  }
+
   removeSocket(socketId) {
     const roomCode = this.socketToRoom.get(socketId);
     if (!roomCode) return null;
@@ -332,6 +420,9 @@ class RoomManager {
     if (room.hostSocketId === socketId) {
       if (room.roundTimer) clearTimeout(room.roundTimer);
       if (room.countdownTimer) clearTimeout(room.countdownTimer);
+      for (const p of room.players.values()) {
+        if (p.disconnectTimer) clearTimeout(p.disconnectTimer);
+      }
       this.io.to(room.code).emit('room_closed', { message: 'L\'hôte a quitté la partie.' });
       for (const pId of room.players.keys()) {
         this.socketToRoom.delete(pId);
@@ -342,19 +433,29 @@ class RoomManager {
 
     if (room.players.has(socketId)) {
       const player = room.players.get(socketId);
-      room.players.delete(socketId);
-      
-      this.io.to(room.hostSocketId).emit('player_left', {
-        playerId: socketId,
-        nickname: player.nickname,
-        players: this.getPlayersList(room)
-      });
+      player.connected = false;
+      const graceMs = room.status === 'lobby' ? 15000 : 180000;
 
-      if (room.status === 'playing') {
-        this.checkAllPlayersAnswered(room);
-      }
+      if (player.disconnectTimer) clearTimeout(player.disconnectTimer);
+      player.disconnectTimer = setTimeout(() => {
+        if (!this.rooms.has(room.code)) return;
+        const current = room.players.get(player.id);
+        if (!current || current.connected) return;
+        room.players.delete(player.id);
+        this.socketToRoom.delete(player.id);
 
-      return { type: 'player_left', roomCode, player };
+        this.io.to(room.hostSocketId).emit('player_left', {
+          playerId: player.id,
+          nickname: player.nickname,
+          players: this.getPlayersList(room)
+        });
+
+        if (room.status === 'playing') {
+          this.checkAllPlayersAnswered(room);
+        }
+      }, graceMs);
+
+      return { type: 'player_disconnected', roomCode, player };
     }
 
     return null;

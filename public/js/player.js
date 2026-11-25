@@ -1504,9 +1504,43 @@ btnJoin.addEventListener('click', () => {
   });
 });
 
+function saveActiveRoomSession(roomCode, reconnectToken) {
+  if (!roomCode || !reconnectToken) return;
+  try {
+    sessionStorage.setItem('melovix_session', JSON.stringify({ roomCode, reconnectToken }));
+  } catch (e) {}
+}
+
+function clearActiveRoomSession() {
+  try {
+    sessionStorage.removeItem('melovix_session');
+  } catch (e) {}
+}
+
+function getActiveRoomSession() {
+  try {
+    const raw = sessionStorage.getItem('melovix_session');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.roomCode && parsed.reconnectToken) return parsed;
+  } catch (e) {}
+  return null;
+}
+
+socket.on('connect', () => {
+  const session = getActiveRoomSession();
+  if (session) {
+    socket.emit('rejoin_room', {
+      roomCode: session.roomCode,
+      reconnectToken: session.reconnectToken
+    });
+  }
+});
+
 socket.on('join_success', (data) => {
   myPlayerInfo = data.player;
-  
+  saveActiveRoomSession(data.roomCode, data.player.reconnectToken);
+
   document.getElementById('player-avatar-badge').innerHTML = renderAvatar(data.player.avatar, 32);
   document.getElementById('player-name-badge').textContent = data.player.nickname;
   document.getElementById('player-level-badge').textContent = `Nv. ${data.player.level || 1}`;
@@ -1517,6 +1551,54 @@ socket.on('join_success', (data) => {
 
   vibrate(50);
   switchView('waiting');
+});
+
+socket.on('rejoin_success', (data) => {
+  myPlayerInfo = data.player;
+  saveActiveRoomSession(data.roomCode, data.player.reconnectToken);
+
+  document.getElementById('player-avatar-badge').innerHTML = renderAvatar(data.player.avatar, 32);
+  document.getElementById('player-name-badge').textContent = data.player.nickname;
+  document.getElementById('player-level-badge').textContent = `Nv. ${data.player.level || 1}`;
+  document.getElementById('player-title-badge').textContent = data.player.title || 'Novice';
+  document.getElementById('player-score-badge').textContent = `${data.player.score} pts`;
+
+  applyLobbyGameModeUI(data.settings, data.player, data.teamScores);
+
+  if (data.status === 'playing' && data.roundData) {
+    handleRoundStartPlayer(data.roundData);
+    if (data.roundData.hasAnswered) {
+      hasAnsweredCurrentRound = true;
+      document.querySelectorAll('.choice-btn').forEach(b => {
+        if (b.dataset.optionId === data.roundData.lastOptionId) {
+          b.classList.add('selected');
+        } else {
+          b.classList.add('disabled');
+          b.disabled = true;
+        }
+      });
+      document.getElementById('answer-locked-banner').style.display = 'block';
+    }
+  } else if (data.status === 'game_over') {
+    document.getElementById('final-score-display').textContent = `${data.player.score} pts`;
+    switchView('gameover');
+  } else {
+    switchView('waiting');
+  }
+
+  showToast('bolt', 'Reconnecté !', 'Tu es de retour dans la partie');
+});
+
+socket.on('rejoin_failed', () => {
+  clearActiveRoomSession();
+});
+
+socket.on('room_closed', (data) => {
+  clearActiveRoomSession();
+  hidePlayerCountdown();
+  if (playerTimerInterval) clearInterval(playerTimerInterval);
+  switchView('join');
+  showToast('wave', 'Salon fermé', (data && data.message) || 'L\'hôte a fermé le salon');
 });
 
 socket.on('settings_updated', (data) => {
@@ -1546,7 +1628,7 @@ socket.on('game_countdown', () => {
   startPlayerCountdown();
 });
 
-socket.on('round_start_player', (data) => {
+function handleRoundStartPlayer(data) {
   hidePlayerCountdown();
   hasAnsweredCurrentRound = false;
   currentOptions = data.options;
@@ -1643,7 +1725,9 @@ socket.on('round_start_player', (data) => {
   });
 
   startMobileTimer(data.duration);
-});
+}
+
+socket.on('round_start_player', handleRoundStartPlayer);
 
 socket.on('answer_received', (data) => {
   if (data.lives !== undefined) currentLives = data.lives;

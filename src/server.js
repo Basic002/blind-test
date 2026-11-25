@@ -295,6 +295,24 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('rejoin_room', ({ roomCode, reconnectToken }) => {
+    try {
+      const { room, player, roundData } = roomManager.rejoinRoom(roomCode, socket.id, reconnectToken);
+      socket.join(room.code);
+
+      socket.emit('rejoin_success', {
+        roomCode: room.code,
+        player,
+        settings: room.settings,
+        teamScores: roomManager.getTeamScores(room),
+        status: room.status,
+        roundData
+      });
+    } catch (err) {
+      socket.emit('rejoin_failed', { message: err.message });
+    }
+  });
+
   socket.on('select_team', ({ teamId }) => {
     try {
       const room = roomManager.getRoomBySocket(socket.id);
