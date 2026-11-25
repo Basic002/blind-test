@@ -1986,3 +1986,74 @@ function spawnFloatingEmote(data) {
 socket.on('room_emote', (data) => {
   spawnFloatingEmote(data);
 });
+
+const SOUNDBOARD_EMOJIS = {
+  vineboom: '💥',
+  bruh: '🗿',
+  bonk: '🏏',
+  winxp: '❌',
+  wow: '✨',
+  emotional: '💔',
+  airhorn: '📢',
+  sadviolin: '🎻',
+  rizz: '😏',
+  tacobell: '🔔'
+};
+
+function spawnSoundboardOverlay(data) {
+  const overlay = document.getElementById('floating-reactions-overlay');
+  if (!overlay) return;
+  const emoji = SOUNDBOARD_EMOJIS[data.soundId];
+  if (!emoji) return;
+
+  const item = document.createElement('div');
+  item.className = 'floating-reaction';
+  const randomLeft = 10 + Math.random() * 80;
+  const driftX = (Math.random() - 0.5) * 90;
+  const rotStart = (Math.random() - 0.5) * 20;
+  const rotMid = (Math.random() - 0.5) * 14;
+  const rotEnd = (Math.random() - 0.5) * 18;
+
+  item.style.left = `${randomLeft}%`;
+  item.style.setProperty('--drift-x', `${driftX}px`);
+  item.style.setProperty('--rot-start', `${rotStart}deg`);
+  item.style.setProperty('--rot-mid', `${rotMid}deg`);
+  item.style.setProperty('--rot-end', `${rotEnd}deg`);
+
+  const avatarSvg = typeof renderAvatar === 'function' ? renderAvatar(data.avatar || 'fox', 18) : '';
+  const safeName = escapeHtml(String(data.nickname || 'Joueur').substring(0, 14));
+
+  item.innerHTML = `
+    <div class="floating-reaction-icon" style="font-size: 3rem; line-height: 1;">${emoji}</div>
+    <div class="floating-reaction-sender">
+      <span class="floating-reaction-avatar">${avatarSvg}</span>
+      <span>${safeName}</span>
+    </div>
+  `;
+
+  overlay.appendChild(item);
+  const allReactions = overlay.querySelectorAll('.floating-reaction');
+  if (allReactions.length > 25) {
+    allReactions[0].remove();
+  }
+  item.addEventListener('animationend', () => {
+    item.remove();
+  });
+}
+
+function playHostSoundboardSfx(soundId) {
+  if (!SOUNDBOARD_EMOJIS[soundId]) return;
+  const masterVol = getMasterSfxVolume();
+  if (masterVol <= 0) return;
+  try {
+    const audio = new Audio(`/sounds/${soundId}.mp3`);
+    audio.volume = masterVol;
+    audio.play().catch(() => {});
+  } catch (e) {}
+}
+
+socket.on('host_soundboard', (data) => {
+  if (!data || !data.soundId) return;
+  playHostSoundboardSfx(data.soundId);
+  spawnSoundboardOverlay(data);
+});

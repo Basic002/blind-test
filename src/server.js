@@ -385,6 +385,39 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('send_soundboard', (payload) => {
+    try {
+      const soundId = payload && typeof payload.soundId === 'string' ? payload.soundId.trim() : '';
+      if (!soundId) return;
+
+      const allowedSounds = ['vineboom', 'bruh', 'bonk', 'winxp', 'wow', 'emotional', 'airhorn', 'sadviolin', 'rizz', 'tacobell'];
+      if (!allowedSounds.includes(soundId)) return;
+
+      const room = roomManager.getRoomBySocket(socket.id);
+      if (!room || room.status !== 'lobby') return;
+
+      const player = room.players.get(socket.id);
+      if (!player) return;
+
+      const now = Date.now();
+      const lastSound = player.lastSoundboardTime || 0;
+      if (now - lastSound < 350) return;
+      player.lastSoundboardTime = now;
+
+      if (room.hostSocketId) {
+        io.to(room.hostSocketId).emit('host_soundboard', {
+          playerId: player.id,
+          nickname: player.nickname,
+          avatar: player.avatar,
+          soundId,
+          timestamp: now
+        });
+      }
+    } catch (err) {
+      console.error('Erreur send_soundboard:', err);
+    }
+  });
+
   socket.on('host_quit_game', () => {
     const room = roomManager.getRoomBySocket(socket.id);
     if (room && room.hostSocketId === socket.id) {

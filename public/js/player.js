@@ -169,6 +169,10 @@ function initPlayerStaticIcons() {
   if (sProfBtnIcon && typeof renderIcon === 'function') sProfBtnIcon.innerHTML = renderIcon('camera', { size: 14 });
   const sFilterTitleIcon = document.getElementById('selfie-filter-title-icon');
   if (sFilterTitleIcon && typeof renderIcon === 'function') sFilterTitleIcon.innerHTML = renderIcon('sparkles', { size: 22 });
+  const sbBtnIcon = document.getElementById('soundboard-btn-icon');
+  if (sbBtnIcon && typeof renderIcon === 'function') sbBtnIcon.innerHTML = renderIcon('music', { size: 18 });
+  const sbModalIcon = document.getElementById('soundboard-modal-title-icon');
+  if (sbModalIcon && typeof renderIcon === 'function') sbModalIcon.innerHTML = renderIcon('music', { size: 22 });
 
   document.querySelectorAll('#avatar-picker .avatar-option').forEach(el => {
     const av = el.dataset.avatar;
@@ -877,6 +881,9 @@ function switchView(viewName) {
   if (dock) {
     dock.style.display = viewName === 'join' ? 'none' : 'flex';
   }
+  if (viewName !== 'waiting') {
+    closeSoundboardModal();
+  }
 }
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -1283,6 +1290,7 @@ window.addEventListener('keydown', (e) => {
     closeProfileModal();
     closeLegalModalPlayer();
     closeSelfieFilterModal();
+    closeSoundboardModal();
   }
 });
 
@@ -2044,5 +2052,69 @@ document.querySelectorAll('#player-reaction-dock .reaction-btn').forEach(btn => 
     e.preventDefault();
     const emoteId = btn.dataset.emote;
     if (emoteId) sendQuickEmote(emoteId, btn);
+  });
+});
+
+let lastSoundboardTime = 0;
+
+function isInWaitingRoom() {
+  const waitingView = document.getElementById('view-waiting');
+  return Boolean(waitingView && waitingView.style.display !== 'none');
+}
+
+function openSoundboardModal() {
+  if (!isInWaitingRoom()) return;
+  const modal = document.getElementById('modal-soundboard');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeSoundboardModal() {
+  const modal = document.getElementById('modal-soundboard');
+  if (modal) modal.style.display = 'none';
+}
+
+function playSoundboardSound(soundId, padBtn) {
+  if (!isInWaitingRoom()) return;
+  const nowMs = Date.now();
+  if (nowMs - lastSoundboardTime < 350) return;
+  lastSoundboardTime = nowMs;
+
+  vibrate(25);
+  if (padBtn) {
+    padBtn.classList.add('playing');
+    setTimeout(() => padBtn.classList.remove('playing'), 220);
+  }
+
+  socket.emit('send_soundboard', { soundId });
+}
+
+const btnOpenSoundboard = document.getElementById('btn-open-soundboard');
+if (btnOpenSoundboard) {
+  btnOpenSoundboard.addEventListener('click', openSoundboardModal);
+}
+
+const btnCloseSoundboard = document.getElementById('btn-close-soundboard');
+if (btnCloseSoundboard) {
+  btnCloseSoundboard.addEventListener('click', closeSoundboardModal);
+}
+
+const btnDoneSoundboard = document.getElementById('btn-done-soundboard');
+if (btnDoneSoundboard) {
+  btnDoneSoundboard.addEventListener('click', closeSoundboardModal);
+}
+
+const modalSoundboard = document.getElementById('modal-soundboard');
+if (modalSoundboard) {
+  modalSoundboard.addEventListener('click', (e) => {
+    if (e.target === modalSoundboard) {
+      closeSoundboardModal();
+    }
+  });
+}
+
+document.querySelectorAll('#soundboard-grid .soundboard-pad').forEach(pad => {
+  pad.addEventListener('click', () => {
+    const soundId = pad.dataset.sound;
+    if (soundId) playSoundboardSound(soundId, pad);
   });
 });
