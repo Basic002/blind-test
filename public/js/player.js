@@ -171,6 +171,8 @@ function initPlayerStaticIcons() {
   if (sFilterTitleIcon && typeof renderIcon === 'function') sFilterTitleIcon.innerHTML = renderIcon('sparkles', { size: 22 });
   const sbBtnIcon = document.getElementById('soundboard-btn-icon');
   if (sbBtnIcon && typeof renderIcon === 'function') sbBtnIcon.innerHTML = renderIcon('music', { size: 18 });
+  const sbGameoverBtnIcon = document.getElementById('soundboard-gameover-btn-icon');
+  if (sbGameoverBtnIcon && typeof renderIcon === 'function') sbGameoverBtnIcon.innerHTML = renderIcon('music', { size: 18 });
   const sbModalIcon = document.getElementById('soundboard-modal-title-icon');
   if (sbModalIcon && typeof renderIcon === 'function') sbModalIcon.innerHTML = renderIcon('music', { size: 22 });
 
@@ -881,7 +883,7 @@ function switchView(viewName) {
   if (dock) {
     dock.style.display = viewName === 'join' ? 'none' : 'flex';
   }
-  if (viewName !== 'waiting') {
+  if (viewName !== 'waiting' && viewName !== 'gameover') {
     closeSoundboardModal();
   }
 }
@@ -2057,13 +2059,16 @@ document.querySelectorAll('#player-reaction-dock .reaction-btn').forEach(btn => 
 
 let lastSoundboardTime = 0;
 
-function isInWaitingRoom() {
+function isSoundboardAllowed() {
   const waitingView = document.getElementById('view-waiting');
-  return Boolean(waitingView && waitingView.style.display !== 'none');
+  const gameoverView = document.getElementById('view-gameover-player');
+  const inWaiting = Boolean(waitingView && waitingView.style.display !== 'none');
+  const inGameover = Boolean(gameoverView && gameoverView.style.display !== 'none');
+  return inWaiting || inGameover;
 }
 
 function openSoundboardModal() {
-  if (!isInWaitingRoom()) return;
+  if (!isSoundboardAllowed()) return;
   const modal = document.getElementById('modal-soundboard');
   if (modal) modal.style.display = 'flex';
 }
@@ -2074,7 +2079,7 @@ function closeSoundboardModal() {
 }
 
 function playSoundboardSound(soundId, padBtn) {
-  if (!isInWaitingRoom()) return;
+  if (!isSoundboardAllowed()) return;
   const nowMs = Date.now();
   if (nowMs - lastSoundboardTime < 350) return;
   lastSoundboardTime = nowMs;
@@ -2091,6 +2096,11 @@ function playSoundboardSound(soundId, padBtn) {
 const btnOpenSoundboard = document.getElementById('btn-open-soundboard');
 if (btnOpenSoundboard) {
   btnOpenSoundboard.addEventListener('click', openSoundboardModal);
+}
+
+const btnOpenSoundboardGameover = document.getElementById('btn-open-soundboard-gameover');
+if (btnOpenSoundboardGameover) {
+  btnOpenSoundboardGameover.addEventListener('click', openSoundboardModal);
 }
 
 const btnCloseSoundboard = document.getElementById('btn-close-soundboard');

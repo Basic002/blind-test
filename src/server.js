@@ -394,7 +394,7 @@ io.on('connection', (socket) => {
       if (!allowedSounds.includes(soundId)) return;
 
       const room = roomManager.getRoomBySocket(socket.id);
-      if (!room || room.status !== 'lobby') return;
+      if (!room || (room.status !== 'lobby' && room.status !== 'game_over')) return;
 
       const player = room.players.get(socket.id);
       if (!player) return;
